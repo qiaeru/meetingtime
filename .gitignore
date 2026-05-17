@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.local
+.DS_Store
+.vscode/
+.idea/
+*.tsbuildinfo
+coverage/
+
+# Private Claude Code notes (working memory, not shipped or published).
+CLAUDE.md
+**/CLAUDE.md
+.claude/

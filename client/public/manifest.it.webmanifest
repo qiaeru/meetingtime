@@ -1,0 +1,16 @@
+{
+  "name": "Meetingtime",
+  "short_name": "Meetingtime",
+  "description": "Applicazione web in tempo reale e self-hosted che aiuta a organizzare meglio le riunioni misurando il tempo di parola e il tempo dedicato a ciascun argomento, oltre a permettere la presa di note collaborativa.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1220",
+  "theme_color": "#2563eb",
+  "lang": "it",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

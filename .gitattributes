@@ -1,0 +1,11 @@
+# Normalize line endings to LF in the repository, regardless of OS.
+# The server runs in a Linux Docker container and shell scripts inside
+# the deploy/ variants must keep LF; mixing CRLF in the repo would break
+# them on rebuild. Windows contributors keep CRLF in their working tree
+# if their local core.autocrlf is true; git converts on checkout/commit.
+* text=auto eol=lf
+
+# Binary assets must never be touched.
+*.png   binary
+*.ico   binary
+*.woff2 binary

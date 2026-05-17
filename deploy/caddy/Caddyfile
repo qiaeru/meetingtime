@@ -1,0 +1,4 @@
+{$MEETINGTIME_DOMAIN:localhost} {
+	encode gzip zstd
+	reverse_proxy meetingtime:3000
+}

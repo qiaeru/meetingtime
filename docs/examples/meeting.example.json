@@ -1,0 +1,22 @@
+{
+  "host": {
+    "firstName": "Alice",
+    "lastName": "Martin",
+    "role": "Product Manager"
+  },
+  "participants": [
+    { "firstName": "Bob", "lastName": "Durand", "role": "Tech Lead" },
+    { "firstName": "Carla", "lastName": "Lopez", "role": "Scrum Master" },
+    { "firstName": "David", "lastName": "Nguyen", "role": "Designer" }
+  ],
+  "topics": [
+    "Roundtable",
+    "Sprint 12 demo",
+    "Q3 roadmap",
+    "Risks & blockers",
+    "Miscellaneous"
+  ],
+  "timeboxMinutes": 2,
+  "plannedDurationMinutes": 60,
+  "password": "test123"
+}

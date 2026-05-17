@@ -1,0 +1,16 @@
+{
+  "name": "Meetingtime",
+  "short_name": "Meetingtime",
+  "description": "Aplicación web en tiempo real y auto-alojada que ayuda a organizar mejor las reuniones midiendo el tiempo de palabra y el tiempo dedicado a cada tema, además de permitir la toma de notas colaborativa.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1220",
+  "theme_color": "#2563eb",
+  "lang": "es",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

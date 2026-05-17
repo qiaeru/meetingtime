@@ -1,0 +1,864 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Anchor for absolutely-positioned overlays like the meeting loader. */
+  position: relative;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  gap: var(--gap);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  cursor: pointer;
+}
+.brand:hover {
+  background: var(--bg-muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-header {
+  /* override base for meeting view: 3-col layout to center controls */
+  display: flex;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.header-controls:empty {
+  display: none;
+}
+.app-header {
+  position: relative;
+}
+.header-btn {
+  padding: 6px 14px;
+  min-height: 38px;
+  font-size: 0.9rem;
+}
+
+/* ---- Home ---- */
+
+.page-home {
+  position: relative;
+  overflow: hidden;
+  /* Transparent so the body-level floating-bg shows through. The gradient
+     itself is on body[data-route="/"] below, behind the floating icons. */
+  background: transparent;
+}
+body[data-route="/"] {
+  background:
+    radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+    radial-gradient(circle at 80% 90%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-muted) 100%);
+}
+
+.floating-bg {
+  /* Mounted in <body>, not in #app, so it survives router re-renders. Fixed
+     position covers the viewport; pointer-events:none lets clicks pass to the
+     #app content above. Hidden by default, shown only when the router marks
+     the home route on <body>. */
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  display: none;
+}
+body[data-route="/"] .floating-bg {
+  display: block;
+}
+/* #app needs to sit above the floating background. */
+#app {
+  position: relative;
+  z-index: 1;
+}
+.floating-icon {
+  position: absolute;
+  color: color-mix(in srgb, var(--accent) 55%, var(--fg-muted));
+  /* `--base-opacity` is set per-icon to encode its depth (smaller/farther
+     icons fade more). The fade animation modulates around this base; cursor
+     repulsion temporarily bumps it via --repel-opacity. */
+  opacity: var(--repel-opacity, var(--base-opacity, 0.25));
+  animation:
+    float-y var(--duration, 22s) ease-in-out infinite,
+    float-fade var(--duration, 22s) ease-in-out infinite;
+  filter: blur(var(--blur, 0.3px));
+  transition: opacity 0.3s ease;
+}
+.floating-icon > svg {
+  transform: translate3d(var(--repel-x, 0), var(--repel-y, 0), 0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-home .hero {
+  position: relative;
+  z-index: 1;
+}
+.page-home .app-header {
+  /* Strictly above the hero so the locale picker's menu, which drops below
+     the header bar, is clickable instead of being covered by .hero (same
+     z-index 1 + later in DOM order = hero would paint on top). */
+  position: relative;
+  z-index: 10;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 32px;
+  gap: 28px;
+}
+
+.hero h1 {
+  font-size: clamp(2.6rem, 5.5vw, 4.2rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  background: linear-gradient(135deg, var(--fg) 0%, color-mix(in srgb, var(--accent) 70%, var(--fg)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-subtitle {
+  max-width: 56ch;
+  color: var(--fg-muted);
+  font-size: 1.15rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+
+/* Grid layout so the icon always sits in a fixed-width slot and the label
+   text starts at the same x position in every CTA, regardless of which
+   Lucide glyph is used (their visible mass varies inside the 24x24 viewBox).
+   `.btn.big-cta` doubles specificity to override `.btn { display: inline-flex }`
+   defined later in components.css. */
+.btn.big-cta {
+  display: inline-grid;
+  grid-template-columns: 24px auto;
+  align-items: center;
+  justify-content: start;
+  gap: 14px;
+  padding: 16px 28px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  min-height: 56px;
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+/* Optical compensation: arrow/asymmetric icons whose visible ink extends close
+   to the SVG's right edge need a slightly wider gap to look balanced with
+   centered icons like CirclePlus. */
+.btn.big-cta:has(svg.cta-icon-tight) {
+  gap: 19px;
+}
+.btn.big-cta > svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  place-self: center;
+}
+.btn.big-cta > span {
+  line-height: 1;
+  align-self: center;
+}
+
+/* ---- Forms ---- */
+
+.page-form {
+  background: var(--bg);
+  padding-bottom: 60px;
+}
+
+.form-card {
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 32px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.form-card h1 {
+  margin-bottom: 24px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldset {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fieldset > .btn {
+  align-self: flex-start;
+}
+
+/* Empty list containers must not occupy a flex slot or the fieldset gap
+   gets applied twice (above and below) for nothing. */
+.fieldset > .stack-sm:empty {
+  display: none;
+}
+
+.fieldset legend {
+  padding: 0 8px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+/* Red asterisk marking required fields */
+.required::after,
+.fieldset > legend.required::after {
+  content: " *";
+  color: var(--danger);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.field > span {
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
+
+.inline-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-muted);
+  border-radius: var(--radius);
+}
+.resume-banner[hidden] {
+  display: none;
+}
+
+.import-zone {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 22px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-muted));
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  color: var(--fg);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+.import-zone:hover {
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-muted));
+  border-color: var(--accent);
+}
+.import-zone:active {
+  transform: scale(0.998);
+}
+.import-zone[data-dragover="true"] {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-muted));
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.import-zone-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.import-zone-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.import-zone-text strong {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--fg);
+}
+.import-zone-hint {
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
+
+/* ---- Meeting layout ---- */
+
+.page-meeting {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.meeting-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.meeting-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 20px;
+  min-height: 0;
+  overflow: hidden;
+}
+.meeting-left > * {
+  flex: 0 0 auto;
+}
+.meeting-left > .list-wrap {
+  /* Size to content when participants fit; shrink (with internal scroll on the
+     bordered list) when the column runs out of room. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ended-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--warn);
+  color: #1a1200;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+.ended-banner[hidden],
+.hand-banner[hidden] {
+  display: none;
+}
+.ended-banner .btn-on-accent {
+  background: rgba(0, 0, 0, 0.18);
+  color: #1a1200;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.top-info {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  gap: var(--gap);
+}
+.top-info > .global-timer {
+  min-width: 160px;
+}
+
+.list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 0 4px;
+}
+.list-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+.list-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--bg-muted);
+  color: var(--fg);
+  border-radius: 999px;
+  letter-spacing: 0;
+}
+.list-header-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.list-header-icon-btn {
+  width: 32px;
+  height: 32px;
+}
+.list-header-icon-btn[data-raised="true"] {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+}
+.list-header-icon-btn[hidden] {
+  display: none;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  color: var(--fg-muted);
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+
+/* ---- Notes panel ---- */
+
+.notes-panel {
+  position: relative;
+  width: 480px;
+  background: var(--bg-elev);
+  border-left: 1px solid var(--border);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  transition: width 0.2s ease;
+  min-height: 0;
+}
+
+.notes-panel[data-collapsed="true"] {
+  width: 48px;
+}
+
+.notes-panel[data-collapsed="true"] .notes-header,
+.notes-panel[data-collapsed="true"] .notes-body {
+  display: none;
+}
+
+/* Toggle button: same size in both expanded and collapsed states.
+   Chevron points right by default; flips to left when collapsed. When the
+   panel is collapsed it shrinks to a narrow strip, so we center the handle
+   horizontally for visual balance. */
+.notes-panel .notes-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  /* Override .icon-btn default 40px. components.css loads after this file,
+     hence the higher-specificity selector. */
+  width: 32px;
+  height: 32px;
+}
+.notes-panel[data-collapsed="true"] .notes-handle {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.notes-panel[data-collapsed="true"] .notes-handle svg {
+  transform: rotate(180deg);
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 8px (handle top) + 32 (handle) + 8 = 48 total header height, matched by
+     vertical padding so the title/buttons sit on the same baseline as the
+     chevron. Left padding reserves space for the absolute handle. */
+  padding: 8px 12px 8px 48px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.notes-header h2 {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.notes-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.notes-body {
+  display: grid;
+  min-height: 0;
+}
+/* Split view: editor on top, preview below, divider in between. */
+.notes-body[data-split="true"] {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+}
+.notes-body[data-split="true"] .notes-preview {
+  border-top: 1px solid var(--border);
+}
+
+.notes-editor,
+.notes-preview {
+  min-height: 0;
+  overflow: auto;
+  height: 100%;
+}
+
+.notes-editor .cm-editor {
+  height: 100%;
+  font-size: 0.85rem;
+}
+
+.notes-preview {
+  padding: 24px 32px;
+  line-height: 1.55;
+  font-size: 0.85rem;
+  color: var(--fg);
+}
+
+/* GitHub-inspired Markdown rendering */
+.notes-preview h1,
+.notes-preview h2,
+.notes-preview h3,
+.notes-preview h4,
+.notes-preview h5,
+.notes-preview h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+.notes-preview h1 {
+  font-size: 1.85em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+.notes-preview h2 {
+  font-size: 1.45em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+.notes-preview h3 { font-size: 1.2em; }
+.notes-preview h4 { font-size: 1em; }
+.notes-preview h5 { font-size: 0.9em; }
+.notes-preview h6 { font-size: 0.85em; color: var(--fg-muted); }
+
+.notes-preview > *:first-child {
+  margin-top: 0;
+}
+
+.notes-preview p,
+.notes-preview ul,
+.notes-preview ol,
+.notes-preview blockquote,
+.notes-preview pre,
+.notes-preview table {
+  margin: 0 0 16px;
+}
+
+.notes-preview ul,
+.notes-preview ol {
+  padding-left: 2em;
+  list-style: revert;
+}
+.notes-preview li + li {
+  margin-top: 4px;
+}
+
+.notes-preview blockquote {
+  padding: 0 1em;
+  color: var(--fg-muted);
+  border-left: 0.25em solid var(--border-strong);
+}
+
+.notes-preview a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.notes-preview a:hover {
+  text-decoration: underline;
+}
+
+.notes-preview code {
+  font-family: var(--mono-font);
+  font-size: 0.88em;
+  padding: 0.2em 0.4em;
+  background: var(--bg-muted);
+  border-radius: 6px;
+}
+.notes-preview pre {
+  font-family: var(--mono-font);
+  font-size: 0.88em;
+  padding: 16px;
+  background: var(--bg-muted);
+  border-radius: 6px;
+  overflow: auto;
+  line-height: 1.45;
+}
+.notes-preview pre code {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: 1em;
+}
+
+/* Caption shown on each code block while Shiki is still loading on first
+   render. Replaced by the proper Shiki output once `loadHighlighter()`
+   resolves and the preview re-renders. */
+.notes-preview pre[data-syntax-pending] {
+  position: relative;
+}
+.notes-preview pre[data-syntax-pending]::before {
+  content: attr(data-syntax-loading);
+  display: block;
+  font-family: var(--sans-font);
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.notes-preview hr {
+  height: 1px;
+  border: 0;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* ---- Syntax highlighting (Shiki dual-theme) ----
+   Shiki emits inline style="--shiki-light: …; --shiki-dark: …" attributes.
+   These rules pick the right variable based on the active theme. */
+.notes-preview .shiki {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--mono-font);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  background-color: var(--shiki-light-bg);
+  color: var(--shiki-light);
+}
+.notes-preview .shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+:root[data-theme="dark"] .notes-preview .shiki {
+  background-color: var(--shiki-dark-bg);
+  color: var(--shiki-dark);
+}
+:root[data-theme="dark"] .notes-preview .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+.notes-preview table {
+  border-collapse: collapse;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+}
+.notes-preview table th,
+.notes-preview table td {
+  padding: 6px 13px;
+  border: 1px solid var(--border);
+}
+.notes-preview table tr {
+  background: var(--bg-elev);
+}
+.notes-preview table tr:nth-child(2n) {
+  background: var(--bg-muted);
+}
+.notes-preview table th {
+  font-weight: 600;
+  background: var(--bg-muted);
+}
+
+.notes-preview img {
+  max-width: 100%;
+  background: var(--bg);
+}
+
+/* Task lists (`- [ ]` / `- [x]`). Marked emits a disabled checkbox inside the
+   <li>; DOMPurify keeps it. The default browser look is misaligned with the
+   text baseline and uses native colours that clash with the theme. */
+.notes-preview li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.5em;
+}
+.notes-preview input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 0 6px -2px 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--bg);
+  display: inline-block;
+  vertical-align: middle;
+  cursor: default;
+}
+.notes-preview input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  /* Tick drawn as a small inline SVG so we don't depend on a font glyph. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8l3.5 3.5L13 5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px;
+}
+
+.notes-description {
+  width: 100%;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.notes-description-line {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
+.notes-description-link {
+  display: inline;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.notes-description-link:hover {
+  filter: brightness(1.1);
+}
+
+.md-help-list {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: 10px 20px;
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+}
+.md-help-list dt {
+  font-weight: 600;
+  color: var(--fg-muted);
+  padding-top: 4px;
+}
+.md-help-list dd {
+  margin: 0;
+}
+.md-help-list pre {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono-font);
+  font-size: 0.82rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ---- Mobile warning ---- */
+
+.mobile-warning {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: var(--warn);
+  color: #1a1200;
+  text-align: center;
+  font-weight: 600;
+  z-index: 50;
+}

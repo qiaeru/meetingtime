@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="description" content="Self-hosted real-time web app that helps you run better meetings by tracking speaking time and time spent on each topic, with collaborative note-taking." />
+    <title>Meetingtime</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="shortcut icon" href="/icons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content" data-i18n="common.skipToContent">Skip to main content</a>
+    <div id="app"></div>
+    <div id="toast-root" aria-live="polite" aria-atomic="false"></div>
+    <div id="dialog-root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

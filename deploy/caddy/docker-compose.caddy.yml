@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+# HTTPS deployment with Caddy (automatic Let's Encrypt).
+# Run from the project root:
+#   export MEETINGTIME_DOMAIN=meetingtime.example.com
+#   docker compose -f deploy/caddy/docker-compose.caddy.yml up -d
+
+services:
+  meetingtime:
+    build: ../..
+    image: meetingtime:latest
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://${MEETINGTIME_DOMAIN}}
+      HOST_TIMEOUT_MS: ${HOST_TIMEOUT_MS:-1800000}
+      POST_END_GC_MS: ${POST_END_GC_MS:-300000}
+      TRUST_PROXY: "1"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - meetingtime
+
+volumes:
+  caddy_data:
+  caddy_config:

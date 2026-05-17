@@ -1,0 +1,20 @@
+{
+  "name": "@meetingtime/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wire-level Socket.IO contracts and TypeScript models shared between the Meetingtime client and server.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./events": "./dist/events.js",
+    "./models": "./dist/models.js",
+    "./permissions": "./dist/permissions.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist"
+  }
+}

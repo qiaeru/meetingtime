@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Meetingtime">
+  <!-- Solid backdrop fills the maskable safe zone so Android crops cleanly. -->
+  <rect width="256" height="256" fill="#0b1220"/>
+  <!-- Lucide Clock, scaled and centred inside the 80% safe area. -->
+  <g transform="translate(64 64) scale(5.333)" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </g>
+</svg>

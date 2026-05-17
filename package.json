@@ -1,0 +1,44 @@
+{
+  "name": "meetingtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-hosted real-time web app that helps you run better meetings by tracking speaking time and time spent on each topic, with collaborative note-taking.",
+  "license": "MIT",
+  "author": "qiaeru",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qiaeru/meetingtime.git"
+  },
+  "homepage": "https://github.com/qiaeru/meetingtime#readme",
+  "bugs": {
+    "url": "https://github.com/qiaeru/meetingtime/issues"
+  },
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w shared && npm run build -w client && npm run build -w server",
+    "start": "node server/dist/index.js",
+    "typecheck": "tsc -b shared server client",
+    "lint": "eslint \"{shared,server,client}/src/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"{shared,server,client}/src/**/*.{ts,tsx,css,json,md}\" \"*.md\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0",
+    "prettier": "^3.3.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

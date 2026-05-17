@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MIT
+# HTTPS deployment with nginx + certbot (manual certificate management).
+# Run from the project root:
+#   docker compose -f deploy/nginx/docker-compose.nginx.yml up -d
+
+services:
+  meetingtime:
+    build: ../..
+    image: meetingtime:latest
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      HOST_TIMEOUT_MS: ${HOST_TIMEOUT_MS:-1800000}
+      POST_END_GC_MS: ${POST_END_GC_MS:-300000}
+      TRUST_PROXY: "1"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - meetingtime

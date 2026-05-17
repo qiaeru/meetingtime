@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MIT
+# Local HTTP deployment. For HTTPS in production, use one of the variants in deploy/.
+
+services:
+  meetingtime:
+    build: .
+    image: meetingtime:latest
+    container_name: meetingtime
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      HOST_TIMEOUT_MS: ${HOST_TIMEOUT_MS:-1800000}
+      POST_END_GC_MS: ${POST_END_GC_MS:-300000}
+      TRUST_PROXY: "0"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
