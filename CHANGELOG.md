@@ -6,17 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-20
+
 ### Changed
 
-- Negotiate gzip on the HTTP responses (client bundle, CSS, locale JSON, SPA index) via the `compression` middleware so cold loads over a tunnel or VPN ship far fewer bytes.
+- gzip HTTP responses (client bundle, CSS, locale JSON, SPA index) via the `compression` middleware so cold loads over a tunnel or VPN ship far fewer bytes.
 
 ### Fixed
 
-- Share dialog: fall back to `document.execCommand("copy")` when the asynchronous Clipboard API is unavailable, so the Copy buttons work on plain-HTTP LAN deployments instead of silently failing.
+- Share dialog Copy buttons now fall back to `document.execCommand("copy")` when the async Clipboard API is unavailable, so they work on plain-HTTP LAN deployments instead of silently failing.
 
 ### Security
 
-- Pin transitive `ws` to `^8.20.1` via npm `overrides` to clear the GHSA-58qx-3vcg-4xpx uninitialized-memory-disclosure advisory (Socket.IO and engine.io still depend on `ws@~8.18.3`).
+- Pin transitive `ws` to `^8.20.1` via npm `overrides`, clearing GHSA-58qx-3vcg-4xpx (uninitialized memory disclosure) while Socket.IO upstream still ships `engine.io` with `ws@~8.18.3`.
 
 ## [1.0.0] - 2026-05-17
 

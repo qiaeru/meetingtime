@@ -1,6 +1,6 @@
 {
   "name": "meetingtime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Self-hosted real-time web app that helps you run better meetings by tracking speaking time and time spent on each topic, with collaborative note-taking.",
   "license": "MIT",
