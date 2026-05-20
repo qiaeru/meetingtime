@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Share dialog: fall back to `document.execCommand("copy")` when the asynchronous Clipboard API is unavailable, so the Copy buttons work on plain-HTTP LAN deployments instead of silently failing.
 
+### Security
+
+- Pin transitive `ws` to `^8.20.1` via npm `overrides` to clear the GHSA-58qx-3vcg-4xpx uninitialized-memory-disclosure advisory (Socket.IO and engine.io still depend on `ws@~8.18.3`).
+
 ## [1.0.0] - 2026-05-17
 
 - Initial release.
