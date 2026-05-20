@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import compression from "compression";
 import cors from "cors";
 import { Server as IOServer } from "socket.io";
 import type { ClientToServerEvents, ServerToClientEvents } from "@meetingtime/shared";
@@ -21,6 +22,11 @@ const app = express();
 if (config.trustProxy) app.set("trust proxy", 1);
 app.use(securityHeaders());
 app.use(cors({ origin: config.corsOrigin }));
+// gzip the JS bundle, CSS, locale JSON and the SPA index. The default 1 KB
+// threshold skips tiny bodies where the encoder overhead beats the savings.
+// Helps self-hosted deployments served over a tunnel or VPN where wire bytes
+// dominate the cold-start cost.
+app.use(compression({ threshold: 1024 }));
 // HTTP path of the per-IP gate. WS upgrades hit the same allowIP() in
 // io.use() and in the Yjs bridge, so the limit cannot be bypassed by
 // jumping straight to the upgrade.

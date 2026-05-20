@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Negotiate gzip on the HTTP responses (client bundle, CSS, locale JSON, SPA index) via the `compression` middleware so cold loads over a tunnel or VPN ship far fewer bytes.
+
 ### Fixed
 
 - Share dialog: fall back to `document.execCommand("copy")` when the asynchronous Clipboard API is unavailable, so the Copy buttons work on plain-HTTP LAN deployments instead of silently failing.
