@@ -40,5 +40,16 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "overrides": {
+    "engine.io": {
+      "ws": "^8.20.1"
+    },
+    "engine.io-client": {
+      "ws": "^8.20.1"
+    },
+    "socket.io-adapter": {
+      "ws": "^8.20.1"
+    }
   }
 }
