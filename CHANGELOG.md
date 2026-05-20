@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Share dialog: fall back to `document.execCommand("copy")` when the asynchronous Clipboard API is unavailable, so the Copy buttons work on plain-HTTP LAN deployments instead of silently failing.
+
 ## [1.0.0] - 2026-05-17
 
 - Initial release.

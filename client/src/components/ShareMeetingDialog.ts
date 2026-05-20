@@ -133,12 +133,41 @@ async function copyToClipboard(
   btn?: HTMLButtonElement,
   iconSize = 14
 ): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
+  if (await tryCopy(text)) {
     toast(t("share.copied"), { type: "success" });
     if (btn) flashCopied(btn, iconSize);
-  } catch {
+  } else {
     toast(t("share.copyFailed"), { type: "error" });
+  }
+}
+
+// navigator.clipboard.writeText only exists in secure contexts (HTTPS or
+// localhost), so a plain-HTTP LAN deployment would otherwise see the Copy
+// button silently do nothing. Fall back to the legacy execCommand path.
+async function tryCopy(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fall through to execCommand
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
   }
 }
 
