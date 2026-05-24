@@ -1,5 +1,5 @@
 # --- Builder stage ---------------------------------------------------------
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 
 # Copy workspace manifests first for cached deps install.
@@ -19,7 +19,7 @@ COPY client/ ./client/
 RUN npm run build
 
 # --- Runtime stage ---------------------------------------------------------
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
