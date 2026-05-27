@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Coda delle mani alzate",
   "meeting.participants": "Partecipanti",
   "meeting.participantsEmpty": "Ancora nessun partecipante.",
+  "meeting.inviteHint": "Per ora sei da solo.",
+  "meeting.inviteCta": "Invita partecipanti.",
   "meeting.removeConfirm": "Rimuovere {name} dalla riunione?",
   "meeting.promoteHost": "Promuovi a moderatore",
   "meeting.demoteHost": "Rimuovi il ruolo di moderatore",

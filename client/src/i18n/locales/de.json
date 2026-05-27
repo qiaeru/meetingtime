@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Warteschlange der gehobenen Hände",
   "meeting.participants": "Teilnehmer",
   "meeting.participantsEmpty": "Noch keine Teilnehmer.",
+  "meeting.inviteHint": "Sie sind im Moment allein.",
+  "meeting.inviteCta": "Teilnehmer einladen.",
   "meeting.removeConfirm": "{name} aus dem Meeting entfernen?",
   "meeting.promoteHost": "Zum Moderator ernennen",
   "meeting.demoteHost": "Moderator-Rolle entziehen",

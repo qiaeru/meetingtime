@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Invite nudge: when the host is alone in the meeting, a discreet hint under the participant list links straight to the share dialog.
+
 ### Changed
 
 - Refine the French UI strings: French-typography non-breaking spaces before `:` and `?`, and tighter wording in the tagline and the join hint.

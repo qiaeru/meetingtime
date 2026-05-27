@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Raised hands queue",
   "meeting.participants": "Participants",
   "meeting.participantsEmpty": "No participants yet.",
+  "meeting.inviteHint": "You're the only one here so far.",
+  "meeting.inviteCta": "Invite participants.",
   "meeting.removeConfirm": "Remove {name} from the meeting?",
   "meeting.promoteHost": "Promote to host",
   "meeting.demoteHost": "Demote from host",

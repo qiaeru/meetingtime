@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Mains levées en attente",
   "meeting.participants": "Participants",
   "meeting.participantsEmpty": "Aucun participant pour le moment.",
+  "meeting.inviteHint": "Vous êtes seul pour le moment.",
+  "meeting.inviteCta": "Invitez des participants.",
   "meeting.removeConfirm": "Retirer {name} de la réunion ?",
   "meeting.promoteHost": "Promouvoir animateur",
   "meeting.demoteHost": "Retirer le rôle d'animateur",

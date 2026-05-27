@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Cola de manos levantadas",
   "meeting.participants": "Participantes",
   "meeting.participantsEmpty": "Aún no hay participantes.",
+  "meeting.inviteHint": "De momento estás solo.",
+  "meeting.inviteCta": "Invita a participantes.",
   "meeting.removeConfirm": "¿Quitar a {name} de la reunión?",
   "meeting.promoteHost": "Ascender a anfitrión",
   "meeting.demoteHost": "Quitar el rol de anfitrión",

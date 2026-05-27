@@ -298,7 +298,30 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   headerActions.append(handBtn, timeboxBtn, addParticipantBtn);
   listHeader.appendChild(headerActions);
 
-  listWrap.append(listHeader, list.el);
+  // First-moment nudge: when the host is the only participant, point them at
+  // the share dialog so inviting others is one click away.
+  const inviteHint = document.createElement("div");
+  inviteHint.className = "invite-hint";
+  inviteHint.hidden = true;
+  const inviteText = document.createElement("span");
+  inviteText.textContent = t("meeting.inviteHint") + " ";
+  const inviteCta = document.createElement("button");
+  inviteCta.type = "button";
+  inviteCta.className = "invite-hint-cta";
+  inviteCta.textContent = t("meeting.inviteCta");
+  inviteCta.addEventListener("click", () => {
+    const m = getMeeting();
+    if (!m) return;
+    void showShareMeetingDialog({ meetingId: m.id, password: loadPassword(m.id) });
+  });
+  inviteHint.append(inviteText, inviteCta);
+  const refreshInviteHint = () => {
+    const m = getMeeting();
+    const alone = Boolean(m) && Object.keys(m?.participants ?? {}).length === 1;
+    inviteHint.hidden = !(amIHost() && m?.phase !== "ended" && alone);
+  };
+
+  listWrap.append(listHeader, list.el, inviteHint);
   left.appendChild(listWrap);
 
   const agenda = renderAgenda({ getMeeting, socket, isHost: amIHost });
@@ -338,6 +361,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     refreshAddP();
     refreshHand();
     refreshTimeboxBtn();
+    refreshInviteHint();
     if (!m) return;
 
     // Push the same colour the participant list uses for me into Yjs

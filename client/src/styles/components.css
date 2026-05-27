@@ -654,6 +654,25 @@ textarea:focus-visible {
   font-style: italic;
 }
 
+.invite-hint {
+  flex: 0 0 auto;
+  padding: 8px 4px 0;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  font-style: italic;
+}
+.invite-hint-cta {
+  color: var(--accent);
+  font: inherit;
+  font-style: italic;
+  text-decoration: underline;
+  padding: 0;
+  cursor: pointer;
+}
+.invite-hint-cta:hover {
+  filter: brightness(1.1);
+}
+
 .participant {
   position: relative;
   display: grid;
