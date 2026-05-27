@@ -1,6 +1,6 @@
 {
   "name": "@meetingtime/shared",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Wire-level Socket.IO contracts and TypeScript models shared between the Meetingtime client and server.",
   "license": "MIT",
