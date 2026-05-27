@@ -187,6 +187,7 @@
   "a11y.muteToggle": "Couper ou rétablir les sons",
   "a11y.offline": "déconnecté",
   "a11y.notesPanelToggle": "Replier ou déplier le volet des notes",
+  "a11y.notesPanelResize": "Redimensionner le volet des notes",
 
   "mobile.warning": "Meetingtime est conçu pour un grand écran. L'expérience peut être limitée sur mobile.",
 
