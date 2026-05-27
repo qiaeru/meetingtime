@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Raised hands queue",
   "meeting.participants": "Participants",
   "meeting.participantsEmpty": "No participants yet.",
+  "meeting.inviteHint": "You're the only one here so far.",
+  "meeting.inviteCta": "Invite participants.",
   "meeting.removeConfirm": "Remove {name} from the meeting?",
   "meeting.promoteHost": "Promote to host",
   "meeting.demoteHost": "Demote from host",
@@ -185,6 +187,7 @@
   "a11y.muteToggle": "Mute or unmute sounds",
   "a11y.offline": "offline",
   "a11y.notesPanelToggle": "Collapse or expand the notes panel",
+  "a11y.notesPanelResize": "Resize the notes panel",
 
   "mobile.warning": "Meetingtime is designed for large screens. The experience may be limited on mobile.",
 

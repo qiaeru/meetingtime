@@ -508,7 +508,7 @@ body[data-route="/"] .floating-bg {
 
 .notes-panel {
   position: relative;
-  width: 480px;
+  width: var(--notes-width, 480px);
   background: var(--bg-elev);
   border-left: 1px solid var(--border);
   display: grid;
@@ -519,6 +519,35 @@ body[data-route="/"] .floating-bg {
 
 .notes-panel[data-collapsed="true"] {
   width: 48px;
+}
+
+/* No width animation while dragging the resizer (it would lag a frame behind
+   the pointer), and freeze text selection so the drag doesn't highlight notes. */
+.notes-panel[data-resizing="true"] {
+  transition: none;
+  user-select: none;
+}
+
+/* Full-height drag strip over the left border. Sits clear of the collapse
+   handle (top:8 left:8, 32px wide), so the two never overlap. */
+.notes-resizer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  z-index: 2;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.notes-resizer:hover,
+.notes-resizer:focus-visible {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  outline: none;
+}
+.notes-panel[data-collapsed="true"] .notes-resizer {
+  display: none;
 }
 
 .notes-panel[data-collapsed="true"] .notes-header,

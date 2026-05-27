@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Cola de manos levantadas",
   "meeting.participants": "Participantes",
   "meeting.participantsEmpty": "Aún no hay participantes.",
+  "meeting.inviteHint": "De momento estás solo.",
+  "meeting.inviteCta": "Invita a participantes.",
   "meeting.removeConfirm": "¿Quitar a {name} de la reunión?",
   "meeting.promoteHost": "Ascender a anfitrión",
   "meeting.demoteHost": "Quitar el rol de anfitrión",
@@ -185,6 +187,7 @@
   "a11y.muteToggle": "Silenciar o activar los sonidos",
   "a11y.offline": "sin conexión",
   "a11y.notesPanelToggle": "Plegar o desplegar el panel de notas",
+  "a11y.notesPanelResize": "Redimensionar el panel de notas",
 
   "mobile.warning": "Meetingtime está diseñado para pantallas grandes. La experiencia puede ser limitada en móvil.",
 

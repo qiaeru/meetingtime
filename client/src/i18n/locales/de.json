@@ -75,6 +75,8 @@
   "meeting.handQueueLabel": "Warteschlange der gehobenen Hände",
   "meeting.participants": "Teilnehmer",
   "meeting.participantsEmpty": "Noch keine Teilnehmer.",
+  "meeting.inviteHint": "Sie sind im Moment allein.",
+  "meeting.inviteCta": "Teilnehmer einladen.",
   "meeting.removeConfirm": "{name} aus dem Meeting entfernen?",
   "meeting.promoteHost": "Zum Moderator ernennen",
   "meeting.demoteHost": "Moderator-Rolle entziehen",
@@ -185,6 +187,7 @@
   "a11y.muteToggle": "Töne stumm schalten oder aktivieren",
   "a11y.offline": "offline",
   "a11y.notesPanelToggle": "Notizenleiste ein- oder ausklappen",
+  "a11y.notesPanelResize": "Breite der Notizenleiste ändern",
 
   "mobile.warning": "Meetingtime ist für große Bildschirme konzipiert. Auf mobilen Geräten kann die Erfahrung eingeschränkt sein.",
 

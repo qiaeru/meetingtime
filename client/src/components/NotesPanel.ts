@@ -7,6 +7,12 @@ import { exportNotes } from "../lib/markdownExport.js";
 import { markdownHelpDialog } from "./MarkdownHelpDialog.js";
 
 const COLLAPSE_KEY = "mt:notes:collapsed";
+const WIDTH_KEY = "mt:notes:width";
+const MIN_WIDTH = 320;
+// Cap relative to the viewport so the panel can never swallow the meeting
+// column whole, with a hard ceiling for very wide monitors.
+const maxWidth = (): number => Math.min(820, Math.round(window.innerWidth * 0.7));
+const clampWidth = (w: number): number => Math.max(MIN_WIDTH, Math.min(maxWidth(), w));
 
 interface Args {
   getMeeting: () => Meeting | null;
@@ -43,6 +49,18 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     /* ignore */
   }
   if (collapsed) aside.dataset.collapsed = "true";
+
+  // Width is driven by a CSS variable so the [data-collapsed] rule (which sets
+  // a literal 48px) keeps winning over the user-chosen width when collapsed.
+  try {
+    const raw = localStorage.getItem(WIDTH_KEY);
+    if (raw) {
+      const n = parseInt(raw, 10);
+      if (Number.isFinite(n)) aside.style.setProperty("--notes-width", `${clampWidth(n)}px`);
+    }
+  } catch {
+    /* ignore */
+  }
 
   // Chevron flips direction via CSS based on [data-collapsed].
   const handle = document.createElement("button");
@@ -130,7 +148,59 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
   };
   refreshDescription(args.readOnly);
 
-  aside.append(handle, header, body);
+  const resizer = document.createElement("div");
+  resizer.className = "notes-resizer";
+  resizer.setAttribute("role", "separator");
+  resizer.setAttribute("aria-orientation", "vertical");
+  resizer.setAttribute("aria-label", t("a11y.notesPanelResize"));
+  resizer.tabIndex = 0;
+
+  const currentWidth = (): number => aside.getBoundingClientRect().width;
+  const applyWidth = (w: number): void => {
+    const clamped = clampWidth(w);
+    aside.style.setProperty("--notes-width", `${clamped}px`);
+    try {
+      localStorage.setItem(WIDTH_KEY, String(clamped));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  let dragStartX = 0;
+  let dragStartWidth = 0;
+  const onPointerMove = (e: PointerEvent): void => {
+    // Panel sits on the right, so dragging the edge leftwards widens it.
+    applyWidth(dragStartWidth + (dragStartX - e.clientX));
+  };
+  const onPointerUp = (e: PointerEvent): void => {
+    resizer.releasePointerCapture(e.pointerId);
+    delete aside.dataset.resizing;
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+  };
+  resizer.addEventListener("pointerdown", (e) => {
+    if (aside.dataset.collapsed === "true") return;
+    e.preventDefault();
+    dragStartX = e.clientX;
+    dragStartWidth = currentWidth();
+    aside.dataset.resizing = "true";
+    resizer.setPointerCapture(e.pointerId);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+  });
+  resizer.addEventListener("keydown", (e) => {
+    if (aside.dataset.collapsed === "true") return;
+    const step = e.shiftKey ? 64 : 16;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      applyWidth(currentWidth() + step);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      applyWidth(currentWidth() - step);
+    }
+  });
+
+  aside.append(handle, resizer, header, body);
 
   const editor: CollaborativeEditor = mountCollaborativeEditor({
     container: editorMount,
