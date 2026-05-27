@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Security
+
+- Raise the `ws` override to `^8.21.0` so the Socket.IO transport also picks up the remote memory exhaustion DoS fix. The notes channel already shipped 8.21.0 in 1.1.0; this closes the same gap on the Socket.IO channel.
+
 ## [1.1.0] - 2026-05-27
 
 ### Added
