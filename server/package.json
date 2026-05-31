@@ -23,7 +23,7 @@
     "uuid": "^14.0.0",
     "ws": "^8.21.0",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
