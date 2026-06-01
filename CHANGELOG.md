@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-02
+
 ### Added
 
 - Participants can now take and release the floor themselves from their phone, so the host no longer has to switch the active speaker by hand (the host keeps manual control). This ships as a dedicated mobile view showing the current speaker, the meeting timer and the topic under discussion, with a large take/release-the-floor button, a raise-hand button, sound and vibration toggles, and a screen that stays awake while the meeting is open.
