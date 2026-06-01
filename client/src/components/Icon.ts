@@ -48,6 +48,8 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Vibrate,
+  VibrateOff,
   Volume2,
   VolumeX,
 } from "lucide";
@@ -103,6 +105,8 @@ const ICONS = {
   Trash2,
   UserPlus,
   Users,
+  Vibrate,
+  VibrateOff,
   Volume2,
   VolumeX,
 } satisfies Record<string, IconNode>;

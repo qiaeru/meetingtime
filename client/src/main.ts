@@ -14,14 +14,12 @@ import { initTheme } from "./components/ThemeToggle.js";
 import { connect } from "./state/socket.js";
 import { initKeyboardLayer } from "./lib/keyboard.js";
 import { mountToaster } from "./components/Toaster.js";
-import { mountMobileWarning } from "./components/MobileWarning.js";
 import { locale$, t } from "./i18n/index.js";
 
 initTheme();
 connect();
 initKeyboardLayer();
 mountToaster();
-mountMobileWarning();
 applyStaticI18n();
 locale$.subscribe(() => applyStaticI18n());
 

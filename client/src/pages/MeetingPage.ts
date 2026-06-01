@@ -3,14 +3,15 @@ import { headerBar } from "./HomePage.js";
 import { t } from "../i18n/index.js";
 import { meeting$, myParticipantId$, socket$, connection$ } from "../state/socket.js";
 import { clearSession, loadSession, loadPassword, savePassword, saveSession } from "../state/session.js";
-import { navigate } from "../router.js";
+import { navigate, rerender } from "../router.js";
+import { renderMobileMeeting } from "../components/MobileMeetingView.js";
 import { renderMeetingTimer } from "../components/MeetingTimer.js";
 import { renderSpeakerSpotlight } from "../components/SpeakerSpotlight.js";
 import { renderHandRaiseBanner } from "../components/HandRaiseBanner.js";
 import { renderParticipantList } from "../components/ParticipantList.js";
 import { addParticipantDialog } from "../components/AddParticipantDialog.js";
 import { renderAgenda } from "../components/AgendaPanel.js";
-import { renderNotesPanel } from "../components/NotesPanel.js";
+import type { NotesPanelHandle } from "../components/NotesPanel.js";
 import { confirmDialog } from "../components/ConfirmDialog.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
 import { icon } from "../components/Icon.js";
@@ -57,6 +58,22 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       navigate("/join", { id: meetingId });
       return () => undefined;
     }
+  }
+
+  // On phones, participants get a stripped-down view (current speaker + take/
+  // release-the-floor + raise-hand) instead of the desktop dashboard. The host
+  // is expected on a large screen. rerender() reruns this page if the viewport
+  // crosses the breakpoint (rotation, window resize).
+  const MOBILE_BREAKPOINT = 900;
+  const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+  const onBreakpoint = (): void => rerender();
+  mql.addEventListener("change", onBreakpoint);
+  if (mql.matches) {
+    const teardown = renderMobileMeeting(root, meetingId, socket);
+    return () => {
+      mql.removeEventListener("change", onBreakpoint);
+      teardown();
+    };
   }
 
   const page = document.createElement("main");
@@ -334,22 +351,38 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const token = sess?.token ?? "";
   const me = getMeeting()?.participants[participantId];
   const displayName = me ? `${me.firstName} ${me.lastName}` : "?";
-  const notes = renderNotesPanel({
-    getMeeting,
-    meetingId,
-    participantId,
-    displayName,
-    token,
-    readOnly: !amIHost(),
-  });
-  grid.appendChild(notes.el);
-
-  page.appendChild(grid);
-  root.appendChild(page);
 
   let prevHandRaised = new Set<string>();
   let prevPhase: Meeting["phase"] | null = null;
   let lastNotesColor: string | null = null;
+
+  // The notes editor (CodeMirror + Yjs + Shiki) is the heaviest module on this
+  // route. Loading it dynamically keeps it out of the mobile path entirely:
+  // phones render the lightweight MobileMeetingView above and never download
+  // this chunk.
+  let notes: NotesPanelHandle | null = null;
+  const myColor = (): string | null => {
+    const m = getMeeting();
+    const myId = getMyId();
+    if (!m || !myId || !m.participants[myId]) return null;
+    const sorted = Object.values(m.participants).sort(
+      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
+    );
+    const idx = sorted.findIndex((p) => p.id === myId);
+    return idx >= 0 ? colorByPosition(idx, sorted.length, m.id) : null;
+  };
+  void import("../components/NotesPanel.js").then(({ renderNotesPanel }) => {
+    notes = renderNotesPanel({ getMeeting, meetingId, participantId, displayName, token, readOnly: !amIHost() });
+    grid.appendChild(notes.el);
+    const color = myColor();
+    if (color) {
+      notes.setUserColor(color);
+      lastNotesColor = color;
+    }
+  });
+
+  page.appendChild(grid);
+  root.appendChild(page);
   const unsubMeeting = meeting$.subscribe((m) => {
     list.update();
     handBanner.update();
@@ -357,7 +390,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     agenda.update();
     spotlight.update();
     refreshHeaderControls();
-    notes.setReadOnly(!amIHost());
+    notes?.setReadOnly(!amIHost());
     refreshAddP();
     refreshHand();
     refreshTimeboxBtn();
@@ -366,19 +399,10 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
 
     // Push the same colour the participant list uses for me into Yjs
     // awareness, so my remote cursor matches my row colour for everyone else.
-    const myId = getMyId();
-    if (myId && m.participants[myId]) {
-      const sorted = Object.values(m.participants).sort(
-        (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
-      );
-      const idx = sorted.findIndex((p) => p.id === myId);
-      if (idx >= 0) {
-        const color = colorByPosition(idx, sorted.length, m.id);
-        if (color !== lastNotesColor) {
-          notes.setUserColor(color);
-          lastNotesColor = color;
-        }
-      }
+    const color = myColor();
+    if (notes && color && color !== lastNotesColor) {
+      notes.setUserColor(color);
+      lastNotesColor = color;
     }
 
     const currentRaised = new Set<string>();
@@ -400,9 +424,9 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       // a few more navigations (so the "Home" button still resolves) and is
       // cleared when the user actually leaves via the ended-banner CTA.
       savePassword(m.id, undefined);
-      if (notes.hasContent()) {
+      if (notes?.hasContent()) {
         void confirmDialog(t("meeting.exportNotesPrompt")).then((ok) => {
-          if (ok) notes.exportNow();
+          if (ok) notes?.exportNow();
         });
       }
     }
@@ -505,7 +529,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     },
     { alt: true }
   );
-  shortcut("n", (e) => { e.preventDefault(); notes.toggleCollapsed(); }, { alt: true });
+  shortcut("n", (e) => { e.preventDefault(); notes?.toggleCollapsed(); }, { alt: true });
 
   const toggleHand = (): void => {
     const m = getMeeting();
@@ -524,9 +548,10 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   };
 
   return () => {
+    mql.removeEventListener("change", onBreakpoint);
     meetingTimer.stop();
     spotlight.stop();
-    notes.destroy();
+    notes?.destroy();
     unsubMeeting();
     unsubMute();
     unsubConn();

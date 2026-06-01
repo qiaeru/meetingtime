@@ -49,6 +49,17 @@
   }
 }
 
+/* Mobile take-the-floor button when the speaker is past their timebox. */
+@keyframes claim-over-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--danger) 0%, transparent);
+  }
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -76,6 +87,7 @@
   .speaker-timer[data-zone="over"],
   .speaker-spotlight[data-zone="over"] .spotlight-turn-timer,
   .speaker-spotlight[data-zone="over"] .spotlight-turn-bar-fill,
+  .mobile-claim-btn[data-over="true"],
   .participant[data-just-spoke="true"],
   .phase-pill[data-phase="running"]::before,
   .toast,
