@@ -876,18 +876,163 @@ body[data-route="/"] .floating-bg {
   overflow-x: auto;
 }
 
-/* ---- Mobile warning ---- */
+/* ---- Mobile participant view ---- */
 
-.mobile-warning {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.page-meeting-mobile {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* fallback for browsers without dvh */
+  min-height: 100dvh;
+}
+
+/* Extend the header under the status bar / notch. */
+.mobile-header {
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+}
+/* The brand is plain text here, not a link home. */
+.mobile-header .brand {
+  cursor: default;
+}
+.mobile-header .brand:hover {
+  background: transparent;
+}
+
+/* Ended banner here is two stacked lines (status + "you can close this page"),
+   with no back-home button, so stack them instead of spreading apart. */
+.page-meeting-mobile .ended-banner {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.mobile-meeting {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+/* The speaker is the focal point: it fills and is centred in the space
+   between the header and the bottom actions, so the middle is never empty. */
+.mobile-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+.mobile-stage .speaker-spotlight-root {
+  width: 100%;
+}
+/* A wide band on mobile so the rising-water fill reads clearly. */
+.mobile-meeting .global-timer {
+  width: 100%;
+  min-height: 96px;
+}
+
+/* Read-only chip for the agenda topic currently under discussion. */
+.mobile-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 12px 16px;
-  background: var(--warn);
-  color: #1a1200;
-  text-align: center;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius);
+}
+.mobile-topic-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mobile-topic-label,
+.mobile-topic-time {
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+}
+.mobile-topic-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mobile-topic-time {
+  font-family: var(--mono-font);
+  font-variant-numeric: tabular-nums;
+}
+/* A long, unbroken title must wrap rather than overflow the card. */
+.mobile-topic-name {
   font-weight: 600;
-  z-index: 50;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Both action buttons share the same shape: icon on top, label underneath. */
+.mobile-claim-btn,
+.mobile-hand-btn {
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mobile-claim-btn {
+  min-height: 168px;
+  font-size: 1.45rem;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+.mobile-claim-btn:hover:not([disabled]) {
+  filter: brightness(1.1);
+}
+.mobile-claim-icon {
+  display: inline-flex;
+}
+/* Holding the floor: red, matching the desktop "revoke" control. */
+.mobile-claim-btn[data-active="true"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+/* Past the timebox while holding the floor: same red but pulsing (declared
+   after data-active so it wins when both are set). */
+.mobile-claim-btn[data-over="true"] {
+  animation: claim-over-pulse 1.1s ease-in-out infinite;
+}
+
+.mobile-hand-btn {
+  min-height: 96px;
+  font-size: 1.1rem;
+  background: var(--bg-elev);
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+.mobile-hand-btn[data-raised="true"] {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Short viewports (landscape phones): shrink the touch targets and gaps so the
+   whole view still fits. The page can scroll if it ever overflows anyway. */
+@media (max-height: 540px) {
+  .mobile-meeting {
+    gap: 10px;
+  }
+  .mobile-stage {
+    gap: 8px;
+  }
+  .mobile-claim-btn {
+    min-height: 96px;
+  }
+  .mobile-hand-btn {
+    min-height: 52px;
+  }
 }

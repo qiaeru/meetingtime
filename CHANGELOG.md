@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Participants can now take and release the floor themselves from their phone, so the host no longer has to switch the active speaker by hand (the host keeps manual control). This ships as a dedicated mobile view showing the current speaker, the meeting timer and the topic under discussion, with a large take/release-the-floor button, a raise-hand button, sound and vibration toggles, and a screen that stays awake while the meeting is open.
+
+### Changed
+
+- Joining the same meeting from a second device with identical first name, last name and role now reuses the existing participant instead of creating a duplicate, so speaking time and host status stay on one identity.
+- Load the collaborative notes editor on demand so it is no longer downloaded on the mobile participant view.
+- Update dependencies: Yjs, DOMPurify and Lucide, plus the lint and build dev toolchain.
+
 ## [1.1.1] - 2026-05-27
 
 ### Security

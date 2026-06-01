@@ -98,9 +98,18 @@ function onConnection(io: IO, socket: SK): void {
         }
         const identity = sanitizeIdentity(payload.identity);
         if (!identity) return ack({ ok: false, error: "invalid_identity" });
-        const added = meeting.addParticipant(identity, false);
-        participantId = added.participant.id;
-        token = added.token;
+        // Same person joining from a second device (laptop + phone): reuse the
+        // existing participant instead of cloning them, so speaking time and
+        // host status stay on a single identity.
+        const twin = meeting.participantByIdentity(identity);
+        if (twin) {
+          participantId = twin.id;
+          token = meeting.tokenFor(twin.id)!;
+        } else {
+          const added = meeting.addParticipant(identity, false);
+          participantId = added.participant.id;
+          token = added.token;
+        }
       } else {
         return ack({ ok: false, error: "missing_credentials" });
       }
@@ -117,6 +126,9 @@ function onConnection(io: IO, socket: SK): void {
         broadcastState(io, prev.meeting);
       }
 
+      // A merged second device joins an already-connected participant; don't
+      // re-announce them as a fresh arrival.
+      const wasConnected = Boolean(meeting.state.participants[participantId]?.connected);
       attach(socket, meeting.state.id, participantId, token);
       meeting.setConnected(participantId, true);
       socket.join(roomFor(meeting.state.id));
@@ -127,7 +139,9 @@ function onConnection(io: IO, socket: SK): void {
         token,
         meeting: meeting.publicState(),
       });
-      socket.to(roomFor(meeting.state.id)).emit("participant:joined", { participantId });
+      if (!wasConnected) {
+        socket.to(roomFor(meeting.state.id)).emit("participant:joined", { participantId });
+      }
       broadcastState(io, meeting);
     } catch (e) {
       ack({ ok: false, error: passthroughOrInternal(e) });
@@ -297,6 +311,32 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
+  // Any participant can take the floor for themselves. grantSpeaker already
+  // no-ops outside running/paused, so no phase guard is needed here.
+  socket.on("speaker:claim", (ack) => {
+    const ctx = socket.ctx;
+    if (!ctx) return ack?.({ ok: false, error: "not_joined" });
+    ctx.meeting.grantSpeaker(ctx.participant.id);
+    io.to(roomFor(ctx.meeting.state.id)).emit("speaker:changed", {
+      participantId: ctx.meeting.state.currentSpeakerId ?? null,
+      startedAt: ctx.meeting.state.currentSpeakerStartedAt,
+    });
+    broadcastState(io, ctx.meeting);
+    ack?.({ ok: true });
+  });
+
+  // Releasing only affects the caller's own turn; a participant can never
+  // revoke someone else.
+  socket.on("speaker:release", (ack) => {
+    const ctx = socket.ctx;
+    if (!ctx) return ack?.({ ok: false, error: "not_joined" });
+    if (ctx.meeting.state.currentSpeakerId !== ctx.participant.id) return ack?.({ ok: true });
+    ctx.meeting.revokeSpeaker();
+    io.to(roomFor(ctx.meeting.state.id)).emit("speaker:changed", { participantId: null });
+    broadcastState(io, ctx.meeting);
+    ack?.({ ok: true });
+  });
+
   socket.on("topic:add", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
@@ -359,6 +399,9 @@ function onConnection(io: IO, socket: SK): void {
   socket.on("disconnect", () => {
     const ctx = socket.ctx;
     if (!ctx) return;
+    // Another device of the same participant (laptop + phone) may still be
+    // connected; only mark them gone once their last socket drops.
+    if (hasOtherSocketFor(io, ctx.meeting.state.id, ctx.participant.id, socket.id)) return;
     ctx.meeting.setConnected(ctx.participant.id, false);
     io.to(roomFor(ctx.meeting.state.id)).emit("participant:left", {
       participantId: ctx.participant.id,
@@ -373,6 +416,21 @@ function attach(socket: SK, meetingId: string, participantId: string, token: str
   const participant = meeting.state.participants[participantId];
   if (!participant) return;
   socket.ctx = { meeting, participant, token };
+}
+
+// True if a socket other than `exceptSid` is still attached to this
+// participant in the room (a second device of the same person).
+function hasOtherSocketFor(
+  io: IO,
+  meetingId: string,
+  participantId: string,
+  exceptSid: string
+): boolean {
+  for (const sid of io.of("/").adapter.rooms.get(roomFor(meetingId)) ?? []) {
+    if (sid === exceptSid) continue;
+    if (io.sockets.sockets.get(sid)?.ctx?.participant.id === participantId) return true;
+  }
+  return false;
 }
 
 function disconnectParticipant(io: IO, meetingId: string, participantId: string): void {

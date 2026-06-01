@@ -30,13 +30,15 @@ The repo is a three-workspace npm monorepo. `shared/` holds the TypeScript contr
 
 `meetings/hostFallback.ts` is the safety net that auto-promotes the oldest connected participant when no host remains, so an accidental disconnect of every host does not lock the meeting.
 
-`socket/handlers.ts` wires each Socket.IO event to a `Meeting` method and rebroadcasts the state. `socket/authorize.ts` carries the `requireHost` guard that gates every host-sensitive event on the participant's `isHost` flag. `yjs/ywsBridge.ts` is the minimal y-websocket-compatible bridge that drops doc updates coming from non-hosts so guests cannot tamper with the notes.
+`socket/handlers.ts` wires each Socket.IO event to a `Meeting` method and rebroadcasts the state. `socket/authorize.ts` carries the `requireHost` guard that gates every host-sensitive event on the participant's `isHost` flag. The exceptions are `hand:raise`/`hand:lower` and the participant-driven `speaker:claim`/`speaker:release`: a participant takes or releases the floor for themselves (reusing `grantSpeaker`/`revokeSpeaker`, so the host can still override). Presence is multi-socket aware: a participant connected from two devices stays connected until their last socket drops, and an identity-flow join whose first name, last name and role match an existing participant reuses that participant instead of creating a duplicate (so a laptop plus a phone is one identity, not two). `yjs/ywsBridge.ts` is the minimal y-websocket-compatible bridge that drops doc updates coming from non-hosts so guests cannot tamper with the notes.
 
 `lib/locales.ts` is the canonical server-side list of supported locales plus the `pickLocale(acceptLanguage)` content-negotiation helper used by the manifest route. Any new locale must be added here and in the matching client list at the same time.
 
 ## Client
 
 The client has no UI framework. Components are functions that return a handle of the shape `{ el: HTMLElement; update(): void; tick?(): void; stop?(): void; destroy?(): void }`. `pages/MeetingPage.ts` is canonical: it builds every component once, subscribes to `meeting$` to call `update()` on state changes, and runs a single five-hundred-millisecond ticker that calls `spotlight.update()`, `list.tick()` and `agenda.tick()`. The single ticker means every component reads the same `Date.now()` value, so the spotlight chronometer and the participant-row chronometer cannot drift apart by a second.
+
+Below a 900-pixel viewport, `MeetingPage` hands the participant experience to `components/MobileMeetingView.ts` instead of building the desktop dashboard; the host is expected on a large screen, and the page re-renders if the viewport crosses the breakpoint.
 
 `update()` versus `tick()` is the split that keeps hot paths fast and stable. `update()` rebuilds the full DOM on state change and is therefore destructive (it clobbers focus, hover and in-progress drag). `tick()` only mutates the live numeric fields (chronometer text, progress-bar width). Both `ParticipantList` and `AgendaPanel` use this split so dragging a row no longer flickers every five hundred milliseconds. `SpeakerSpotlight` follows a similar pattern in place: the DOM is built once and the chronometer text and turn-bar width are mutated per tick.
 
@@ -56,7 +58,9 @@ The client has no UI framework. Components are functions that return a handle of
 
 `components/CollaborativeEditor.ts` wraps CodeMirror 6, `y-codemirror.next` and the Yjs `WebsocketProvider`. The theme switches dynamically (light or dark) through a CodeMirror `Compartment`, with no reload needed.
 
-`components/NotesPanel.ts` is the foldable notes side panel. The header carries the title plus the action buttons (preview, split, export). A permanent description points to the Markdown help dialog. Three modes are offered: edit, preview and a horizontal split. Non-hosts get a read-only banner.
+`components/NotesPanel.ts` is the foldable notes side panel. The header carries the title plus the action buttons (preview, split, export). A permanent description points to the Markdown help dialog. Three modes are offered: edit, preview and a horizontal split. Non-hosts get a read-only banner. The meeting page imports it on demand, so the notes editor (CodeMirror, Yjs, Shiki) is never downloaded on the mobile participant view.
+
+`components/MobileMeetingView.ts` is the phone-sized participant view rendered below the breakpoint. It shows the meeting timer, the current speaker and the topic under discussion, with a large take/release-the-floor button, a raise-hand button, and sound and vibration toggles, and it holds a Screen Wake Lock so the phone does not dim mid-meeting. It reuses `SpeakerSpotlight` and `MeetingTimer` and deliberately omits the agenda, participant list and notes editor.
 
 `components/MarkdownPreview.ts` renders Markdown through Marked, with syntax highlighting from a lazy-loaded **Shiki** highlighter (dual themes `github-light` and `github-dark`, fifteen bundled languages). The output is sanitised by DOMPurify with `ADD_ATTR: ["style"]` so Shiki's inline styles are preserved.
 
@@ -75,6 +79,8 @@ The client has no UI framework. Components are functions that return a handle of
 `lib/markdownExport.ts` composes the final `.md` document (header, speaking-time table, agenda, notes body) and triggers a browser download named `YYYYMMDD_Meetingtime_<id>.md`.
 
 `lib/sounds.ts` synthesises sounds through the Web Audio API. No binary audio asset ships.
+
+`lib/haptics.ts` gates optional vibration feedback (taking or releasing the floor, timebox overrun) behind a persisted, user-toggleable preference, and only on devices that expose the Vibration API.
 
 `lib/keyboard.ts` is the central keyboard registry. See `keyboard.md` for the full table and the capture-phase dispatcher trick that makes shortcuts work uniformly inside CodeMirror.
 
