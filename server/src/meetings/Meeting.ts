@@ -99,6 +99,20 @@ export class Meeting {
     return undefined;
   }
 
+  // Lets a single person reconnect from a second device (laptop + phone)
+  // without spawning a duplicate that would split their speaking time. Match
+  // is trim + case-insensitive on the full identity, so "Jean Martin / Hôte"
+  // collapses regardless of casing or stray spaces.
+  participantByIdentity(identity: ParticipantIdentity): Participant | undefined {
+    const norm = (s: string): string => s.trim().toLowerCase();
+    const first = norm(identity.firstName);
+    const last = norm(identity.lastName);
+    const role = norm(identity.role);
+    return Object.values(this.state.participants).find(
+      (p) => norm(p.firstName) === first && norm(p.lastName) === last && norm(p.role) === role
+    );
+  }
+
   addParticipant(identity: ParticipantIdentity, asHost = false): { participant: Participant; token: string } {
     if (Object.keys(this.state.participants).length >= MAX_PARTICIPANTS) {
       throw new Error("participant_cap_reached");

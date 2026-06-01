@@ -45,6 +45,10 @@ export interface ClientToServerEvents {
 
   "speaker:grant": (payload: { participantId: string }, ack?: AckSimple) => void;
   "speaker:revoke": (ack?: AckSimple) => void;
+  // Participant-driven floor: a participant takes the floor for themselves and
+  // releases it. Unlike speaker:grant/revoke these are not host-gated.
+  "speaker:claim": (ack?: AckSimple) => void;
+  "speaker:release": (ack?: AckSimple) => void;
 
   "topic:add": (payload: { label: string }, ack?: AckSimple) => void;
   "topic:remove": (payload: { topicId: string }, ack?: AckSimple) => void;
