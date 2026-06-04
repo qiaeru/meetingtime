@@ -1,6 +1,6 @@
 # Keyboard shortcuts
 
-Meetingtime is designed to be operated without a mouse. Every shortcut uses a modifier (`Alt`, `Ctrl`, or `Ctrl + Shift`) so the same keys work whether or not the host is typing in the notes. The help dialog is reachable from the question-mark button in the header.
+You can operate Meetingtime entirely from the keyboard. Every shortcut uses a modifier (`Alt`, `Ctrl`, or `Ctrl + Shift`) so the same keys work whether or not the host is typing in the notes. The help dialog is reachable from the question-mark button in the header.
 
 ## Meeting (Alt)
 
@@ -43,4 +43,4 @@ The semantic axes are:
 - `Ctrl` for actions on the **participants**.
 - `Ctrl + Shift` mirrors the participant shortcuts but applies to the **topics**.
 
-Browser conflicts are avoided deliberately: no `Ctrl + P`, `Ctrl + T`, `Ctrl + L`, `Ctrl + H`, `Ctrl + N` or `Ctrl + J` is bound, since those are reserved by every major browser for printing, new-tab, address-bar focus, history, new-window and downloads respectively. `Alt + Space` is also avoided because Windows hosts running PowerToys (or just the native window-menu accelerator) intercept it before the browser ever sees the event.
+Meetingtime deliberately avoids browser conflicts: no `Ctrl + P`, `Ctrl + T`, `Ctrl + L`, `Ctrl + H`, `Ctrl + N` or `Ctrl + J` is bound, since those are reserved by every major browser for printing, new-tab, address-bar focus, history, new-window and downloads respectively. `Alt + Space` is also avoided because Windows hosts running PowerToys (or just the native window-menu accelerator) intercept it before the browser ever sees the event.

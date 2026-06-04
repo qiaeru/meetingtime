@@ -1,6 +1,6 @@
 # Deployment
 
-Meetingtime ships as a single Docker image. Everything (API, WebSocket server, Yjs notes bridge, static client bundle) runs in one Node process on one port, so any container host or reverse proxy can serve it without surprises.
+Meetingtime ships as a single Docker image. Everything (API, WebSocket server, Yjs notes bridge, static client bundle) runs in one Node process on one port, so any container host or reverse proxy can serve it.
 
 ## Quick start (local HTTP)
 
@@ -16,7 +16,7 @@ Three variants live under `deploy/`. Pick the one that matches the reverse proxy
 
 | Variant   | Certificate flow                         | When to pick it                                                                     |
 | --------- | ---------------------------------------- | ----------------------------------------------------------------------------------- |
-| `caddy`   | Automatic Let's Encrypt, no extra config | Greenfield deployments where you just want HTTPS to work out of the box.            |
+| `caddy`   | Automatic Let's Encrypt, no extra config | Greenfield deployments where you want HTTPS to work out of the box.            |
 | `nginx`   | `certbot` outside Docker                 | Hosts where you already run nginx and want to keep `certbot` doing the renewals.    |
 | `traefik` | Let's Encrypt via Docker labels          | Stacks that already use Traefik as their reverse proxy and label-based discovery.   |
 

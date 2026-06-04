@@ -20,7 +20,7 @@ Hosts create a meeting in one click, share a short identifier (or a direct join 
 
 ### What it does
 
-- **Speaking-time accountability.** The host grants or revokes the floor in one click, or participants take and release it themselves from their device; the current speaker's chronometer is visible to everyone. An optional per-turn time-box shifts the timer from green to orange to red with discreet audio warnings as the limit approaches, then is exceeded.
+- **Speaking-time accountability.** The host grants or revokes the floor in one click, or participants take and release it themselves from their device; the current speaker's chronometer is visible to everyone. An optional per-turn time-box shifts the timer from green to orange to red with discreet audio warnings as the limit approaches and once it is exceeded.
 - **Live agenda.** Topics get their own chronometer, can be reordered live, and the currently active topic is highlighted across every participant's view.
 - **Raise-hand queue.** Participants signal they want to speak; the host sees a full-width banner with the queue and grants the floor in one click.
 - **Join from a phone.** Participants get a focused mobile view to take the floor, raise their hand and follow the speaker, the meeting timer and the current topic, with the screen kept awake and optional vibration. The host runs the full dashboard on a large screen.
