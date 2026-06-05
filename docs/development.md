@@ -10,14 +10,14 @@ From the repo root, run `npm install`. This walks the three workspaces (`shared`
 
 ## Root scripts
 
-| Command             | Effect                                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `npm run dev`       | Starts the server (`tsx watch`) and the Vite client in parallel. Client on `:5173`, API on `:3000`.          |
-| `npm run build`     | Builds in order `shared` → `client` → `server`. Client output lands in `server/dist/public/`.                |
-| `npm start`         | Runs the built single-process server (serves both the API and the static client bundle).                     |
-| `npm run typecheck` | Runs `tsc -b shared server client` using TypeScript project references.                                      |
-| `npm run lint`      | ESLint flat config (`eslint.config.js`).                                                                     |
-| `npm run format`    | Prettier.                                                                                                    |
+| Command | Effect |
+| --- | --- |
+| `npm run dev` | Starts the server (`tsx watch`) and the Vite client in parallel. Client on `:5173`, API on `:3000`. |
+| `npm run build` | Builds in order `shared` → `client` → `server`. Client output lands in `server/dist/public/`. |
+| `npm start` | Runs the built single-process server (serves both the API and the static client bundle). |
+| `npm run typecheck` | Runs `tsc -b shared server client` using TypeScript project references. |
+| `npm run lint` | ESLint flat config (`eslint.config.js`). |
+| `npm run format` | Prettier. |
 
 ## Workspace boundaries
 

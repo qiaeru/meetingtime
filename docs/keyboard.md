@@ -4,32 +4,32 @@ You can operate Meetingtime entirely from the keyboard. Every shortcut uses a mo
 
 ## Meeting (Alt)
 
-| Shortcut         | Action                                              | Role  |
-| ---------------- | --------------------------------------------------- | ----- |
-| `Alt + Enter`    | Start, resume or pause the meeting                  | Host  |
-| `Alt + ⌫`        | End the meeting (with confirmation)                 | Host  |
-| `Alt + H`        | Raise or lower your hand                            | All   |
-| `Alt + N`        | Collapse or expand the notes panel                  | All   |
+| Shortcut | Action | Role |
+| --- | --- | --- |
+| `Alt + Enter` | Start, resume or pause the meeting | Host |
+| `Alt + ⌫` | End the meeting (with confirmation) | Host |
+| `Alt + H` | Raise or lower your hand | All |
+| `Alt + N` | Collapse or expand the notes panel | All |
 
 ## Participants (Ctrl)
 
-| Shortcut       | Action                                                | Role |
-| -------------- | ----------------------------------------------------- | ---- |
-| `Ctrl + ↑ / ↓` | Navigate the participant list                         | All  |
+| Shortcut | Action | Role |
+| --- | --- | --- |
+| `Ctrl + ↑ / ↓` | Navigate the participant list | All |
 | `Ctrl + Enter` | Grant or revoke the floor for the focused participant | Host |
 
 ## Topics (Ctrl + Shift)
 
-| Shortcut                | Action                                       | Role  |
-| ----------------------- | -------------------------------------------- | ----- |
-| `Ctrl + Shift + ↑ / ↓`  | Navigate the agenda                          | All   |
-| `Ctrl + Shift + Enter`  | Start or stop the focused topic              | Host  |
+| Shortcut | Action | Role |
+| --- | --- | --- |
+| `Ctrl + Shift + ↑ / ↓` | Navigate the agenda | All |
+| `Ctrl + Shift + Enter` | Start or stop the focused topic | Host |
 
 ## Miscellaneous
 
-| Shortcut | Action                          |
-| -------- | ------------------------------- |
-| `Esc`    | Close the currently open dialog |
+| Shortcut | Action |
+| --- | --- |
+| `Esc` | Close the currently open dialog |
 
 ## Implementation notes
 
