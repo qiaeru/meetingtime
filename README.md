@@ -12,7 +12,7 @@ Hosts create a meeting in one click, share a short identifier (or a direct join 
 > **Ephemeral by design.** No database, no telemetry, no external network call at runtime. Meeting state lives in server memory and is wiped a few minutes after the host ends the meeting.
 
 | Home | Live meeting |
-| :--: | :----------: |
+| :--: | :--: |
 | ![Meetingtime home screen](./docs/assets/screenshot1.png) | ![A Meetingtime meeting in progress](./docs/assets/screenshot2.png) |
 | *The home screen with create / join actions and the language picker* | *A meeting in progress with the speaker spotlight, agenda and collaborative notes* |
 

@@ -30,14 +30,14 @@ This is useful to prepare a recurring meeting, share a starting configuration be
 
 ### Fields
 
-| Field                    | Type                  | Required | Description                                                                                                       |
-| ------------------------ | --------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
-| `host`                   | identity object       | No       | Pre-fills the host form if present, otherwise left empty for the user to fill in.                                 |
-| `participants`           | array of identities   | No       | Pre-declared participants. Empty or missing means none.                                                           |
-| `topics`                 | array of strings      | No       | Agenda topics, in the desired order.                                                                              |
-| `timeboxMinutes`         | positive number       | No       | Target duration of one speaking turn, in minutes. Whole minutes only.                                             |
-| `plannedDurationMinutes` | positive number       | No       | Planned total length of the meeting, in minutes. Drives the visual fill of the global timer.                      |
-| `password`               | string                | No       | Password required for new participants to join. Empty or omitted means an open meeting.                           |
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `host` | identity object | No | Pre-fills the host form if present, otherwise left empty for the user to fill in. |
+| `participants` | array of identities | No | Pre-declared participants. Empty or missing means none. |
+| `topics` | array of strings | No | Agenda topics, in the desired order. |
+| `timeboxMinutes` | positive number | No | Target duration of one speaking turn, in minutes. Whole minutes only. |
+| `plannedDurationMinutes` | positive number | No | Planned total length of the meeting, in minutes. Drives the visual fill of the global timer. |
+| `password` | string | No | Password required for new participants to join. Empty or omitted means an open meeting. |
 
 ### Identity structure
 

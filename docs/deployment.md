@@ -14,11 +14,11 @@ The root `docker-compose.yml` exposes the app on `http://localhost:3000`. This i
 
 Three variants live under `deploy/`. Pick the one that matches the reverse proxy you already run, or the one whose certificate management you prefer.
 
-| Variant   | Certificate flow                         | When to pick it                                                                     |
-| --------- | ---------------------------------------- | ----------------------------------------------------------------------------------- |
-| `caddy`   | Automatic Let's Encrypt, no extra config | Greenfield deployments where you want HTTPS to work out of the box.            |
-| `nginx`   | `certbot` outside Docker                 | Hosts where you already run nginx and want to keep `certbot` doing the renewals.    |
-| `traefik` | Let's Encrypt via Docker labels          | Stacks that already use Traefik as their reverse proxy and label-based discovery.   |
+| Variant | Certificate flow | When to pick it |
+| --- | --- | --- |
+| `caddy` | Automatic Let's Encrypt, no extra config | Greenfield deployments where you want HTTPS to work out of the box. |
+| `nginx` | `certbot` outside Docker | Hosts where you already run nginx and want to keep `certbot` doing the renewals. |
+| `traefik` | Let's Encrypt via Docker labels | Stacks that already use Traefik as their reverse proxy and label-based discovery. |
 
 Each subfolder under `deploy/` ships its own `docker-compose.<proxy>.yml`, the proxy config and a `README.md` with the exact commands. The compose files set `TRUST_PROXY=1` so Express honours the `X-Forwarded-*` headers your proxy sets.
 

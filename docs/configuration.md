@@ -4,14 +4,14 @@ All operator-facing knobs are environment variables read by `server/src/config.t
 
 ## Variables
 
-| Variable          | Default   | Description                                                       |
-| ----------------- | --------- | ----------------------------------------------------------------- |
-| `PORT`            | `3000`    | TCP port the Node process listens on.                             |
-| `CORS_ORIGIN`     | `*`       | Allowed origin for Socket.IO. Set explicitly in production.       |
-| `HOST_TIMEOUT_MS` | `1800000` | Idle ms after which an empty meeting is garbage-collected.        |
-| `POST_END_GC_MS`  | `300000`  | Delay ms after `meeting:end` before the meeting is wiped.         |
-| `LOG_LEVEL`       | `info`    | Pino log level. `debug` for Socket.IO traffic, `warn` to silence. |
-| `TRUST_PROXY`     | `0`       | `1` behind a reverse proxy you control (see warning below).       |
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PORT` | `3000` | TCP port the Node process listens on. |
+| `CORS_ORIGIN` | `*` | Allowed origin for Socket.IO. Set explicitly in production. |
+| `HOST_TIMEOUT_MS` | `1800000` | Idle ms after which an empty meeting is garbage-collected. |
+| `POST_END_GC_MS` | `300000` | Delay ms after `meeting:end` before the meeting is wiped. |
+| `LOG_LEVEL` | `info` | Pino log level. `debug` for Socket.IO traffic, `warn` to silence. |
+| `TRUST_PROXY` | `0` | `1` behind a reverse proxy you control (see warning below). |
 
 `CORS_ORIGIN` defaults to `*` for ease of local development. In production, set it to your own origin (typically `https://meetingtime.example.com`) so cross-origin Socket.IO connections are rejected. All deployment variants under `deploy/` set this automatically based on `MEETINGTIME_DOMAIN`.
 
