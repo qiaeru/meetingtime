@@ -46,7 +46,7 @@ The `update()` / `tick()` split keeps hot paths fast and stable. `update()` rebu
 
 `router.ts` is a hash-router with **per-route code splitting** (each page is loaded with a dynamic `import()`) and a monotonic token that ignores stale loads if the user navigates faster than the dynamic import resolves. It also sets `document.body.dataset.route` on every render so CSS can target the current route, which is how the floating background and the home-only gradient are scoped.
 
-`i18n/index.ts` exposes `t(key, params)` with a fallback chain (current locale → French → raw key), `setLocale`, `toggleLocale` and the canonical `SUPPORTED_LOCALES` array used by the picker. Dictionaries live in `client/src/i18n/locales/{fr,en}.json`.
+`i18n/index.ts` exposes `t(key, params)` with a fallback chain (current locale → French → raw key), `setLocale`, `toggleLocale` and the canonical `SUPPORTED_LOCALES` array used by the picker. Dictionaries live in `client/src/i18n/locales/<locale>.json`, one file per supported locale with `fr` as the source of truth (see `i18n.md` for the current list).
 
 `components/Avatar.ts` is the round avatar with initials, a deterministic colour and a status badge (speaking or hand-raised). It carries `role="img"` plus a reconstructed `aria-label` (full name, role, connection or status).
 
@@ -70,7 +70,7 @@ The `update()` / `tick()` split keeps hot paths fast and stable. `update()` rebu
 
 `components/MeetingTimer.ts` is the global meeting chronometer. When a `plannedDurationMs` is set, the card fills from the bottom up in blue, then orange, then red, depending on the ratio of elapsed to planned time. The fill carries a water-like animation produced by two slowly rotating near-circular pseudo-elements; the meeting phase being `ended` freezes the chronometer at `endedAt`.
 
-`components/LocaleSwitcher.ts` is the extensible dropdown picker (FR, EN currently, sorted alphabetically by native name).
+`components/LocaleSwitcher.ts` is the extensible dropdown picker listing every supported locale, sorted alphabetically by native name.
 
 `components/FloatingBackground.ts` is the decorative background of slow-floating icons on the home page. It is mounted **once** directly under `<body>` (not inside `#app`) because the router clears `#app` on every render, which would restart every CSS animation and produce a visible flicker. Visibility is driven by `body[data-route="/"]` set by the router. Each icon receives a random `depth ∈ [0,1]` that derives its size, blur, animation speed and base opacity together, producing a genuine sense of multiple planes rather than visual noise. Cursor proximity repels nearby icons gently.
 
