@@ -18,6 +18,11 @@ COPY client/ ./client/
 
 RUN npm run build
 
+# The runtime stage copies node_modules wholesale, but the build toolchain
+# (TypeScript, ESLint, Vite/Rolldown, tsx) is only needed in this stage.
+# Pruning devDependencies before the copy keeps it out of the final image.
+RUN npm prune --omit=dev
+
 # --- Runtime stage ---------------------------------------------------------
 FROM node:24-alpine AS runtime
 WORKDIR /app
