@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove a departed participant's cursor from the collaborative notes as soon as they disconnect, instead of letting it linger for up to 30 seconds.
+
 ## [1.2.0] - 2026-06-02
 
 ### Added
