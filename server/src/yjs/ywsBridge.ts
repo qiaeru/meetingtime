@@ -72,6 +72,14 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
   awareness.on(
     "update",
     ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => {
+      // Track which awareness clientIDs each connection controls, so cleanup
+      // can remove them the moment the socket closes; otherwise the departed
+      // user's cursor lingers until the 30 s awareness timeout.
+      const controlled = state!.conns.get(origin as WebSocket);
+      if (controlled) {
+        for (const clientID of added) controlled.add(clientID);
+        for (const clientID of removed) controlled.delete(clientID);
+      }
       const changed = added.concat(updated, removed);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_AWARENESS);

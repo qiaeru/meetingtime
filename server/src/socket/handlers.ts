@@ -178,6 +178,8 @@ function onConnection(io: IO, socket: SK): void {
   socket.on("meeting:end", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
+    // Idempotent: a second end would re-stamp endedAt and reschedule the GC.
+    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: true });
     const summary = ctx.meeting.end();
     io.to(roomFor(ctx.meeting.state.id)).emit("meeting:ended", { summary });
     broadcastState(io, ctx.meeting);
@@ -275,6 +277,7 @@ function onConnection(io: IO, socket: SK): void {
   socket.on("hand:raise", (ack) => {
     const ctx = socket.ctx;
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
+    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.raiseHand(ctx.participant.id);
     io.to(roomFor(ctx.meeting.state.id)).emit("hand:raised", { participantId: ctx.participant.id });
     broadcastState(io, ctx.meeting);
@@ -284,6 +287,7 @@ function onConnection(io: IO, socket: SK): void {
   socket.on("hand:lower", (ack) => {
     const ctx = socket.ctx;
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
+    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.lowerHand(ctx.participant.id);
     io.to(roomFor(ctx.meeting.state.id)).emit("hand:lowered", { participantId: ctx.participant.id });
     broadcastState(io, ctx.meeting);

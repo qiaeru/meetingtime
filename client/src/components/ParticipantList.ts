@@ -9,9 +9,11 @@ import { locale$ } from "../i18n/index.js";
 import { colorByPosition } from "../lib/color.js";
 
 // Sort key falls back to joinedAt for legacy meetings written before the
-// `order` field existed.
+// `order` field existed. Exported because colorByPosition is keyed on the
+// sorted index: every consumer (spotlight, notes cursor colour) must sort
+// participants exactly like this list or colours desynchronize.
 const participantSortKey = (p: Participant): number => p.order ?? p.joinedAt;
-const sortedParticipants = (m: Meeting): Participant[] =>
+export const sortedParticipants = (m: Meeting): Participant[] =>
   Object.values(m.participants).sort((a, b) => participantSortKey(a) - participantSortKey(b));
 
 // Module-scoped so it survives the update() rebuild that runs on every
