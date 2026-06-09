@@ -8,7 +8,7 @@ import { renderMobileMeeting } from "../components/MobileMeetingView.js";
 import { renderMeetingTimer } from "../components/MeetingTimer.js";
 import { renderSpeakerSpotlight } from "../components/SpeakerSpotlight.js";
 import { renderHandRaiseBanner } from "../components/HandRaiseBanner.js";
-import { renderParticipantList } from "../components/ParticipantList.js";
+import { renderParticipantList, sortedParticipants } from "../components/ParticipantList.js";
 import { addParticipantDialog } from "../components/AddParticipantDialog.js";
 import { renderAgenda } from "../components/AgendaPanel.js";
 import type { NotesPanelHandle } from "../components/NotesPanel.js";
@@ -365,9 +365,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     const m = getMeeting();
     const myId = getMyId();
     if (!m || !myId || !m.participants[myId]) return null;
-    const sorted = Object.values(m.participants).sort(
-      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
-    );
+    const sorted = sortedParticipants(m);
     const idx = sorted.findIndex((p) => p.id === myId);
     return idx >= 0 ? colorByPosition(idx, sorted.length, m.id) : null;
   };

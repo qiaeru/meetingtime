@@ -1,6 +1,7 @@
 import type { Meeting, Participant } from "@meetingtime/shared";
 import { renderAvatar } from "./Avatar.js";
 import { icon } from "./Icon.js";
+import { sortedParticipants } from "./ParticipantList.js";
 import { colorByPosition } from "../lib/color.js";
 import { formatMs } from "../lib/format.js";
 import { t } from "../i18n/index.js";
@@ -149,9 +150,7 @@ export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: (
 
     // colorByPosition is keyed on the sorted index, so the colour must
     // match whatever ParticipantList renders for the same row.
-    const sorted = Object.values(m.participants).sort(
-      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
-    );
+    const sorted = sortedParticipants(m);
     const idx = sorted.findIndex((p) => p.id === speaker.id);
     const color = colorByPosition(idx, sorted.length, m.id);
 
