@@ -175,7 +175,8 @@ export function renderHostSetup(root: HTMLElement): void {
   plannedInput.min = "0";
   plannedInput.max = "600";
   plannedInput.step = "5";
-  plannedInput.placeholder = "60";
+  // No numeric placeholder: "60" reads as a default, but blank means "no
+  // planned duration" (the hint below spells it out).
   plannedInput.setAttribute("aria-label", t("host.plannedDuration"));
   const plannedHint = document.createElement("p");
   plannedHint.className = "hint";
@@ -193,7 +194,6 @@ export function renderHostSetup(root: HTMLElement): void {
   timeboxInput.min = "0";
   timeboxInput.max = "60";
   timeboxInput.step = "1";
-  timeboxInput.placeholder = "2";
   timeboxInput.setAttribute("aria-label", t("host.timebox"));
   const hint = document.createElement("p");
   hint.className = "hint";
@@ -223,6 +223,7 @@ export function renderHostSetup(root: HTMLElement): void {
     input.placeholder = placeholder;
     input.maxLength = 64;
     input.setAttribute("aria-label", ariaLabel);
+    input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "icon-btn password-toggle";
@@ -346,6 +347,25 @@ export function renderHostSetup(root: HTMLElement): void {
     e.preventDefault();
     const host = hostFields.value();
     if (!host) return;
+    // A row with some but not all fields filled would be silently dropped by
+    // the filter below; that person missing from the meeting is invisible
+    // data loss, so block the submit and point at the gap instead.
+    const partialIdx = preParticipants.findIndex((p) => {
+      const filled = [p.firstName, p.lastName, p.role].filter((v) => v.trim()).length;
+      return filled > 0 && filled < 3;
+    });
+    if (partialIdx >= 0) {
+      toast(t("host.incompleteParticipantRow"), { type: "error" });
+      const rowInputs = preList.children[partialIdx]?.querySelectorAll("input") ?? [];
+      for (const input of rowInputs) {
+        if (!input.value.trim()) {
+          input.setAttribute("aria-invalid", "true");
+          input.focus();
+          break;
+        }
+      }
+      return;
+    }
     const cleanedPre = preParticipants.filter((p) => p.firstName.trim() && p.lastName.trim() && p.role.trim());
     const cleanedTopics = topics.map((t) => t.trim()).filter(Boolean);
     const minutes = parseFloat(timeboxInput.value);
@@ -359,14 +379,19 @@ export function renderHostSetup(root: HTMLElement): void {
     const passwordConfirm = passwordConfirmInput.value.trim();
     if (password && password !== passwordConfirm) {
       toast(t("host.passwordMismatch"), { type: "error" });
+      passwordConfirmInput.setAttribute("aria-invalid", "true");
       passwordConfirmInput.focus();
+      return;
+    }
+    // The socket guard comes first: disabling the button and then bailing
+    // would leave the form stuck on "Creating…" forever.
+    const s = socket$.get();
+    if (!s) {
+      toast(t("errors.connection"), { type: "error" });
       return;
     }
     submit.disabled = true;
     submitLbl.textContent = t("host.creating");
-
-    const s = socket$.get();
-    if (!s) return;
     // Without the ack timeout, a dead socket would leave the button stuck
     // on "Creating…" forever because the ack callback never fires.
     s.timeout(10_000).emit(
@@ -389,7 +414,7 @@ export function renderHostSetup(root: HTMLElement): void {
         if (!resp.ok) {
           submit.disabled = false;
           submitLbl.textContent = t("host.create");
-          toast(t(`errors.${resp.error}`) || resp.error, { type: "error" });
+          toast(t(`errors.${resp.error}`), { type: "error" });
           return;
         }
         meeting$.set(resp.meeting);
@@ -410,14 +435,14 @@ export function renderHostSetup(root: HTMLElement): void {
 
   page.appendChild(wrap);
   root.appendChild(page);
-  hostFields.focusFirst();
+  // No field autofocus: the router focuses <main> after every render (skip
+  // link target), which would clobber it anyway.
 }
 
 interface IdentityFieldsHandle {
   el: HTMLElement;
   value: () => ParticipantIdentity | undefined;
   set: (identity: ParticipantIdentity) => void;
-  focusFirst: () => void;
 }
 
 function identityFields(legendText: string): IdentityFieldsHandle {
@@ -452,7 +477,6 @@ function identityFields(legendText: string): IdentityFieldsHandle {
       last.value = identity.lastName;
       role.value = identity.role;
     },
-    focusFirst: () => first.focus(),
   };
 }
 
@@ -472,7 +496,10 @@ function makeInput(placeholder: string, value: string, onChange: (v: string) => 
   input.placeholder = placeholder;
   input.setAttribute("aria-label", placeholder);
   input.value = value;
-  input.addEventListener("input", () => onChange(input.value));
+  input.addEventListener("input", () => {
+    input.removeAttribute("aria-invalid");
+    onChange(input.value);
+  });
   return input;
 }
 

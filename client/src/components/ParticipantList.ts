@@ -33,7 +33,6 @@ interface RowRefs {
   pctText: HTMLElement;
   fill: HTMLElement;
   timing: HTMLElement;
-  participant: Participant;
 }
 
 interface Args {
@@ -50,11 +49,13 @@ export function renderParticipantList(args: Args): {
   focusedId: () => string | null;
   focusNext: (dir: 1 | -1) => void;
 } {
+  // Plain list semantics: the previous role="listbox"/"option" markup was a
+  // broken composite (options with interactive children, no
+  // aria-activedescendant); the virtual focus is keyboard-driven via the
+  // documented Ctrl+Arrow shortcuts and exposed visually with data-focused.
   const el = document.createElement("ul");
   el.className = "participant-list";
   el.setAttribute("aria-label", t("meeting.participants"));
-  el.setAttribute("role", "listbox");
-  el.tabIndex = 0;
 
   let focused: string | null = null;
   const rowRefs = new Map<string, RowRefs>();
@@ -76,6 +77,11 @@ export function renderParticipantList(args: Args): {
 
   const update = () => {
     const m = args.getMeeting();
+    // The rebuild destroys the focused element; remember which action button
+    // held keyboard focus so it can be re-focused on the fresh DOM (without
+    // this, every chevron press dumps the user back to the top of the page).
+    const active = document.activeElement as HTMLElement | null;
+    const focusKey = active && el.contains(active) ? active.dataset.focusKey : undefined;
     el.innerHTML = "";
     rowRefs.clear();
     if (!m) return;
@@ -135,6 +141,10 @@ export function renderParticipantList(args: Args): {
       focused = null;
       args.onFocusChange?.(null);
     }
+
+    if (focusKey) {
+      el.querySelector<HTMLElement>(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
+    }
   };
 
   const tick = () => {
@@ -149,22 +159,12 @@ export function renderParticipantList(args: Args): {
       refs.fill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
       const desc = `${formatMsSpoken(total, locale$.get())}, ${formatPercent(ratio)}`;
       refs.timing.title = `${t("meeting.totalSpeakingTime")}: ${desc}`;
+      // Keep the spoken description in step with the visible chrono, or a
+      // screen reader inspecting the row reads a stale duration.
+      const p = m.participants[id];
+      if (p) refs.timing.setAttribute("aria-label", `${p.firstName} ${p.lastName}: ${desc}`);
     }
   };
-
-  el.addEventListener("focus", () => {
-    if (!focused) {
-      const m = args.getMeeting();
-      const first = m
-        ? sortedParticipants(m)[0]
-        : undefined;
-      if (first) {
-        focused = first.id;
-        args.onFocusChange?.(focused);
-        update();
-      }
-    }
-  });
 
   return {
     el,
@@ -174,9 +174,9 @@ export function renderParticipantList(args: Args): {
     focusNext: (dir) => {
       const m = args.getMeeting();
       if (!m) return;
-      const ids = Object.values(m.participants)
-        .sort((a, b) => a.joinedAt - b.joinedAt)
-        .map((p) => p.id);
+      // Walk the same order as the rendered rows; sorting by joinedAt here
+      // would make the focus ring jump around after a host reorder.
+      const ids = sortedParticipants(m).map((p) => p.id);
       if (ids.length === 0) return;
       const cur = focused ? ids.indexOf(focused) : -1;
       const next = ids[(cur + dir + ids.length) % ids.length];
@@ -208,7 +208,6 @@ function renderRow(
 ): { el: HTMLElement; refs: RowRefs } {
   const li = document.createElement("li");
   li.className = "participant";
-  li.setAttribute("role", "option");
   li.dataset.id = p.id;
   li.dataset.connected = String(p.connected);
   li.dataset.handRaised = String(p.handRaised);
@@ -225,7 +224,6 @@ function renderRow(
   li.dataset.me = String(p.id === meId);
   if (isFocused) {
     li.dataset.focused = "true";
-    li.setAttribute("aria-selected", "true");
   }
 
   // The <li> is only marked draggable while the user mousedowns on this
@@ -263,12 +261,14 @@ function renderRow(
         socket.emit("speaker:revoke")
       );
       stop.classList.add("danger");
+      stop.dataset.focusKey = `${p.id}:floor`;
       li.appendChild(stop);
     } else {
       const give = iconBtn("Speech", t("meeting.giveFloor"), () =>
         socket.emit("speaker:grant", { participantId: p.id })
       );
       give.classList.add("primary-action");
+      give.dataset.focusKey = `${p.id}:floor`;
       li.appendChild(give);
     }
   }
@@ -289,7 +289,7 @@ function renderRow(
   if (p.id === meId) {
     const meTag = document.createElement("span");
     meTag.className = "tag tag-muted";
-    meTag.textContent = t("meeting.youAreHost").split(" ")[0];
+    meTag.textContent = t("meeting.youTag");
     nameRow.appendChild(meTag);
   }
   if (p.isHost) {
@@ -297,7 +297,7 @@ function renderRow(
     hostTag.className = "tag tag-host";
     hostTag.appendChild(icon("Crown", { size: 11 }));
     const hostLabel = document.createElement("span");
-    hostLabel.textContent = t("meeting.youAreHost").split(" ").pop() ?? "host";
+    hostLabel.textContent = t("meeting.hostTag");
     hostTag.appendChild(hostLabel);
     nameRow.appendChild(hostTag);
   }
@@ -333,23 +333,28 @@ function renderRow(
         socket.emit("host:demote", { participantId: p.id })
       );
       demote.disabled = ended;
+      // promote/demote share one key so focus survives the swap after a click
+      demote.dataset.focusKey = `${p.id}:hostrole`;
       actions.appendChild(demote);
     } else if (!p.isHost) {
       const promote = iconBtn("Crown", t("meeting.promoteHost"), () =>
         socket.emit("host:promote", { participantId: p.id })
       );
       promote.disabled = ended;
+      promote.dataset.focusKey = `${p.id}:hostrole`;
       actions.appendChild(promote);
     }
     const up = iconBtn("ChevronUp", t("meeting.moveUp"), () =>
       socket.emit("participant:reorder", { participantId: p.id, direction: "up" })
     );
     up.disabled = isFirst || ended;
+    up.dataset.focusKey = `${p.id}:up`;
     actions.appendChild(up);
     const down = iconBtn("ChevronDown", t("meeting.moveDown"), () =>
       socket.emit("participant:reorder", { participantId: p.id, direction: "down" })
     );
     down.disabled = isLast || ended;
+    down.dataset.focusKey = `${p.id}:down`;
     actions.appendChild(down);
     const remove = iconBtn("Trash2", t("common.remove"), async () => {
       const ok = await confirmDialog(
@@ -359,6 +364,7 @@ function renderRow(
     });
     remove.classList.add("danger");
     remove.disabled = ended;
+    remove.dataset.focusKey = `${p.id}:remove`;
     actions.appendChild(remove);
   }
 
@@ -412,7 +418,7 @@ function renderRow(
     });
   }
 
-  return { el: li, refs: { timeText, pctText, fill, timing, participant: p } };
+  return { el: li, refs: { timeText, pctText, fill, timing } };
 }
 
 function iconBtn(

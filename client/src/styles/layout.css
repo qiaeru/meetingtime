@@ -285,8 +285,14 @@ body[data-route="/"] .floating-bg {
 
 .inline-row {
   display: flex;
+  /* Identity rows hold three fields (plus action buttons on the create page);
+     without wrapping they get crushed to unusable widths on phones. */
+  flex-wrap: wrap;
   gap: 8px;
   align-items: flex-end;
+}
+.inline-row > .field {
+  min-width: 9ch;
 }
 
 .hint {
@@ -376,7 +382,10 @@ body[data-route="/"] .floating-bg {
 /* ---- Meeting layout ---- */
 
 .page-meeting {
+  /* dvh tracks dynamic browser chrome (tablet toolbars); 100vh is the
+     fallback for engines without dvh support. */
   height: 100vh;
+  height: 100dvh;
   display: grid;
   grid-template-rows: auto 1fr;
 }
@@ -413,7 +422,7 @@ body[data-route="/"] .floating-bg {
   gap: 16px;
   padding: 14px 20px;
   background: var(--warn);
-  color: #1a1200;
+  color: var(--warn-fg);
   border-radius: var(--radius);
   font-weight: 600;
 }
@@ -421,15 +430,27 @@ body[data-route="/"] .floating-bg {
 .hand-banner[hidden] {
   display: none;
 }
+.ended-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ended-banner-hint {
+  font-weight: 400;
+  font-size: 0.85rem;
+}
 .ended-banner .btn-on-accent {
   background: rgba(0, 0, 0, 0.18);
-  color: #1a1200;
+  color: var(--warn-fg);
   border-color: rgba(0, 0, 0, 0.3);
 }
 
 .top-info {
   display: grid;
-  grid-template-columns: 1fr auto;
+  /* minmax(0, …) lets the spotlight shrink below its intrinsic minimum when
+     the notes panel squeezes the left column, instead of clipping. */
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
   gap: var(--gap);
 }
@@ -495,15 +516,6 @@ body[data-route="/"] .floating-bg {
   display: none;
 }
 
-.section-title {
-  font-size: 0.95rem;
-  color: var(--fg-muted);
-  margin: 0;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-
 /* ---- Notes panel ---- */
 
 .notes-panel {
@@ -538,7 +550,8 @@ body[data-route="/"] .floating-bg {
   height: 100%;
   z-index: 2;
   cursor: col-resize;
-  background: transparent;
+  /* Faint idle grip so the affordance is discoverable without hovering. */
+  background: linear-gradient(var(--border-strong), var(--border-strong)) center / 2px 40px no-repeat;
   transition: background 0.15s ease;
 }
 .notes-resizer:hover,
@@ -999,7 +1012,15 @@ body[data-route="/"] .floating-bg {
 .mobile-claim-btn[data-active="true"] {
   background: var(--danger);
   border-color: var(--danger);
-  color: #ffffff;
+  color: var(--danger-fg);
+}
+/* Someone else holds the floor: visibly different from the free state so the
+   tap reads as "take over from them", not "take the free floor". */
+.mobile-claim-btn[data-occupied="true"] {
+  background: var(--bg-elev);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-size: 1.15rem;
 }
 /* Past the timebox while holding the floor: same red but pulsing (declared
    after data-active so it wins when both are set). */

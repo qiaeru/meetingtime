@@ -32,6 +32,9 @@ export function renderLocaleSwitcher(): HTMLElement {
       item.setAttribute("role", "menuitemradio");
       item.setAttribute("aria-checked", String(c === locale$.get()));
       item.dataset.active = String(c === locale$.get());
+      // Each native name is in its own language; the lang attribute makes
+      // screen readers pronounce "Deutsch" in German, not in the page voice.
+      item.lang = c;
       const nameEl = document.createElement("span");
       nameEl.className = "locale-name";
       nameEl.textContent = native;
@@ -56,6 +59,8 @@ export function renderLocaleSwitcher(): HTMLElement {
     btn.setAttribute("aria-expanded", "true");
     document.addEventListener("click", onOutside, true);
     document.addEventListener("keydown", onKey);
+    // role="menu" promises focus-on-open + arrow navigation (see onKey).
+    menu.querySelector<HTMLElement>(".locale-menu-item")?.focus();
   };
   const close = (): void => {
     menu.hidden = true;
@@ -67,7 +72,18 @@ export function renderLocaleSwitcher(): HTMLElement {
     if (!wrap.contains(e.target as Node)) close();
   };
   const onKey = (e: KeyboardEvent): void => {
-    if (e.key === "Escape") close();
+    if (e.key === "Escape") {
+      close();
+      btn.focus();
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const items = Array.from(menu.querySelectorAll<HTMLElement>(".locale-menu-item"));
+    if (items.length === 0) return;
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    const next = (idx + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+    items[next].focus();
   };
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -75,9 +91,17 @@ export function renderLocaleSwitcher(): HTMLElement {
     else close();
   });
 
-  // No teardown: the picker is rebuilt on every page render, the orphan
-  // subscription becomes a no-op once `menu` is detached.
-  locale$.subscribe(() => {
+  // The picker is rebuilt on every page render; self-unsubscribe once this
+  // instance leaves the DOM so orphan subscriptions (and their detached menu)
+  // don't accumulate over the session. subscribe() fires synchronously before
+  // `wrap` is appended, so only later notifications check isConnected.
+  let first = true;
+  const unsub = locale$.subscribe(() => {
+    if (!first && !wrap.isConnected) {
+      unsub();
+      return;
+    }
+    first = false;
     if (!menu.hidden) renderMenu();
   });
 

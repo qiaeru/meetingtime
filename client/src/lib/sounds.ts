@@ -89,3 +89,10 @@ export function playGong(): void {
 export function toggleMute(): void {
   muted$.set(!muted$.get());
 }
+
+// Mobile browsers keep an AudioContext created outside a user gesture
+// suspended; calling this from any tap handler unlocks it so later cues
+// (timebox ticks, gong) actually play.
+export function unlockAudio(): void {
+  audio();
+}

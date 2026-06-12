@@ -32,13 +32,3 @@ export function connect(): MeetingSocket {
   socket$.set(s);
   return s;
 }
-
-export function disconnect(): void {
-  const s = socket$.get();
-  if (s) {
-    s.disconnect();
-    socket$.set(null);
-  }
-  meeting$.set(null);
-  myParticipantId$.set(null);
-}

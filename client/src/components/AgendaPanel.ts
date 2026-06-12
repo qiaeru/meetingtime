@@ -4,6 +4,8 @@ import { icon } from "./Icon.js";
 import { t } from "../i18n/index.js";
 import { formatMs } from "../lib/format.js";
 import { addTopicDialog } from "./AddTopicDialog.js";
+import { confirmDialog } from "./ConfirmDialog.js";
+import { toast } from "./Toaster.js";
 
 // Module-scoped so it survives the update() rebuild on every meeting-state push.
 let topicDragState: { sourceId: string; sourceIdx: number } | null = null;
@@ -63,9 +65,16 @@ export function renderAgenda(args: Args): AgendaHandle {
   addBtn.setAttribute("aria-label", t("host.addTopic"));
   addBtn.title = t("host.addTopic");
   addBtn.appendChild(icon("Plus", { size: 16 }));
+  // The server can refuse the add (topic cap, empty label); without the ack
+  // the dialog would close and nothing would happen, with zero feedback.
+  const emitAdd = (label: string): void => {
+    args.socket.emit("topic:add", { label }, (resp) => {
+      if (!resp.ok) toast(t(`errors.${resp.error}`), { type: "error" });
+    });
+  };
   addBtn.addEventListener("click", async () => {
     const label = await addTopicDialog();
-    if (label) args.socket.emit("topic:add", { label });
+    if (label) emitAdd(label);
   });
   headerActions.appendChild(addBtn);
   header.appendChild(headerActions);
@@ -77,6 +86,10 @@ export function renderAgenda(args: Args): AgendaHandle {
 
   const update = () => {
     const m = args.getMeeting();
+    // Same focus-preservation dance as ParticipantList: the rebuild destroys
+    // the focused row button, so re-focus its successor after the rebuild.
+    const active = document.activeElement as HTMLElement | null;
+    const focusKey = active && list.contains(active) ? active.dataset.focusKey : undefined;
     list.innerHTML = "";
     timeRefs.clear();
     if (!m) return;
@@ -95,7 +108,7 @@ export function renderAgenda(args: Args): AgendaHandle {
         cta.textContent = t("meeting.agendaEmptyCta");
         cta.addEventListener("click", async () => {
           const label = await addTopicDialog();
-          if (label) args.socket.emit("topic:add", { label });
+          if (label) emitAdd(label);
         });
         empty.appendChild(cta);
       } else {
@@ -183,6 +196,7 @@ export function renderAgenda(args: Args): AgendaHandle {
         playBtn.addEventListener("click", () =>
           args.socket.emit("topic:setCurrent", { topicId: isActive ? null : topic.id })
         );
+        playBtn.dataset.focusKey = `${topic.id}:play`;
         li.appendChild(playBtn);
       }
 
@@ -202,22 +216,33 @@ export function renderAgenda(args: Args): AgendaHandle {
           args.socket.emit("topic:reorder", { topicId: topic.id, direction: "up" })
         );
         up.disabled = idx === 0 || ended;
+        up.dataset.focusKey = `${topic.id}:up`;
         li.appendChild(up);
         const down = rowIconBtn("ChevronDown", t("meeting.moveDown"), () =>
           args.socket.emit("topic:reorder", { topicId: topic.id, direction: "down" })
         );
         down.disabled = idx === m.topics.length - 1 || ended;
+        down.dataset.focusKey = `${topic.id}:down`;
         li.appendChild(down);
 
-        const remove = rowIconBtn("Trash2", t("common.remove"), () =>
-          args.socket.emit("topic:remove", { topicId: topic.id })
-        );
+        // Deletion is destructive (the accumulated time goes with the topic)
+        // and the trash sits next to the reorder chevrons, so it confirms,
+        // unlike the freely reversible actions around it.
+        const remove = rowIconBtn("Trash2", t("common.remove"), async () => {
+          const ok = await confirmDialog(t("meeting.deleteTopicConfirm", { label: topic.label }));
+          if (ok) args.socket.emit("topic:remove", { topicId: topic.id });
+        });
         remove.classList.add("danger");
         remove.disabled = ended;
+        remove.dataset.focusKey = `${topic.id}:remove`;
         li.appendChild(remove);
       }
       list.appendChild(li);
     });
+
+    if (focusKey) {
+      list.querySelector<HTMLElement>(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
+    }
   };
 
   const tick = () => {

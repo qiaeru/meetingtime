@@ -57,12 +57,24 @@ export function renderThemeToggle(): HTMLButtonElement {
   btn.className = "icon-btn";
   btn.setAttribute("aria-label", t("a11y.themeToggle"));
   btn.title = t("a11y.themeToggle");
-  const update = () => {
+  // Self-unsubscribe once the button leaves the DOM (the router rebuilds the
+  // header on every render); a persistent subscription per render would
+  // accumulate listeners and retain detached buttons for the whole session.
+  // subscribe() fires synchronously before the button is appended, so the
+  // isConnected check must only apply to later notifications.
+  let first = true;
+  const unsub = theme$.subscribe(() => {
+    if (!first && !btn.isConnected) {
+      unsub();
+      return;
+    }
+    first = false;
     btn.innerHTML = "";
     btn.appendChild(icon(theme$.get() === "dark" ? "Sun" : "Moon"));
-  };
-  const unsub = theme$.subscribe(update);
+    // Exposes the current state (dark on/off) to assistive tech; the icon
+    // swap alone is aria-hidden.
+    btn.setAttribute("aria-pressed", String(theme$.get() === "dark"));
+  });
   btn.addEventListener("click", toggleTheme);
-  btn.addEventListener("DOMNodeRemoved", () => unsub(), { once: true });
   return btn;
 }
