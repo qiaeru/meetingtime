@@ -10,8 +10,8 @@ import { colorByPosition } from "../lib/color.js";
 
 // Sort key falls back to joinedAt for legacy meetings written before the
 // `order` field existed. Exported because colorByPosition is keyed on the
-// sorted index: every consumer (spotlight, notes cursor colour) must sort
-// participants exactly like this list or colours desynchronize.
+// sorted index: every consumer (spotlight, notes cursor color) must sort
+// participants exactly like this list or colors desynchronize.
 const participantSortKey = (p: Participant): number => p.order ?? p.joinedAt;
 export const sortedParticipants = (m: Meeting): Participant[] =>
   Object.values(m.participants).sort((a, b) => participantSortKey(a) - participantSortKey(b));
@@ -188,7 +188,7 @@ export function renderParticipantList(args: Args): {
 }
 
 // Stripe-orientation gives a second visual channel on top of hue, so
-// colour-blind viewers can still tell two close fills apart.
+// color-blind viewers can still tell two close fills apart.
 const FILL_PATTERN_ANGLES = [20, 70, 110, 160, 45, 135];
 
 function renderRow(
@@ -240,7 +240,7 @@ function renderRow(
 
   // Width = this participant's share of the cumulative speaking time. The
   // stripe orientation rotates per row to double the hue channel for
-  // colour-blind viewers (see FILL_PATTERN_ANGLES).
+  // color-blind viewers (see FILL_PATTERN_ANGLES).
   const fill = document.createElement("span");
   fill.className = "participant-fill";
   fill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;

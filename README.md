@@ -59,7 +59,7 @@ Three ready-to-use Compose variants live in [`deploy/`](./deploy/):
 - [Security](./docs/security.md)
 - [Accessibility](./docs/accessibility.md)
 - [Keyboard shortcuts](./docs/keyboard.md)
-- [Internationalisation](./docs/i18n.md)
+- [Internationalization](./docs/i18n.md)
 - [Meeting templates (JSON)](./docs/meeting_import.md)
 - [Development](./docs/development.md)
 - [Contributing](./CONTRIBUTING.md)
@@ -67,7 +67,7 @@ Three ready-to-use Compose variants live in [`deploy/`](./deploy/):
 
 ## Credits
 
-Third-party libraries and their licences are listed in [CREDITS.md](./CREDITS.md).
+Third-party libraries and their licenses are listed in [CREDITS.md](./CREDITS.md).
 
 ## License
 

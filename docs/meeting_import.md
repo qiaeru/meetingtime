@@ -1,6 +1,6 @@
 # Meeting templates (JSON)
 
-The create page (`/host`) lets the host work with reusable JSON templates. The drop zone at the top of the form **imports** a template (either by clicking it to open the file dialog, or by dragging a `.json` file straight onto it; the zone highlights when a file is dragged over). The **Export as template** button next to **Create meeting** does the reverse: it saves whatever is currently typed in the form into a `.json` file named `YYYYMMDD_Meetingtime_Template.json` that can be re-imported later.
+The create page (`/host`) lets the host work with reusable JSON templates. The drop zone at the top of the form imports a template (either by clicking it to open the file dialog, or by dragging a `.json` file straight onto it; the zone highlights when a file is dragged over). The **Export as template** button next to **Create meeting** does the reverse: it saves whatever is currently typed in the form into a `.json` file named `YYYYMMDD_Meetingtime_Template.json` that can be re-imported later.
 
 This is useful to prepare a recurring meeting, share a starting configuration between hosts, or archive a draft before clicking Create.
 
@@ -49,11 +49,11 @@ The three fields are mandatory when the object is present.
 
 ### Validation
 
-Any whitespace-only text field is rejected. Numeric fields must be non-negative. On error, a toast surfaces a "Invalid file: `<reason>`" message; on success, a "Import done" toast fires and every form field is populated.
+Any whitespace-only text field is rejected. Numeric fields must be non-negative. On error, a toast shows "Invalid file: `<reason>`"; on success, a "Template imported" toast confirms the import and every form field is populated.
 
-### Export behaviour
+### Export behavior
 
-Empty or unset fields are **omitted** from the output (no `null` keys). The order of participants and topics is preserved. The file is downloaded by the browser; nothing is uploaded to the server.
+Empty or unset fields are omitted from the output (no `null` keys). The order of participants and topics is preserved. The file is downloaded by the browser; nothing is uploaded to the server.
 
 ### Minimal example
 

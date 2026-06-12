@@ -1,6 +1,6 @@
 # Code of Conduct
 
-This project adopts version 2.1 of the **Contributor Covenant**, an industry-standard code of conduct for open-source projects.
+This project adopts version 2.1 of the Contributor Covenant, an industry-standard code of conduct for open-source projects.
 
 The full text is available at <https://www.contributor-covenant.org/version/2/1/code_of_conduct/>.
 

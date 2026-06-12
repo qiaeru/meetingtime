@@ -44,7 +44,7 @@
   "host.import": "Import a template",
   "host.importHint": "Pre-fills the fields from an existing template.",
   "host.importError": "Invalid file: {reason}",
-  "host.importSuccess": "Import done.",
+  "host.importSuccess": "Template imported.",
   "host.exportTemplate": "Export as template",
   "host.exportTemplateSuccess": "Template exported.",
 

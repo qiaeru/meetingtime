@@ -156,7 +156,7 @@ export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: (
     setIdleVisible(false);
     card.dataset.state = "speaking";
 
-    // colorByPosition is keyed on the sorted index, so the colour must
+    // colorByPosition is keyed on the sorted index, so the color must
     // match whatever ParticipantList renders for the same row.
     const sorted = sortedParticipants(m);
     const idx = sorted.findIndex((p) => p.id === speaker.id);

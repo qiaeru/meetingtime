@@ -445,8 +445,8 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     refreshInviteHint();
     if (!m) return;
 
-    // Push the same colour the participant list uses for me into Yjs
-    // awareness, so my remote cursor matches my row colour for everyone else.
+    // Push the same color the participant list uses for me into Yjs
+    // awareness, so my remote cursor matches my row color for everyone else.
     const color = myColor();
     if (notes && color && color !== lastNotesColor) {
       notes.setUserColor(color);

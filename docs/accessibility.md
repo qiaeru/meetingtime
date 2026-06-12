@@ -1,6 +1,6 @@
 # Accessibility
 
-The target is **WCAG 2.2 level AA**.
+The target is WCAG 2.2 level AA.
 
 ## Concrete commitments
 
@@ -16,9 +16,9 @@ The target is **WCAG 2.2 level AA**.
 
 **Hit targets** for primary actions are at least 44 by 44 pixels (`.btn { min-height: 44px }`); header icon buttons are 40 by 40; secondary in-list actions are 32 by 32 (acceptable for dense lists where the primary action is already large).
 
-**Motion** respects `prefers-reduced-motion: reduce`: the hand-icon pulse, the phase-pill pulse, the `turn-over-pulse` on the spotlight's small chronometer and progress bar, the toast in and out, the dialog entrance animations, the global timer water animation, the floating-background icons and **all global CSS transitions** are disabled in that mode.
+**Motion** respects `prefers-reduced-motion: reduce`: the hand-icon pulse, the phase-pill pulse, the `turn-over-pulse` on the spotlight's small chronometer and progress bar, the toast in and out, the dialog entrance animations, the global timer water animation, the floating-background icons and all global CSS transitions are disabled in that mode.
 
-**No information is conveyed by colour alone.** A participant's share of the speaking time is rendered both by a deterministic hue and by the orientation of a stripe pattern whose angle varies by index (20, 70, 110, 160, 45, 135 degrees) so two close hues remain distinguishable for colour-blind viewers. The "speaker granted" state is marked by a Speech badge on the avatar, a ring around the avatar and a proportional fill bar. The time-box is doubled by a border colour, by the green-to-orange-to-red transition of the secondary progress bar, by a discreet pulse on the small chronometer and its bar when the limit is exceeded, and by audible ticks at 10, 5, 3, 2 and 1 seconds.
+**No information is conveyed by color alone.** A participant's share of the speaking time is rendered both by a deterministic hue and by the orientation of a stripe pattern whose angle varies by index (20, 70, 110, 160, 45, 135 degrees) so two close hues remain distinguishable for color-blind viewers. The "speaker granted" state is marked by a Speech badge on the avatar, a ring around the avatar and a proportional fill bar. The time-box is doubled by a border color, by the green-to-orange-to-red transition of the secondary progress bar, by a discreet pulse on the small chronometer and its bar when the limit is exceeded, and by audible ticks at 10, 5, 3, 2 and 1 seconds.
 
 ## Verification
 
@@ -26,4 +26,4 @@ Lighthouse Accessibility scores at least 95 on the home page and the meeting pag
 
 ## Known limits
 
-CodeMirror 6 itself is highly accessible, but **remote collaborator cursors are not announced** verbally. This is a generic limitation of collaborative editors and is not specific to Meetingtime. The application targets **desktop** for running a meeting: below the 900px breakpoint, participants get a deliberately stripped-down view (current speaker, meeting timer, take/release-the-floor and raise-hand). Hosting from a phone is out of scope by design; the host is expected on a large screen (see `architecture.md`).
+CodeMirror 6 itself is highly accessible, but remote collaborator cursors are not announced verbally. This is a generic limitation of collaborative editors and is not specific to Meetingtime. The application targets desktop for running a meeting: below the 900px breakpoint, participants get a deliberately stripped-down view (current speaker, meeting timer, take/release-the-floor and raise-hand). Hosting from a phone is out of scope by design; the host is expected on a large screen (see `architecture.md`).

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Polish UI strings in all five languages: French non-breaking spaces before punctuation, consistent imperative mood on the Italian floor buttons, corrected German grammar on the take-over label, and a clearer "Template imported." confirmation everywhere.
+
+### Fixed
+
+- Screen readers now hear the avatar label as "name, role, status" with spoken pauses, as documented, instead of a dash-separated string.
+
 ## [1.3.0] - 2026-06-12
 
 ### Added

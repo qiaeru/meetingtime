@@ -44,7 +44,7 @@
   "host.import": "Importar una plantilla",
   "host.importHint": "Rellena los campos a partir de una plantilla existente.",
   "host.importError": "Archivo no válido: {reason}",
-  "host.importSuccess": "Importación realizada.",
+  "host.importSuccess": "Plantilla importada.",
   "host.exportTemplate": "Exportar como plantilla",
   "host.exportTemplateSuccess": "Plantilla exportada.",
 

@@ -35,7 +35,7 @@ export function renderAvatar(args: Args): HTMLElement {
   if (args.badge === "speaking") parts.push(t("meeting.currentSpeaker"));
   else if (args.badge === "hand") parts.push(t("meeting.raiseHand"));
   wrap.setAttribute("role", "img");
-  wrap.setAttribute("aria-label", parts.join(" — "));
+  wrap.setAttribute("aria-label", parts.join(", "));
 
   const inner = document.createElement("span");
   inner.className = "avatar-inner";

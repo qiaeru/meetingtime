@@ -809,7 +809,7 @@ body[data-route="/"] .floating-bg {
 
 /* Task lists (`- [ ]` / `- [x]`). Marked emits a disabled checkbox inside the
    <li>; DOMPurify keeps it. The default browser look is misaligned with the
-   text baseline and uses native colours that clash with the theme. */
+   text baseline and uses native colors that clash with the theme. */
 .notes-preview li:has(> input[type="checkbox"]) {
   list-style: none;
   margin-left: -1.5em;

@@ -8,7 +8,7 @@ export function colorFromId(id: string): string {
 }
 
 // Per-position hue spaced evenly around the wheel, salted by meeting id so
-// the same position in two different meetings doesn't yield the same colour.
+// the same position in two different meetings doesn't yield the same color.
 export function colorByPosition(idx: number, total: number, salt = ""): string {
   if (total <= 0) total = 1;
   let off = 0;
@@ -16,7 +16,7 @@ export function colorByPosition(idx: number, total: number, salt = ""): string {
   const baseHue = (off % 360) + (idx * 360) / total;
   const hue = ((baseHue % 360) + 360) % 360;
   // Alternate saturation/lightness slightly per index for extra distinction
-  // when participant count is high. White initials sit on this colour, so
+  // when participant count is high. White initials sit on this color, so
   // the high-luminance band (yellow through cyan) gets a darker base to keep
   // them legible.
   const sat = 65 + ((idx % 2) * 10);

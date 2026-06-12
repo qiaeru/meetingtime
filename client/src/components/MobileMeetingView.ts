@@ -102,7 +102,7 @@ export function renderMobileMeeting(
   endedBanner.append(endedText, endedHint);
   wrap.appendChild(endedBanner);
 
-  // The stage centres the current speaker and the current topic in the space
+  // The stage centers the current speaker and the current topic in the space
   // between the top meeting timer and the bottom actions.
   const stage = document.createElement("div");
   stage.className = "mobile-stage";
@@ -124,7 +124,7 @@ export function renderMobileMeeting(
   topicName.className = "mobile-topic-name";
   topicEl.append(topicHead, topicName);
 
-  // Overall meeting timer pinned to the top, above the centred stage.
+  // Overall meeting timer pinned to the top, above the centered stage.
   const meetingTimer = renderMeetingTimer(getMeeting);
   wrap.appendChild(meetingTimer.el);
 
@@ -246,7 +246,7 @@ export function renderMobileMeeting(
     claimBtn.dataset.occupied = String(floorActive && Boolean(occupiedBy));
     claimIconSlot.replaceChildren(icon(iAmSpeaker ? "Square" : "Speech", { size: 36 }));
     // Spell out why the button is inert before the meeting starts or once it
-    // has ended, instead of just greying it out. When a colleague holds the
+    // has ended, instead of just graying it out. When a colleague holds the
     // floor, the label says the tap takes over from them, not that the floor
     // is free.
     let claimText: string;
@@ -263,7 +263,7 @@ export function renderMobileMeeting(
     }
     claimLabel.textContent = claimText;
     claimBtn.setAttribute("aria-label", claimText);
-    // A dropped connection silently queues emits, so grey the actions out
+    // A dropped connection silently queues emits, so gray the actions out
     // rather than letting a tap look like it worked.
     claimBtn.disabled = !floorActive || !connected;
 

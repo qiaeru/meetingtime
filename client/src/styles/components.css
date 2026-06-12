@@ -412,7 +412,7 @@ textarea:focus-visible {
   --water-bg: color-mix(in srgb, var(--water) 28%, transparent);
 }
 /* Two big near-circular pseudo elements painted with the card background
-   colour. Only the lower curved edge intrudes into the water, and that
+   color. Only the lower curved edge intrudes into the water, and that
    boundary is what reads as the wave. The shapes are oversized (400% wide)
    so the visible curve is gentle. */
 .global-timer-fill::before,
