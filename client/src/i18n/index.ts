@@ -25,17 +25,17 @@ export const SUPPORTED_LOCALES: ReadonlyArray<{ code: Locale; native: string; fl
   .slice()
   .sort((a, b) => a.native.localeCompare(b.native));
 
-const KNOWN_LOCALES = new Set<Locale>(["fr", "en", "es", "it", "de"]);
+const LOCALE_CODES: readonly Locale[] = SUPPORTED_LOCALES.map((l) => l.code);
 const STORAGE_KEY = "mt:locale";
 
 const initial: Locale = (() => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
-    if (saved && KNOWN_LOCALES.has(saved)) return saved;
+    if (saved && LOCALE_CODES.includes(saved)) return saved;
   } catch {
     /* ignore */
   }
-  return detectLocale();
+  return detectLocale(LOCALE_CODES);
 })();
 
 export const locale$ = new Observable<Locale>(initial);

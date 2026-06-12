@@ -1,7 +1,7 @@
 import { t } from "../i18n/index.js";
 import { installDialogA11y } from "../lib/dialogA11y.js";
 
-export function confirmDialog(message: string): Promise<boolean> {
+export function confirmDialog(message: string, opts: { okLabel?: string } = {}): Promise<boolean> {
   return new Promise((resolve) => {
     const backdrop = document.createElement("div");
     backdrop.className = "dialog-backdrop";
@@ -26,7 +26,7 @@ export function confirmDialog(message: string): Promise<boolean> {
     const ok = document.createElement("button");
     ok.type = "button";
     ok.className = "btn btn-primary";
-    ok.textContent = t("common.confirm");
+    ok.textContent = opts.okLabel ?? t("common.confirm");
 
     actions.append(cancel, ok);
     dlg.appendChild(actions);
@@ -40,17 +40,21 @@ export function confirmDialog(message: string): Promise<boolean> {
       document.removeEventListener("keydown", onEnter);
       resolve(value);
     };
-    // Enter confirms; Escape (cancel) is handled by the shared helper.
+    // Enter confirms; Escape (cancel) is handled by the shared helper. When
+    // the Cancel button has focus (keyboard user tabbed to it), Enter must
+    // activate Cancel, not confirm over it.
     const onEnter = (e: KeyboardEvent): void => {
       if (e.key === "Enter") {
         e.preventDefault();
-        close(true);
+        close(document.activeElement !== cancel);
       }
     };
     document.addEventListener("keydown", onEnter);
 
     cancel.addEventListener("click", () => close(false));
     ok.addEventListener("click", () => close(true));
-    teardown = installDialogA11y(backdrop, dlg, () => close(false), { initialFocus: ok });
+    // Cancel takes the initial focus: every caller guards a destructive or
+    // irreversible action, so a reflexive Enter must be the safe choice.
+    teardown = installDialogA11y(backdrop, dlg, () => close(false), { initialFocus: cancel });
   });
 }

@@ -9,6 +9,10 @@ import { playTimeboxWarn, playTimeboxTick, playTimeboxNearLimit } from "../lib/s
 
 interface Args {
   getMeeting: () => Meeting | null;
+  // When provided and false, the 10..1 s countdown cues are skipped (the
+  // at-limit warning still plays). The mobile view scopes them to the
+  // current speaker's own device so a room of phones doesn't beep in chorus.
+  countdownSounds?: () => boolean;
 }
 
 // DOM is built once and only text + bar width mutate on tick. A separate
@@ -128,12 +132,16 @@ export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: (
     }
 
     if (!m.currentSpeakerId) {
+      // In the lobby "nobody is speaking" reads like a stalled meeting; tell
+      // early joiners they are waiting for the host to press Start instead.
+      const idleMsg = m.phase === "lobby" ? t("meeting.floorWaiting") : t("meeting.noSpeaker");
+      idleText.textContent = idleMsg;
       setIdleVisible(true);
       card.dataset.state = "idle";
       card.dataset.zone = "idle";
       warnedForId = undefined;
       if (lastSpeakerId !== null) {
-        live.textContent = t("meeting.noSpeaker");
+        live.textContent = idleMsg;
       }
       lastSpeakerId = null;
       setLimitVisible(false);
@@ -188,9 +196,10 @@ export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: (
       card.dataset.zone = ratio < 0.7 ? "ok" : ratio < 1 ? "warn" : "over";
       updateOutlineRatio(ratio);
       turnTimer.textContent = `${formatMs(baseElapsed)} / ${formatMs(timeboxMs)}`;
+      const countdown = args.countdownSounds?.() ?? true;
       if (ratio >= 0.8 && ratio < 1 && nearLimitForId !== m.currentSpeakerId) {
         nearLimitForId = m.currentSpeakerId;
-        playTimeboxNearLimit();
+        if (countdown) playTimeboxNearLimit();
       }
       if (ratio >= 1 && warnedForId !== m.currentSpeakerId) {
         warnedForId = m.currentSpeakerId;
@@ -198,6 +207,7 @@ export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: (
       }
       const remaining = Math.ceil((timeboxMs - baseElapsed) / 1000);
       if (
+        countdown &&
         remaining > 0 &&
         remaining < lastTickRemaining &&
         TICK_AT_SECONDS.has(remaining)

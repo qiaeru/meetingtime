@@ -10,8 +10,11 @@ const COLLAPSE_KEY = "mt:notes:collapsed";
 const WIDTH_KEY = "mt:notes:width";
 const MIN_WIDTH = 320;
 // Cap relative to the viewport so the panel can never swallow the meeting
-// column whole, with a hard ceiling for very wide monitors.
-const maxWidth = (): number => Math.min(820, Math.round(window.innerWidth * 0.7));
+// column whole, with a hard ceiling for very wide monitors and a guaranteed
+// 380px for the left column (just above the JS mobile breakpoint, 70% of the
+// window would otherwise crush the spotlight below its intrinsic minimum).
+const maxWidth = (): number =>
+  Math.min(820, Math.round(window.innerWidth * 0.7), window.innerWidth - 380);
 const clampWidth = (w: number): number => Math.max(MIN_WIDTH, Math.min(maxWidth(), w));
 
 interface Args {
@@ -68,6 +71,7 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
   handle.className = "notes-handle icon-btn";
   handle.setAttribute("aria-label", t("a11y.notesPanelToggle"));
   handle.title = t("a11y.notesPanelToggle");
+  handle.setAttribute("aria-expanded", String(!collapsed));
   handle.appendChild(icon("ChevronRight"));
   handle.addEventListener("click", () => toggleCollapsed());
 
@@ -156,15 +160,23 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
   resizer.tabIndex = 0;
 
   const currentWidth = (): number => aside.getBoundingClientRect().width;
+  // Value semantics give screen readers position feedback while resizing.
+  const refreshResizerValue = (w: number): void => {
+    resizer.setAttribute("aria-valuemin", String(MIN_WIDTH));
+    resizer.setAttribute("aria-valuemax", String(maxWidth()));
+    resizer.setAttribute("aria-valuenow", String(Math.round(w)));
+  };
   const applyWidth = (w: number): void => {
     const clamped = clampWidth(w);
     aside.style.setProperty("--notes-width", `${clamped}px`);
+    refreshResizerValue(clamped);
     try {
       localStorage.setItem(WIDTH_KEY, String(clamped));
     } catch {
       /* ignore */
     }
   };
+  refreshResizerValue(parseInt(aside.style.getPropertyValue("--notes-width"), 10) || 480);
 
   let dragStartX = 0;
   let dragStartWidth = 0;
@@ -223,7 +235,16 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     if (!previewVisible()) return;
     renderMarkdownInto(previewMount, editor.ytext.toString());
   };
-  editor.ytext.observe(refreshPreview);
+  // Each remote keystroke lands as one Yjs transaction; re-parsing the whole
+  // document (Marked + Shiki + DOMPurify) at typing speed would thrash, so
+  // the observer-driven refresh trails by 200 ms.
+  let previewTimer = 0;
+  const schedulePreview = () => {
+    if (!previewVisible()) return;
+    window.clearTimeout(previewTimer);
+    previewTimer = window.setTimeout(refreshPreview, 200);
+  };
+  editor.ytext.observe(schedulePreview);
 
   const refreshViewState = () => {
     editorMount.hidden = !editorVisible();
@@ -257,6 +278,7 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     const next = aside.dataset.collapsed === "true" ? false : true;
     if (next) aside.dataset.collapsed = "true";
     else delete aside.dataset.collapsed;
+    handle.setAttribute("aria-expanded", String(!next));
     try {
       localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
     } catch {
@@ -289,6 +311,9 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
       refreshDescription(ro);
     },
     setUserColor: (color: string) => editor.setUserColor(color),
-    destroy: () => editor.destroy(),
+    destroy: () => {
+      window.clearTimeout(previewTimer);
+      editor.destroy();
+    },
   };
 }

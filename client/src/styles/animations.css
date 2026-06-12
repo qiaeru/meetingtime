@@ -3,37 +3,12 @@
   50% { transform: scale(1.18); opacity: 0.85; }
 }
 
-@keyframes speaker-pulse {
-  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--over) 40%, transparent); }
-  to   { box-shadow: 0 0 0 8px color-mix(in srgb, var(--over) 0%, transparent); }
-}
-
 /* Scoped pulse for the spotlight's small turn-chrono + its progress bar fill
    when the limit is exceeded. Replaces the previous full-card flash so the
    feedback is visible but not visually aggressive. */
 @keyframes turn-over-pulse {
   from { opacity: 1; }
   to   { opacity: 0.55; }
-}
-
-/* Stronger glow + background tint when the current speaker is past their
-   timebox, so a host watching from across the room spots the overshoot. */
-@keyframes spotlight-pulse-over {
-  0% {
-    box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--over) 55%, transparent),
-      inset 0 0 0 0 color-mix(in srgb, var(--over) 0%, transparent);
-    background-color: var(--bg-elev);
-  }
-  50% {
-    background-color: color-mix(in srgb, var(--over) 10%, var(--bg-elev));
-  }
-  100% {
-    box-shadow:
-      0 0 0 14px color-mix(in srgb, var(--over) 0%, transparent),
-      inset 0 0 0 2px color-mix(in srgb, var(--over) 35%, transparent);
-    background-color: var(--bg-elev);
-  }
 }
 
 /* 3 s fading halo on the row that just finished speaking, so the host can
@@ -84,7 +59,6 @@
   /* Kill recurring / attention-grabbing animations that would otherwise loop
      continuously (speaker pulse, phase-pill pulse, hand icon, etc.). */
   .hand-icon-pulse,
-  .speaker-timer[data-zone="over"],
   .speaker-spotlight[data-zone="over"] .spotlight-turn-timer,
   .speaker-spotlight[data-zone="over"] .spotlight-turn-bar-fill,
   .mobile-claim-btn[data-over="true"],
@@ -92,6 +66,8 @@
   .phase-pill[data-phase="running"]::before,
   .toast,
   .toast--leaving,
+  .dialog-backdrop,
+  .dialog,
   .floating-icon {
     animation: none !important;
   }

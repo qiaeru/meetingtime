@@ -21,7 +21,7 @@ From the repo root, run `npm install`. This walks the three workspaces (`shared`
 
 ## Workspace boundaries
 
-`shared/` ships the wire-level TypeScript contracts (models, Socket.IO event signatures, permissions). It has no runtime dependencies and can be imported from either Node or the browser. `server/` is the Express 5 backend plus the Socket.IO and Yjs servers; it builds to `server/dist/`. `client/` is the Vite 8 + vanilla TypeScript frontend; it builds to `server/dist/public/` so the server can serve it as static assets in production.
+`shared/` ships the wire-level TypeScript contracts (models, Socket.IO event signatures). It has no runtime dependencies and can be imported from either Node or the browser. `server/` is the Express 5 backend plus the Socket.IO and Yjs servers; it builds to `server/dist/`. `client/` is the Vite 8 + vanilla TypeScript frontend; it builds to `server/dist/public/` so the server can serve it as static assets in production.
 
 ## Conventions
 

@@ -5,9 +5,6 @@ interface ToastOpts {
   type?: ToastType;
 }
 
-let counter = 0;
-const queue = new Map<number, HTMLElement>();
-
 function root(): HTMLElement {
   let r = document.getElementById("toast-root");
   if (!r) {
@@ -23,8 +20,7 @@ export function mountToaster(): void {
   root();
 }
 
-export function toast(message: string, opts: ToastOpts = {}): number {
-  const id = ++counter;
+export function toast(message: string, opts: ToastOpts = {}): void {
   const timeoutMs = opts.durationMs ?? 4000;
   const type: ToastType = opts.type ?? "info";
   const el = document.createElement("div");
@@ -33,13 +29,8 @@ export function toast(message: string, opts: ToastOpts = {}): number {
   el.setAttribute("role", type === "error" ? "alert" : "status");
   el.textContent = message;
   root().appendChild(el);
-  queue.set(id, el);
   setTimeout(() => {
     el.classList.add("toast--leaving");
-    setTimeout(() => {
-      el.remove();
-      queue.delete(id);
-    }, 300);
+    setTimeout(() => el.remove(), 300);
   }, timeoutMs);
-  return id;
 }

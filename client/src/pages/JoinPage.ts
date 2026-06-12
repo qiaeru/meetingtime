@@ -29,9 +29,19 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   idInput.required = true;
   idInput.maxLength = 20;
   idInput.autocomplete = "off";
-  idInput.value = (params.get("id") ?? "").toUpperCase();
+  // Forgiving entry: strip spaces/punctuation from pasted IDs and insert the
+  // dash automatically, so "MRX7 92AB" or "mrx792ab" still match the
+  // XXXX-XXXX format instead of round-tripping to "meeting not found".
+  const normalizeId = (raw: string): string => {
+    const chars = raw
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 8);
+    return chars.length > 4 ? `${chars.slice(0, 4)}-${chars.slice(4)}` : chars;
+  };
+  idInput.value = normalizeId(params.get("id") ?? "");
   idInput.addEventListener("input", () => {
-    idInput.value = idInput.value.toUpperCase();
+    idInput.value = normalizeId(idInput.value);
     refreshResume();
   });
   idLabel.append(idSpan, idInput);
@@ -54,6 +64,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   passwordInput.type = "password";
   passwordInput.autocomplete = "current-password";
   passwordInput.maxLength = 64;
+  passwordInput.addEventListener("input", () => passwordInput.removeAttribute("aria-invalid"));
   passwordLabel.append(passwordSpan, passwordInput);
   const passwordHint = document.createElement("p");
   passwordHint.className = "hint";
@@ -95,14 +106,20 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
       return;
     }
     const s = socket$.get();
-    if (!s) return;
+    if (!s) {
+      toast(t("errors.connection"), { type: "error" });
+      return;
+    }
+    // Disabled until the ack so an impatient double-tap doesn't fire twice.
+    resumeBtn.disabled = true;
     s.timeout(10_000).emit("meeting:join", { meetingId: id, token: sess.token }, (timeoutErr, resp) => {
+      resumeBtn.disabled = false;
       if (timeoutErr) {
         toast(t("errors.connection"), { type: "error" });
         return;
       }
       if (!resp.ok) {
-        toast(t(`errors.${resp.error}`) || resp.error, { type: "error" });
+        toast(t(`errors.${resp.error}`), { type: "error" });
         // Stale session: clean it so the banner stops showing.
         if (resp.error === "invalid_token" || resp.error === "meeting_not_found") {
           clearSession(id);
@@ -132,10 +149,15 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
     const id = idInput.value.trim();
     const identity = fields.value();
     if (!id || !identity) return;
+    // The socket guard comes first: disabling the button and then bailing
+    // would leave the form stuck on "Joining…" forever.
+    const s = socket$.get();
+    if (!s) {
+      toast(t("errors.connection"), { type: "error" });
+      return;
+    }
     submit.disabled = true;
     submitLabel.textContent = " " + t("join.joining");
-    const s = socket$.get();
-    if (!s) return;
     const password = passwordInput.value.trim() || undefined;
     // 10 s ack timeout: see HostSetupPage for the rationale.
     s.timeout(10_000).emit("meeting:join", { meetingId: id, identity, password }, (timeoutErr, resp) => {
@@ -146,8 +168,11 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
         return;
       }
       if (!resp.ok) {
-        toast(t(`errors.${resp.error}`) || resp.error, { type: "error" });
-        if (resp.error === "invalid_password") passwordInput.focus();
+        toast(t(`errors.${resp.error}`), { type: "error" });
+        if (resp.error === "invalid_password") {
+          passwordInput.setAttribute("aria-invalid", "true");
+          passwordInput.focus();
+        }
         return;
       }
       meeting$.set(resp.meeting);
@@ -163,7 +188,8 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   wrap.appendChild(form);
   page.appendChild(wrap);
   root.appendChild(page);
-  (idInput.value ? fields.firstInput : idInput).focus();
+  // No field autofocus: the router focuses <main> after every render (skip
+  // link target), which would clobber it anyway.
 }
 
 function identityFields(): { el: HTMLElement; value: () => { firstName: string; lastName: string; role: string } | undefined; firstInput: HTMLInputElement } {

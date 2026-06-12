@@ -40,7 +40,7 @@
 
 .btn-danger {
   background: var(--danger);
-  color: #ffffff;
+  color: var(--danger-fg);
   border-color: var(--danger);
 }
 .btn-danger:hover:not([disabled]) {
@@ -49,16 +49,11 @@
 
 .btn-success {
   background: var(--success);
-  color: #ffffff;
+  color: var(--success-fg);
   border-color: var(--success);
 }
 .btn-success:hover:not([disabled]) {
   filter: brightness(0.92);
-}
-
-.big-btn {
-  font-size: 1rem;
-  padding: 12px 20px;
 }
 
 .btn-compact {
@@ -292,6 +287,9 @@ textarea:focus-visible {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  /* Names are capped at 60+60 chars with no space guarantee; without this a
+     long unbroken name overflows the spotlight card. */
+  overflow-wrap: anywhere;
 }
 .spotlight-role {
   font-size: 0.85rem;
@@ -309,18 +307,6 @@ textarea:focus-visible {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.04em;
 }
-.spotlight-action {
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--border-strong);
-  font-weight: 600;
-}
-.spotlight-action:hover {
-  background: var(--bg-muted);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 /* ---- Tags ---- */
 
 .tag {
@@ -340,7 +326,8 @@ textarea:focus-visible {
 }
 .tag-host {
   background: color-mix(in srgb, var(--warn) 20%, transparent);
-  color: var(--warn);
+  /* Pulled towards --fg so the 11px text clears 4.5:1 on the warm tint. */
+  color: color-mix(in srgb, var(--warn) 72%, var(--fg));
 }
 
 /* ---- Phase pill ---- */
@@ -368,14 +355,14 @@ textarea:focus-visible {
 }
 .phase-pill[data-phase="running"] {
   background: color-mix(in srgb, var(--success) 18%, transparent);
-  color: var(--success);
+  color: color-mix(in srgb, var(--success) 72%, var(--fg));
 }
 .phase-pill[data-phase="running"]::before {
   animation: pulse 1.6s infinite;
 }
 .phase-pill[data-phase="paused"] {
   background: color-mix(in srgb, var(--warn) 18%, transparent);
-  color: var(--warn);
+  color: color-mix(in srgb, var(--warn) 72%, var(--fg));
 }
 .phase-pill[data-phase="ended"] {
   background: color-mix(in srgb, var(--danger) 18%, transparent);
@@ -496,39 +483,6 @@ textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-.speaker-timer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 14px 22px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  text-align: center;
-  border-left: 6px solid var(--border);
-}
-.speaker-timer[data-zone="ok"] {
-  border-left-color: var(--success);
-}
-.speaker-timer[data-zone="warn"] {
-  border-left-color: var(--warn);
-}
-.speaker-timer[data-zone="over"] {
-  border-left-color: var(--over);
-  animation: speaker-pulse 1s infinite alternate;
-}
-.speaker-name {
-  font-size: 1rem;
-  color: var(--fg-muted);
-}
-.speaker-value {
-  font-family: var(--mono-font);
-  font-size: 2.2rem;
-  font-weight: 700;
-}
-
 /* ---- Connection banner ---- */
 
 .connection-banner {
@@ -563,6 +517,11 @@ textarea:focus-visible {
   border: 1px solid var(--accent);
   box-shadow: var(--shadow);
 }
+/* The banner background IS the accent color, so the global accent focus ring
+   (reset.css) would be invisible here; flip it to the readable foreground. */
+.hand-banner :focus-visible {
+  outline-color: var(--accent-fg);
+}
 .hand-banner-left {
   display: flex;
   align-items: center;
@@ -572,14 +531,6 @@ textarea:focus-visible {
 .hand-banner-message {
   font-weight: 600;
   font-size: 1.05rem;
-}
-.hand-banner-more {
-  background: rgba(255, 255, 255, 0.25);
-  color: inherit;
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-weight: 700;
-  font-size: 0.85rem;
 }
 .hand-banner-queue {
   display: flex;
@@ -872,12 +823,6 @@ textarea:focus-visible {
   color: var(--warn);
 }
 
-.list-header-action[data-raised="true"] {
-  background: var(--accent);
-  color: var(--accent-fg);
-  border-color: var(--accent);
-}
-
 /* ---- Agenda ---- */
 
 .agenda {
@@ -924,8 +869,10 @@ textarea:focus-visible {
 }
 .agenda-item .row-action {
   flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
+  /* 32px floor: the trash button is destructive and sits right next to the
+     reorder chevrons, so it must not be a sub-32px slip target. */
+  width: 32px;
+  height: 32px;
 }
 .agenda-item[data-current="true"] {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
@@ -955,14 +902,6 @@ textarea:focus-visible {
 }
 .agenda-empty-cta:hover {
   filter: brightness(1.1);
-}
-
-/* ---- Controls bar ---- */
-
-.controls-bar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
 }
 
 /* ---- Dialogs ---- */
@@ -998,6 +937,10 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* The backdrop centers the dialog, so an overflowing one (keyboard help on
+     a short viewport) would clip unreachably on both ends without this. */
+  max-height: calc(100vh - 32px);
+  overflow: auto;
   animation: dialog-pop-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -1074,7 +1017,8 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 8px;
   z-index: 200;
-  max-width: 360px;
+  /* Never wider than the viewport minus the side margins (320px phones). */
+  max-width: min(360px, calc(100vw - 32px));
 }
 
 .toast {

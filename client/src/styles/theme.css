@@ -22,9 +22,12 @@
   --accent: #2563eb;
   --accent-fg: #ffffff;
   --danger: #b91c1c;
+  --danger-fg: #ffffff;
   --danger-bg: #fde7e7;
   --success: #15803d;
+  --success-fg: #ffffff;
   --warn: #b45309;
+  --warn-fg: #ffffff;
   --over: #b91c1c;
   --shadow: 0 4px 20px rgba(20, 24, 43, 0.06);
   --scroll-thumb: rgba(20, 24, 43, 0.22);
@@ -42,10 +45,15 @@
   --border-strong: #3d4565;
   --accent: #60a5fa;
   --accent-fg: #0a1020;
+  /* Dark accents are light tints, so their readable foreground is dark, not
+     white (white on #f87171 is 2.8:1, far below the 4.5:1 AA floor). */
   --danger: #f87171;
+  --danger-fg: #2a0a0a;
   --danger-bg: #3a1a1a;
   --success: #4ade80;
+  --success-fg: #06210f;
   --warn: #fbbf24;
+  --warn-fg: #1a1200;
   --over: #f87171;
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   --scroll-thumb: rgba(255, 255, 255, 0.18);

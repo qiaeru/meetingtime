@@ -78,6 +78,9 @@ export function mountFloatingBackground(count = 22): void {
     let mx = -9999;
     let my = -9999;
     const onMove = (e: MouseEvent) => {
+      // The background is only visible on the home route; skipping early
+      // avoids 22 getBoundingClientRect calls per frame on the meeting page.
+      if (document.body.dataset.route !== "/") return;
       mx = e.clientX;
       my = e.clientY;
       if (!rafId) rafId = requestAnimationFrame(apply);

@@ -60,12 +60,17 @@ export function installDialogA11y(
   return () => {
     document.removeEventListener("keydown", onKey);
     backdrop.removeEventListener("click", onBackdrop);
-    if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+    // The opener may have been destroyed by a state-driven rebuild while the
+    // dialog was open (confirming "remove participant" rebuilds the list);
+    // focusing a detached node is a silent no-op, so fall back to the page.
+    if (previouslyFocused?.isConnected) {
       try {
         previouslyFocused.focus({ preventScroll: true });
       } catch {
         /* element may have been removed from the DOM */
       }
+    } else {
+      document.getElementById("main-content")?.focus({ preventScroll: true });
     }
   };
 }

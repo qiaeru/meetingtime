@@ -10,8 +10,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./events": "./dist/events.js",
-    "./models": "./dist/models.js",
-    "./permissions": "./dist/permissions.js"
+    "./models": "./dist/models.js"
   },
   "scripts": {
     "build": "tsc -b",

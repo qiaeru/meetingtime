@@ -38,7 +38,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   if (!meeting$.get() || meeting$.get()?.id !== meetingId) {
     const sess = loadSession(meetingId);
     if (sess) {
-      socket.emit("meeting:join", { meetingId, token: sess.token }, (resp) => {
+      // Without the timeout, a server that never acks (restart, dropped
+      // frame) would leave the loader below spinning forever.
+      socket.timeout(10_000).emit("meeting:join", { meetingId, token: sess.token }, (err, resp) => {
+        if (err) {
+          toast(t("errors.connection"), { type: "error" });
+          navigate("/join", { id: meetingId });
+          return;
+        }
         if (resp.ok) {
           meeting$.set(resp.meeting);
           myParticipantId$.set(resp.participantId);
@@ -50,7 +57,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
             clearSession(meetingId);
             savePassword(meetingId, undefined);
           }
-          toast(t(`errors.${resp.error}`) || resp.error, { type: "error" });
+          toast(t(`errors.${resp.error}`), { type: "error" });
           navigate("/join", { id: meetingId });
         }
       });
@@ -101,6 +108,9 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const refreshMute = () => {
     muteBtn.innerHTML = "";
     muteBtn.appendChild(icon(muted$.get() ? "VolumeX" : "Volume2"));
+    // The icon is aria-hidden; without this a screen reader cannot tell
+    // whether sounds are currently muted.
+    muteBtn.setAttribute("aria-pressed", String(muted$.get()));
   };
   const unsubMute = muted$.subscribe(refreshMute);
   muteBtn.addEventListener("click", toggleMute);
@@ -144,6 +154,12 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const headerControls = document.createElement("div");
   headerControls.className = "header-controls";
   const refreshHeaderControls = () => {
+    // Same focus dance as the lists: the rebuild on every state push would
+    // otherwise drop keyboard focus the instant Start/Pause is pressed.
+    // Start and Pause share one key so focus follows the phase swap.
+    const active = document.activeElement as HTMLElement | null;
+    const focusKey =
+      active && headerControls.contains(active) ? active.dataset.focusKey : undefined;
     headerControls.innerHTML = "";
     const m = getMeeting();
     if (!m || !amIHost()) return;
@@ -154,12 +170,15 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       "btn-success",
       () => socket.emit(phase === "paused" ? "meeting:resume" : "meeting:start")
     );
+    start.dataset.focusKey = "phase";
     const pause = headerBtn("Pause", t("meeting.pause"), "btn-secondary", () =>
       socket.emit("meeting:pause")
     );
+    pause.dataset.focusKey = "phase";
     const end = headerBtn("Square", t("meeting.end"), "btn-danger", async () => {
       if (await confirmDialog(t("meeting.endConfirm"))) socket.emit("meeting:end");
     });
+    end.dataset.focusKey = "end";
     if (phase === "ended") {
       start.disabled = true;
       end.disabled = true;
@@ -170,6 +189,9 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       headerControls.append(pause, end);
     } else if (phase === "paused") {
       headerControls.append(start, end);
+    }
+    if (focusKey) {
+      headerControls.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`)?.focus();
     }
   };
   header.querySelector(".header-actions")?.before(headerControls);
@@ -204,8 +226,16 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   endedBanner.className = "ended-banner";
   endedBanner.hidden = true;
   endedBanner.setAttribute("role", "status");
+  const endedTextWrap = document.createElement("div");
+  endedTextWrap.className = "ended-banner-text";
   const endedText = document.createElement("span");
   endedText.textContent = t("meeting.ended");
+  // The server wipes the meeting (and its notes) POST_END_GC_MS after the
+  // end; without this line nothing tells the user the export is on a timer.
+  const endedHint = document.createElement("span");
+  endedHint.className = "ended-banner-hint";
+  endedHint.textContent = t("meeting.endedGcHint");
+  endedTextWrap.append(endedText, endedHint);
   const endedBtn = document.createElement("button");
   endedBtn.type = "button";
   endedBtn.className = "btn btn-on-accent";
@@ -220,7 +250,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     savePassword(meetingId, undefined);
     navigate("/");
   });
-  endedBanner.append(endedText, endedBtn);
+  endedBanner.append(endedTextWrap, endedBtn);
   left.appendChild(endedBanner);
 
   const meetingTimer = renderMeetingTimer(getMeeting);
@@ -361,6 +391,24 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   // phones render the lightweight MobileMeetingView above and never download
   // this chunk.
   let notes: NotesPanelHandle | null = null;
+  // The page can be torn down (navigation, breakpoint rerender) before the
+  // dynamic import below resolves; without this flag the late callback would
+  // mount an editor whose Yjs WebSocket nothing ever closes.
+  let tornDown = false;
+
+  // Offered once, either on the ended transition or, if the meeting was
+  // already over when the notes chunk finished loading, from the import
+  // callback (otherwise that race would silently skip the prompt).
+  let exportPrompted = false;
+  const promptNotesExport = (): void => {
+    if (exportPrompted || !notes?.hasContent()) return;
+    exportPrompted = true;
+    void confirmDialog(t("meeting.exportNotesPrompt"), { okLabel: t("notes.export") }).then(
+      (ok) => {
+        if (ok) notes?.exportNow();
+      }
+    );
+  };
   const myColor = (): string | null => {
     const m = getMeeting();
     const myId = getMyId();
@@ -370,6 +418,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     return idx >= 0 ? colorByPosition(idx, sorted.length, m.id) : null;
   };
   void import("../components/NotesPanel.js").then(({ renderNotesPanel }) => {
+    if (tornDown) return;
     notes = renderNotesPanel({ getMeeting, meetingId, participantId, displayName, token, readOnly: !amIHost() });
     grid.appendChild(notes.el);
     const color = myColor();
@@ -377,6 +426,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       notes.setUserColor(color);
       lastNotesColor = color;
     }
+    if (getMeeting()?.phase === "ended") promptNotesExport();
   });
 
   page.appendChild(grid);
@@ -407,26 +457,22 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     for (const p of Object.values(m.participants)) if (p.handRaised) currentRaised.add(p.id);
     for (const id of currentRaised) {
       if (!prevHandRaised.has(id) && amIHost() && id !== getMyId()) {
+        // Sound only: the hand banner is an aria-live region carrying the
+        // same name, so a toast would announce the request twice.
         playHandRaise();
-        const p = m.participants[id];
-        if (p) toast(t("meeting.handRaisedBy", { name: `${p.firstName} ${p.lastName}` }));
       }
     }
     prevHandRaised = currentRaised;
 
     // Fire end-of-meeting feedback once, on the transition into "ended".
+    // No toast: the ended banner is a live region announcing the same thing.
     if (m.phase === "ended" && prevPhase !== null && prevPhase !== "ended") {
-      toast(t("meeting.ended"));
       playGong();
       // Wipe the password immediately; the token stays in localStorage for
       // a few more navigations (so the "Home" button still resolves) and is
       // cleared when the user actually leaves via the ended-banner CTA.
       savePassword(m.id, undefined);
-      if (notes?.hasContent()) {
-        void confirmDialog(t("meeting.exportNotesPrompt")).then((ok) => {
-          if (ok) notes?.exportNow();
-        });
-      }
+      promptNotesExport();
     }
     prevPhase = m.phase;
   });
@@ -541,11 +587,16 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const openAddParticipantDialog = (): void => {
     addParticipantDialog().then((identity) => {
       if (!identity) return;
-      socket.emit("participant:add", { identity });
+      // The server can refuse (participant cap, invalid identity); without
+      // the ack the dialog closes and the failure is invisible.
+      socket.emit("participant:add", { identity }, (resp) => {
+        if (!resp.ok) toast(t(`errors.${resp.error}`), { type: "error" });
+      });
     });
   };
 
   return () => {
+    tornDown = true;
     mql.removeEventListener("change", onBreakpoint);
     meetingTimer.stop();
     spotlight.stop();

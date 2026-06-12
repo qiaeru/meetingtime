@@ -16,16 +16,22 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
   el.setAttribute("aria-atomic", "true");
   el.hidden = true;
 
+  // The element is an aria-live region updated on every meeting:state push;
+  // rebuilding it when the raised-hands queue did not change would make
+  // screen readers re-announce it on every unrelated state change (and would
+  // destroy the Grant button mid-click).
+  let lastKey = "";
   const update = () => {
     const m = args.getMeeting();
+    const raised = m
+      ? Object.values(m.participants)
+          .filter((p) => p.handRaised)
+          .sort((a, b) => (a.handRaisedAt ?? 0) - (b.handRaisedAt ?? 0))
+      : [];
+    const key = raised.map((p) => p.id).join(",") + (args.isHost() ? "|host" : "");
+    if (key === lastKey) return;
+    lastKey = key;
     el.innerHTML = "";
-    if (!m) {
-      el.hidden = true;
-      return;
-    }
-    const raised = Object.values(m.participants)
-      .filter((p) => p.handRaised)
-      .sort((a, b) => (a.handRaisedAt ?? 0) - (b.handRaisedAt ?? 0));
     if (raised.length === 0) {
       el.hidden = true;
       return;
@@ -89,8 +95,8 @@ function renderQueueChip(p: Participant, args: Args): HTMLLIElement {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "hand-banner-chip hand-banner-chip-button";
-    btn.setAttribute("aria-label", `${t("meeting.giveFloor")} — ${fullName}`);
-    btn.title = `${t("meeting.giveFloor")} — ${fullName}`;
+    btn.setAttribute("aria-label", `${t("meeting.giveFloor")}: ${fullName}`);
+    btn.title = `${t("meeting.giveFloor")}: ${fullName}`;
     btn.textContent = fullName;
     btn.addEventListener("click", () =>
       args.socket.emit("speaker:grant", { participantId: p.id })

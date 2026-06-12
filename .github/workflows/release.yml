@@ -36,6 +36,11 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+          # GitHub Actions layer cache: the arm64 leg runs under QEMU, so
+          # reusing the npm-install layers between releases saves the
+          # slowest part of the build.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ${{ steps.meta.outputs.image }}:${{ github.ref_name }}
             ${{ steps.meta.outputs.image }}:latest

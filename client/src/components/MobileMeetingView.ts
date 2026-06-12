@@ -8,7 +8,7 @@ import { renderLocaleSwitcher } from "./LocaleSwitcher.js";
 import { renderThemeToggle } from "./ThemeToggle.js";
 import { icon } from "./Icon.js";
 import { formatMs } from "../lib/format.js";
-import { muted$, toggleMute } from "../lib/sounds.js";
+import { muted$, toggleMute, playGong, playGrant, unlockAudio } from "../lib/sounds.js";
 import { vibrationEnabled$, toggleVibration, vibrate, hapticsSupported } from "../lib/haptics.js";
 import { t } from "../i18n/index.js";
 
@@ -47,6 +47,7 @@ export function renderMobileMeeting(
   muteBtn.title = t("a11y.muteToggle");
   const refreshMute = (): void => {
     muteBtn.replaceChildren(icon(muted$.get() ? "VolumeX" : "Volume2"));
+    muteBtn.setAttribute("aria-pressed", String(muted$.get()));
   };
   const unsubMute = muted$.subscribe(refreshMute);
   muteBtn.addEventListener("click", toggleMute);
@@ -61,6 +62,7 @@ export function renderMobileMeeting(
     vibrationBtn.title = t("a11y.vibrationToggle");
     const refreshVibration = (): void => {
       vibrationBtn.replaceChildren(icon(vibrationEnabled$.get() ? "Vibrate" : "VibrateOff"));
+      vibrationBtn.setAttribute("aria-pressed", String(vibrationEnabled$.get()));
     };
     unsubVibration = vibrationEnabled$.subscribe(refreshVibration);
     vibrationBtn.addEventListener("click", toggleVibration);
@@ -126,7 +128,12 @@ export function renderMobileMeeting(
   const meetingTimer = renderMeetingTimer(getMeeting);
   wrap.appendChild(meetingTimer.el);
 
-  const spotlight = renderSpeakerSpotlight({ getMeeting });
+  // Countdown cues only on the current speaker's own phone: with a room full
+  // of phones, everyone beeping the last 10 seconds of every turn is noise.
+  const spotlight = renderSpeakerSpotlight({
+    getMeeting,
+    countdownSounds: () => getMeeting()?.currentSpeakerId === getMyId(),
+  });
   stage.append(spotlight.el, topicEl);
   wrap.appendChild(stage);
 
@@ -166,6 +173,9 @@ export function renderMobileMeeting(
   const claimLabel = document.createElement("span");
   claimBtn.append(claimIconSlot, claimLabel);
   claimBtn.addEventListener("click", () => {
+    // First tap doubles as the audio-unlock gesture, so later cues (timebox
+    // ticks, gong) are not silently dropped by the mobile autoplay policy.
+    unlockAudio();
     const m = getMeeting();
     const id = getMyId();
     if (!m || !id) return;
@@ -181,6 +191,7 @@ export function renderMobileMeeting(
   const handLabel = document.createElement("span");
   handBtn.append(handIcon, handLabel);
   handBtn.addEventListener("click", () => {
+    unlockAudio();
     const m = getMeeting();
     const id = getMyId();
     if (!m || !id) return;
@@ -195,6 +206,11 @@ export function renderMobileMeeting(
   page.appendChild(wrap);
   root.appendChild(page);
 
+  // Declared before refresh(): the first refresh() runs before the wake-lock
+  // block below and must be able to release an already-ended meeting's lock.
+  let wakeLock: WakeLockSentinel | null = null;
+  let wasSpeaker = false;
+
   const refresh = (): void => {
     const m = getMeeting();
     const id = getMyId();
@@ -202,22 +218,44 @@ export function renderMobileMeeting(
     const ended = phase === "ended";
     endedBanner.hidden = !ended;
     // Once the meeting ends there is nothing more to do on this page, so drop
-    // the stored token and password (the desktop "Home" button did this).
+    // the stored token and password (the desktop "Home" button did this),
+    // give the same gong + buzz feedback as the desktop view, and let the
+    // screen dim again (the banner says the page can be closed).
     if (ended && !cleanedUp) {
       cleanedUp = true;
       clearSession(meetingId);
       savePassword(meetingId, undefined);
+      playGong();
+      vibrate([100, 50, 100]);
+      void wakeLock?.release();
+      wakeLock = null;
     }
 
     const floorActive = phase === "running" || phase === "paused";
     const iAmSpeaker = Boolean(id && m?.currentSpeakerId === id);
+    // Audible + haptic cue when the host hands me the floor: without it a
+    // phone participant only notices by staring at the screen.
+    if (iAmSpeaker && !wasSpeaker && !ended) {
+      playGrant();
+      vibrate(60);
+    }
+    wasSpeaker = iAmSpeaker;
+    const occupiedBy =
+      !iAmSpeaker && m?.currentSpeakerId ? m.participants[m.currentSpeakerId] : undefined;
     claimBtn.dataset.active = String(iAmSpeaker);
+    claimBtn.dataset.occupied = String(floorActive && Boolean(occupiedBy));
     claimIconSlot.replaceChildren(icon(iAmSpeaker ? "Square" : "Speech", { size: 36 }));
     // Spell out why the button is inert before the meeting starts or once it
-    // has ended, instead of just greying it out.
+    // has ended, instead of just greying it out. When a colleague holds the
+    // floor, the label says the tap takes over from them, not that the floor
+    // is free.
     let claimText: string;
     if (floorActive) {
-      claimText = iAmSpeaker ? t("meeting.releaseFloor") : t("meeting.takeFloor");
+      claimText = iAmSpeaker
+        ? t("meeting.releaseFloor")
+        : occupiedBy
+          ? t("meeting.takeOverFloor", { name: `${occupiedBy.firstName} ${occupiedBy.lastName}` })
+          : t("meeting.takeFloor");
     } else if (ended) {
       claimText = t("meeting.ended");
     } else {
@@ -299,11 +337,11 @@ export function renderMobileMeeting(
 
   // Keep the phone awake while the meeting is on screen: a timer you glance at
   // shouldn't dim out. The lock is dropped when the tab is hidden, so re-acquire
-  // when it becomes visible again. Silently a no-op on browsers without the API
-  // or outside a secure context.
-  let wakeLock: WakeLockSentinel | null = null;
+  // when it becomes visible again (but not once the meeting has ended).
+  // Silently a no-op on browsers without the API or outside a secure context.
   const requestWakeLock = async (): Promise<void> => {
     if (!("wakeLock" in navigator) || wakeLock) return;
+    if (getMeeting()?.phase === "ended") return;
     try {
       wakeLock = await navigator.wakeLock.request("screen");
       wakeLock.addEventListener("release", () => {
