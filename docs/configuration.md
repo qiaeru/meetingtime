@@ -1,6 +1,6 @@
 # Configuration
 
-All operator-facing knobs are environment variables read by `server/src/config.ts` at boot. There is no `.env` file shipped; pass the variables through your container runtime (the Docker Compose files in `docker-compose.yml` and under `deploy/` show the canonical layout).
+All operator-facing knobs are environment variables read at boot by `server/src/config.ts` (except `LOG_LEVEL`, read by `server/src/log.ts`). There is no `.env` file shipped; pass the variables through your container runtime (the Docker Compose files in `docker-compose.yml` and under `deploy/` show the canonical layout).
 
 ## Variables
 

@@ -6,13 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- The meeting ID field cleans up whatever you paste or type (spaces stripped, dash inserted automatically), so "mrx7 92ab" finds the meeting instead of failing.
+- Deleting an agenda topic now asks for confirmation, since the time recorded on it is lost with it.
+- On a phone, the big button reads "Take the floor from {name}" with a distinct style when a colleague is speaking, so a tap no longer silently interrupts them.
+- Phones play the gong and vibrate when the meeting ends, and chime and vibrate when the host hands you the floor.
+- The end-of-meeting banner warns that the meeting and its notes will be deleted from the server within minutes, so nobody postpones the export and loses the notes.
+- Server-side refusals that used to fail silently now surface: adding a participant or topic past the caps shows the error, and an incomplete participant row on the create form blocks submission with an explanation instead of silently dropping that person.
+
 ### Fixed
 
-- Remove a departed participant's cursor from the collaborative notes as soon as they disconnect, instead of letting it linger for up to 30 seconds.
+- Pause time is no longer charged to the current speaker and topic when the meeting ends (or the speaker changes) without resuming first; exported speaking times are now exact.
+- A brief network outage that disconnects everyone at once can no longer delete a meeting older than the idle timeout: presence now counts as activity for the garbage collector.
+- Browsers set to Spanish, Italian or German are now served in their language instead of falling back to English.
+- Contrast: the Start/End buttons and the mobile take-the-floor button no longer pair white text with light backgrounds in dark theme, and the end-of-meeting banner is readable in light theme.
+- Keyboard: focus survives the interface refreshes (reorder chevrons, Start/Pause), global shortcuts no longer fire behind an open dialog, and the Alt/Cmd combos now behave correctly on macOS.
+- Confirmation dialogs focus Cancel by default and Enter activates the focused button, so a reflexive Enter no longer ends the meeting or removes a participant.
+- Early joiners now see "the meeting has not started" instead of "nobody is speaking" while waiting in the lobby.
+- Narrow screens: identity fields wrap instead of being crushed, dialogs scroll instead of clipping, toasts fit small phones.
+- With a room full of phones, the last-seconds countdown beeps play only on the current speaker's device.
+- Joining a different meeting from a second device no longer marks the participant disconnected in the first meeting while another of their devices is still there.
+- A departed participant's cursor is removed from the collaborative notes as soon as they disconnect, instead of lingering for up to 30 seconds.
+- Plug slow memory growth over long sessions (theme toggle, language picker, notes panel torn down mid-load).
+
+### Security
+
+- A malformed Socket.IO frame from any client could crash the whole server process; every socket handler is now guarded and answers with an error code instead.
 
 ### Changed
 
-- Shrink the Docker image by dropping the build toolchain (TypeScript, ESLint, Vite) from the runtime stage.
+- Shrink the Docker image by carrying only the server's production dependencies (the client's packages are already compiled into the bundle), and report container health through the built-in `/healthz` endpoint.
+- Raise the per-IP request budget from 60 to 300 per minute so a whole team behind one office network can load the app at meeting start; `/healthz` is exempt.
+- The server now sends a single `meeting:state` event; the granular notification events were never consumed by the client and have been removed from the wire contract.
+- The collaborative notes preview refreshes at most every 200 ms while others type, instead of re-rendering on every keystroke.
+- Client TypeScript is now type-checked during the build, and the Docker build installs dependencies strictly from the committed lockfile.
 
 ## [1.2.0] - 2026-06-02
 
