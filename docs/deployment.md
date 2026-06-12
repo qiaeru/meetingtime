@@ -20,7 +20,7 @@ Three variants live under `deploy/`. Pick the one that matches the reverse proxy
 | `nginx` | `certbot` outside Docker | Hosts where you already run nginx and want to keep `certbot` doing the renewals. |
 | `traefik` | Let's Encrypt via Docker labels | Stacks that already use Traefik as their reverse proxy and label-based discovery. |
 
-Each subfolder under `deploy/` ships its own `docker-compose.<proxy>.yml`, the proxy config and a `README.md` with the exact commands. The compose files set `TRUST_PROXY=1` so Express honours the `X-Forwarded-*` headers your proxy sets.
+Each subfolder under `deploy/` ships its own `docker-compose.<proxy>.yml`, the proxy config and a `README.md` with the exact commands. The compose files set `TRUST_PROXY=1` so Express honors the `X-Forwarded-*` headers your proxy sets.
 
 ## Environment variables
 

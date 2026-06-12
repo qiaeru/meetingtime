@@ -17,7 +17,7 @@ All operator-facing knobs are environment variables read at boot by `server/src/
 
 `POST_END_GC_MS` is the delay after the host clicks End before the meeting (password, tokens, participants, topics and notes Y.Doc) is wiped from server memory. The default five minutes leaves time for the client to export the Markdown notes from the still-live Yjs document.
 
-`TRUST_PROXY=1` tells Express to honour the `X-Forwarded-*` headers your reverse proxy sets, so the source IP logged by Pino is the real client, not the proxy itself. Enable it **only** behind a reverse proxy you control and that strips inbound `X-Forwarded-*` headers from client requests. Otherwise a remote caller can spoof `X-Forwarded-For` and the IP that ends up in your logs is whatever they sent. All variants under `deploy/` set this safely.
+`TRUST_PROXY=1` tells Express to honor the `X-Forwarded-*` headers your reverse proxy sets, so the source IP logged by Pino is the real client, not the proxy itself. Enable it only behind a reverse proxy you control and that strips inbound `X-Forwarded-*` headers from client requests. Otherwise a remote caller can spoof `X-Forwarded-For` and the IP that ends up in your logs is whatever they sent. All variants under `deploy/` set this safely.
 
 ## Reducing the post-end retention
 

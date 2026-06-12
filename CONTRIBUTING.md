@@ -37,7 +37,7 @@ The client is served at `http://localhost:5173` and proxies `/socket.io`, `/yjs`
 
 Branch from `main`, open a pull request, and let the `build` CI check pass. Keep commits atomic (one feature, one bug-fix, one refactor) and use Conventional Commit prefixes (`fix:`, `feat:`, `chore:`, `docs:`, `refactor:`) optionally scoped with the touched area (`fix(notes):`, `feat(spotlight):`). Pull request titles follow the same rule and stay at or below seventy characters.
 
-Before pushing, walk the checklist in `.claude/skills/pre-commit-check/SKILL.md`: review every added comment in the diff, update the relevant `docs/*.md` if the change affects public behaviour, and tighten the `[Unreleased]` section of `CHANGELOG.md`.
+Before pushing, review every added comment in the diff, update the relevant `docs/*.md` if the change affects public behavior, and tighten the `[Unreleased]` section of `CHANGELOG.md`.
 
 ## Code style
 
@@ -48,12 +48,12 @@ Before pushing, walk the checklist in `.claude/skills/pre-commit-check/SKILL.md`
 
 ## Documentation
 
-If the change touches public behaviour, configuration, the Socket.IO event surface, the meeting state machine, or anything a host or contributor might look up later, update both `CHANGELOG.md` (under `[Unreleased]`) and the relevant page under `docs/`. See the pre-commit checklist for the mapping (architecture, deployment, configuration, security, i18n, accessibility, keyboard, meeting_import).
+If the change touches public behavior, configuration, the Socket.IO event surface, the meeting state machine, or anything a host or contributor might look up later, update both `CHANGELOG.md` (under `[Unreleased]`) and the relevant page under `docs/`. Pick the page the change belongs to (architecture, deployment, configuration, security, i18n, accessibility, keyboard or meeting_import).
 
 ## Reporting issues
 
 Open a GitHub issue with a minimal reproduction and the browser plus operating system you observed it on. For security-sensitive reports, open a private security advisory on GitHub instead of a public issue.
 
-## Licence
+## License
 
-By submitting a contribution, you agree that it is released under the MIT licence shipped with this repo.
+By submitting a contribution, you agree that it is released under the MIT license shipped with this repo.

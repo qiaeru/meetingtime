@@ -21,7 +21,7 @@ This is the simplest way to expose Meetingtime over HTTPS. Caddy negotiates a Le
 
 ## Notes
 
-- `TRUST_PROXY=1` is set automatically so Express honours the `X-Forwarded-*` headers Caddy sets. WebSocket upgrades for Socket.IO and the Yjs notes channel are proxied transparently because Caddy speaks HTTP/2 and HTTP/3 end to end.
+- `TRUST_PROXY=1` is set automatically so Express honors the `X-Forwarded-*` headers Caddy sets. WebSocket upgrades for Socket.IO and the Yjs notes channel are proxied transparently because Caddy speaks HTTP/2 and HTTP/3 end to end.
 - `CORS_ORIGIN` defaults to `https://<MEETINGTIME_DOMAIN>` so cross-origin Socket.IO requests from other hosts are rejected. Override it explicitly only if you embed Meetingtime in a different origin.
 - Caddy stores its generated certificates in the `caddy_data` Docker volume. Do not delete the volume, because the next start would then trigger a fresh ACME challenge and possibly run into Let's Encrypt rate limits.
 - To update the stack: `docker compose -f deploy/caddy/docker-compose.caddy.yml pull && docker compose -f deploy/caddy/docker-compose.caddy.yml up -d`.

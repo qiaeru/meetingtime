@@ -65,7 +65,7 @@ const md = new Marked({
         .replace(/>/g, "&gt;");
       const langAttr = language ? ` class="language-${language}"` : "";
       // CSS ::before reads data-syntax-loading to show a "loading highlighter"
-      // hint until the proper colours arrive.
+      // hint until the proper colors arrive.
       const pending = highlighter ? "" : ' data-syntax-pending="true"';
       return `<pre${pending}><code${langAttr}>${escaped}</code></pre>`;
     },

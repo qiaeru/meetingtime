@@ -1,6 +1,6 @@
 # Credits
 
-Meetingtime is released under the [MIT License](./LICENSE). Every third-party asset and library it ships is distributed under an OSI-approved or FSF-approved open source licence. No CDN is contacted at runtime.
+Meetingtime is released under the [MIT License](./LICENSE). Every third-party asset and library it ships is distributed under an OSI-approved or FSF-approved open source license. No CDN is contacted at runtime.
 
 ## Fonts
 
@@ -13,28 +13,28 @@ Meetingtime is released under the [MIT License](./LICENSE). Every third-party as
 
 ## Backend runtime
 
-- [Express](https://expressjs.com/). MIT licence. The HTTP server.
-- [Socket.IO](https://socket.io/). MIT licence. The bidirectional event channel for meeting state.
-- [Yjs](https://github.com/yjs/yjs). MIT licence. The CRDT powering the collaborative notes.
-- [y-websocket](https://github.com/yjs/y-websocket) and [y-protocols](https://github.com/yjs/y-protocols). MIT licence. The wire protocol used by the Yjs bridge.
-- [cors](https://github.com/expressjs/cors). MIT licence.
-- [pino](https://github.com/pinojs/pino). MIT licence. Structured logging.
-- [uuid](https://github.com/uuidjs/uuid). MIT licence.
+- [Express](https://expressjs.com/). MIT license. The HTTP server.
+- [Socket.IO](https://socket.io/). MIT license. The bidirectional event channel for meeting state.
+- [Yjs](https://github.com/yjs/yjs). MIT license. The CRDT powering the collaborative notes.
+- [y-websocket](https://github.com/yjs/y-websocket) and [y-protocols](https://github.com/yjs/y-protocols). MIT license. The wire protocol used by the Yjs bridge.
+- [cors](https://github.com/expressjs/cors). MIT license.
+- [pino](https://github.com/pinojs/pino). MIT license. Structured logging.
+- [uuid](https://github.com/uuidjs/uuid). MIT license.
 
 ## Frontend runtime
 
-- [CodeMirror 6](https://codemirror.net/). MIT licence. The notes editor.
-- [y-codemirror.next](https://github.com/yjs/y-codemirror.next). MIT licence. The CodeMirror binding for Yjs.
-- [Marked](https://marked.js.org/). MIT licence. Markdown parsing for the preview pane.
-- [DOMPurify](https://github.com/cure53/DOMPurify). Apache-2.0 / MPL-2.0 dual licence. Sanitises the Markdown preview HTML.
-- [Shiki](https://shiki.style/). MIT licence. Syntax highlighting in the Markdown preview, bundled with fifteen languages and the dual `github-light` / `github-dark` themes.
-- [socket.io-client](https://socket.io/). MIT licence.
+- [CodeMirror 6](https://codemirror.net/). MIT license. The notes editor.
+- [y-codemirror.next](https://github.com/yjs/y-codemirror.next). MIT license. The CodeMirror binding for Yjs.
+- [Marked](https://marked.js.org/). MIT license. Markdown parsing for the preview pane.
+- [DOMPurify](https://github.com/cure53/DOMPurify). Apache-2.0 / MPL-2.0 dual license. Sanitises the Markdown preview HTML.
+- [Shiki](https://shiki.style/). MIT license. Syntax highlighting in the Markdown preview, bundled with fifteen languages and the dual `github-light` / `github-dark` themes.
+- [socket.io-client](https://socket.io/). MIT license.
 
 ## Build tooling
 
-- [Vite](https://vitejs.dev/). MIT licence. The frontend bundler.
-- [TypeScript](https://www.typescriptlang.org/). Apache-2.0 licence.
-- [tsx](https://github.com/privatenumber/tsx). MIT licence. Server reload in development.
+- [Vite](https://vitejs.dev/). MIT license. The frontend bundler.
+- [TypeScript](https://www.typescriptlang.org/). Apache-2.0 license.
+- [tsx](https://github.com/privatenumber/tsx). MIT license. Server reload in development.
 
 ## Acknowledgements
 

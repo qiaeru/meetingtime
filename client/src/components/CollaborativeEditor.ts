@@ -83,7 +83,7 @@ interface Args {
   token: string;
   readOnly: boolean;
   // Defaults to a hue derived from the participant id. Pass the meeting's
-  // position-based colour to match the participant list.
+  // position-based color to match the participant list.
   color?: string;
 }
 

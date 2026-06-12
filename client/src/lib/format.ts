@@ -11,7 +11,7 @@ export function formatMs(ms: number): string {
 import type { Locale } from "@meetingtime/shared";
 
 // Locale-aware spoken units for screen-reader output. Plural is the form
-// used for any count !== 1 (zero and 2+) — adequate for FR / EN / ES / IT / DE.
+// used for any count !== 1 (zero and 2+), adequate for FR, EN, ES, IT and DE.
 const SPOKEN_UNITS: Record<Locale, { min: [string, string]; sec: [string, string] }> = {
   fr: { min: ["minute", "minutes"], sec: ["seconde", "secondes"] },
   en: { min: ["minute", "minutes"], sec: ["second", "seconds"] },
