@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-12
+
 ### Added
 
 - The meeting ID field cleans up whatever you paste or type (spaces stripped, dash inserted automatically), so "mrx7 92ab" finds the meeting instead of failing.
