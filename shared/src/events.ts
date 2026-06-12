@@ -1,6 +1,6 @@
 // Socket.IO wire contracts. The string keys are canonical: renaming any of
 // them is a breaking change for every connected client mid-rollout.
-import type { Meeting, MeetingSummary, MeetingPhase, ParticipantIdentity, Topic } from "./models.js";
+import type { Meeting, ParticipantIdentity } from "./models.js";
 
 
 export interface ClientToServerEvents {
@@ -56,24 +56,10 @@ export interface ClientToServerEvents {
   "topic:reorder": (payload: { topicId: string; direction: "up" | "down" }, ack?: AckSimple) => void;
 }
 
+// The full state broadcast is the only downstream event: clients derive every
+// UI change (phase, hands, speaker, topics) by diffing successive states.
 export interface ServerToClientEvents {
   "meeting:state": (state: Meeting) => void;
-  "meeting:phaseChanged": (payload: { phase: MeetingPhase }) => void;
-  "meeting:ended": (payload: { summary: MeetingSummary }) => void;
-
-  "participant:joined": (payload: { participantId: string }) => void;
-  "participant:left": (payload: { participantId: string }) => void;
-
-  "host:changed": (payload: { participantId: string; isHost: boolean }) => void;
-
-  "hand:raised": (payload: { participantId: string }) => void;
-  "hand:lowered": (payload: { participantId: string }) => void;
-
-  "speaker:changed": (payload: { participantId: string | null; startedAt?: number }) => void;
-
-  "topic:changed": (payload: { topics: Topic[]; currentTopicId?: string }) => void;
-
-  "error:msg": (payload: { code: string; message: string }) => void;
 }
 
 export type AckSimple = (response: { ok: true } | { ok: false; error: string }) => void;
@@ -85,8 +71,3 @@ export type AckCreate =
 export type AckJoin =
   | { ok: true; meetingId: string; participantId: string; token: string; meeting: Meeting }
   | { ok: false; error: string };
-
-export interface SocketAuth {
-  token?: string;
-  meetingId?: string;
-}

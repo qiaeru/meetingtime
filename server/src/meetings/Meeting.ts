@@ -2,7 +2,6 @@ import { randomBytes } from "node:crypto";
 import { v4 as uuid } from "uuid";
 import type {
   Meeting as MeetingState,
-  MeetingSummary,
   Participant,
   ParticipantIdentity,
   Topic,
@@ -83,11 +82,6 @@ export class Meeting {
     return Object.values(this.state.participants).find((p) => p.isHost)?.id;
   }
 
-  hostToken(): string | undefined {
-    const id = this.hostId();
-    return id ? this.tokens.get(id) : undefined;
-  }
-
   tokenFor(participantId: string): string | undefined {
     return this.tokens.get(participantId);
   }
@@ -143,9 +137,8 @@ export class Meeting {
     this.ensureHostExists();
   }
 
-  ensureHostExists(): { promoted?: string } {
-    const promoted = promoteOldestFallback(this.state);
-    return { promoted };
+  ensureHostExists(): void {
+    promoteOldestFallback(this.state);
   }
 
   promote(participantId: string): void {
@@ -177,13 +170,17 @@ export class Meeting {
 
   pause(): void {
     if (this.state.phase !== "running") return;
+    // Flip the phase before flushing so the flushes park the start timestamps
+    // at undefined instead of restarting them; a live timestamp during the
+    // pause would charge the whole pause to the speaker and topic on the next
+    // flush (grant/revoke/end while paused).
+    this.state.phase = "paused";
     this.flushSpeaker();
     this.flushTopic();
     this.state.pausedSince = Date.now();
-    this.state.phase = "paused";
   }
 
-  end(): MeetingSummary {
+  end(): void {
     this.flushSpeaker();
     this.flushTopic();
     delete this.state.currentSpeakerId;
@@ -196,7 +193,6 @@ export class Meeting {
       this.state.pauseAccumulatedMs += this.state.endedAt - this.state.pausedSince;
       delete this.state.pausedSince;
     }
-    return this.summary();
   }
 
   setTimebox(ms: number | undefined): void {
@@ -273,7 +269,10 @@ export class Meeting {
 
   removeTopic(topicId: string): void {
     this.state.topics = this.state.topics.filter((t) => t.id !== topicId);
-    if (this.state.currentTopicId === topicId) delete this.state.currentTopicId;
+    if (this.state.currentTopicId === topicId) {
+      delete this.state.currentTopicId;
+      delete this.state.currentTopicStartedAt;
+    }
   }
 
   reorderParticipant(participantId: string, direction: "up" | "down"): void {
@@ -319,24 +318,6 @@ export class Meeting {
     // Tokens live in a separate map; `state` itself carries no secrets and
     // Socket.IO serializes the value on emit, so no defensive clone is needed.
     return this.state;
-  }
-
-  summary(): MeetingSummary {
-    const startedAt = this.state.startedAt;
-    const endedAt = this.state.endedAt ?? Date.now();
-    return {
-      id: this.state.id,
-      startedAt,
-      endedAt,
-      totalDurationMs: startedAt ? endedAt - startedAt - this.state.pauseAccumulatedMs : 0,
-      participants: Object.values(this.state.participants).map((p) => ({
-        id: p.id,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        role: p.role,
-        totalSpeakingMs: p.totalSpeakingMs,
-      })),
-    };
   }
 }
 

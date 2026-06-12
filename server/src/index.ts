@@ -27,6 +27,9 @@ app.use(cors({ origin: config.corsOrigin }));
 // Helps self-hosted deployments served over a tunnel or VPN where wire bytes
 // dominate the cold-start cost.
 app.use(compression({ threshold: 1024 }));
+// Health endpoint sits before the per-IP gate: a container HEALTHCHECK or an
+// orchestrator probe must never eat the budget nor be throttled.
+app.get("/healthz", (_req, res) => res.json({ ok: true }));
 // HTTP path of the per-IP gate. WS upgrades hit the same allowIP() in
 // io.use() and in the Yjs bridge, so the limit cannot be bypassed by
 // jumping straight to the upgrade.
@@ -37,7 +40,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 // __dirname is server/dist/ in production but server/src/ under `tsx watch`;
 // fall back to the source client/public/ so dev still serves the manifests.

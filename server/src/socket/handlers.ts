@@ -45,7 +45,33 @@ function onConnection(io: IO, socket: SK): void {
     }
   });
 
-  socket.on("meeting:create", (payload, ack) => {
+  // Socket.IO does not catch listener exceptions, and index.ts shuts the whole
+  // process down on uncaughtException, so a malformed frame (missing payload,
+  // non-function ack) from any client must never escape a handler.
+  const on = <E extends keyof ClientToServerEvents>(
+    event: E,
+    handler: ClientToServerEvents[E]
+  ): void => {
+    // Socket.IO's generic `on` overloads reject a wrapper typed per-event, so
+    // register through a loosened signature; `event`/`handler` stay typed at
+    // the call sites above.
+    (socket.on as (ev: string, listener: (...args: unknown[]) => void) => void)(
+      event,
+      (...args: unknown[]) => {
+        try {
+          (handler as (...a: unknown[]) => void)(...args);
+        } catch (e) {
+          log.warn({ sid: socket.id, event, err: (e as Error).message }, "socket handler threw");
+          const ack = args[args.length - 1];
+          if (typeof ack === "function") {
+            (ack as (r: unknown) => void)({ ok: false, error: "invalid_payload" });
+          }
+        }
+      }
+    );
+  };
+
+  on("meeting:create", (payload, ack) => {
     try {
       const host = sanitizeIdentity(payload.host);
       if (!host) return ack({ ok: false, error: "invalid_identity" });
@@ -77,7 +103,7 @@ function onConnection(io: IO, socket: SK): void {
     }
   });
 
-  socket.on("meeting:join", (payload, ack) => {
+  on("meeting:join", (payload, ack) => {
     try {
       const meeting = meetingStore.get(payload.meetingId);
       if (!meeting) return ack({ ok: false, error: "meeting_not_found" });
@@ -117,18 +143,17 @@ function onConnection(io: IO, socket: SK): void {
       // Same socket re-joining a different meeting: cleanly detach from the
       // previous one, otherwise the client receives both meetings' broadcasts
       // and the previous meeting forever shows the participant as connected.
+      // Another device of the same participant may still be in the previous
+      // meeting, so only mark them disconnected once their last socket leaves.
       const prev = socket.ctx;
       if (prev && (prev.meeting !== meeting || prev.participant.id !== participantId)) {
-        prev.meeting.setConnected(prev.participant.id, false);
-        const prevRoom = roomFor(prev.meeting.state.id);
-        socket.leave(prevRoom);
-        io.to(prevRoom).emit("participant:left", { participantId: prev.participant.id });
-        broadcastState(io, prev.meeting);
+        socket.leave(roomFor(prev.meeting.state.id));
+        if (!hasOtherSocketFor(io, prev.meeting.state.id, prev.participant.id, socket.id)) {
+          prev.meeting.setConnected(prev.participant.id, false);
+          broadcastState(io, prev.meeting);
+        }
       }
 
-      // A merged second device joins an already-connected participant; don't
-      // re-announce them as a fresh arrival.
-      const wasConnected = Boolean(meeting.state.participants[participantId]?.connected);
       attach(socket, meeting.state.id, participantId, token);
       meeting.setConnected(participantId, true);
       socket.join(roomFor(meeting.state.id));
@@ -139,49 +164,42 @@ function onConnection(io: IO, socket: SK): void {
         token,
         meeting: meeting.publicState(),
       });
-      if (!wasConnected) {
-        socket.to(roomFor(meeting.state.id)).emit("participant:joined", { participantId });
-      }
       broadcastState(io, meeting);
     } catch (e) {
       ack({ ok: false, error: passthroughOrInternal(e) });
     }
   });
 
-  socket.on("meeting:start", (ack) => {
+  on("meeting:start", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     ctx.meeting.start();
-    io.to(roomFor(ctx.meeting.state.id)).emit("meeting:phaseChanged", { phase: ctx.meeting.state.phase });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("meeting:pause", (ack) => {
+  on("meeting:pause", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     ctx.meeting.pause();
-    io.to(roomFor(ctx.meeting.state.id)).emit("meeting:phaseChanged", { phase: ctx.meeting.state.phase });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("meeting:resume", (ack) => {
+  on("meeting:resume", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     ctx.meeting.start();
-    io.to(roomFor(ctx.meeting.state.id)).emit("meeting:phaseChanged", { phase: ctx.meeting.state.phase });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("meeting:end", (ack) => {
+  on("meeting:end", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     // Idempotent: a second end would re-stamp endedAt and reschedule the GC.
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: true });
-    const summary = ctx.meeting.end();
-    io.to(roomFor(ctx.meeting.state.id)).emit("meeting:ended", { summary });
+    ctx.meeting.end();
     broadcastState(io, ctx.meeting);
     // The summary was already broadcast and the client exports notes
     // independently; drop the live meeting (password, tokens, Yjs doc) from
@@ -190,7 +208,7 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  socket.on("meeting:setTimebox", (payload, ack) => {
+  on("meeting:setTimebox", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -199,7 +217,7 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  socket.on("meeting:setTimeboxEnabled", (payload, ack) => {
+  on("meeting:setTimeboxEnabled", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -208,7 +226,7 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  socket.on("participant:add", (payload, ack) => {
+  on("participant:add", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -223,7 +241,7 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  socket.on("participant:remove", (payload, ack) => {
+  on("participant:remove", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -231,12 +249,11 @@ function onConnection(io: IO, socket: SK): void {
     // ctxOf would already reject their next emit; the pre-emptive disconnect
     // saves the round-trip and gives the affected client an explicit signal.
     disconnectParticipant(io, ctx.meeting.state.id, payload.participantId);
-    io.to(roomFor(ctx.meeting.state.id)).emit("participant:left", { participantId: payload.participantId });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("participant:reorder", (payload, ack) => {
+  on("participant:reorder", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -248,100 +265,80 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  socket.on("host:promote", (payload, ack) => {
+  on("host:promote", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.promote(payload.participantId);
-    io.to(roomFor(ctx.meeting.state.id)).emit("host:changed", {
-      participantId: payload.participantId,
-      isHost: true,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("host:demote", (payload, ack) => {
+  on("host:demote", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.demote(payload.participantId);
-    io.to(roomFor(ctx.meeting.state.id)).emit("host:changed", {
-      participantId: payload.participantId,
-      isHost: false,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("hand:raise", (ack) => {
+  on("hand:raise", (ack) => {
     const ctx = socket.ctx;
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.raiseHand(ctx.participant.id);
-    io.to(roomFor(ctx.meeting.state.id)).emit("hand:raised", { participantId: ctx.participant.id });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("hand:lower", (ack) => {
+  on("hand:lower", (ack) => {
     const ctx = socket.ctx;
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.lowerHand(ctx.participant.id);
-    io.to(roomFor(ctx.meeting.state.id)).emit("hand:lowered", { participantId: ctx.participant.id });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("speaker:grant", (payload, ack) => {
+  on("speaker:grant", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     ctx.meeting.grantSpeaker(payload.participantId);
-    io.to(roomFor(ctx.meeting.state.id)).emit("speaker:changed", {
-      participantId: payload.participantId,
-      startedAt: ctx.meeting.state.currentSpeakerStartedAt,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("speaker:revoke", (ack) => {
+  on("speaker:revoke", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     ctx.meeting.revokeSpeaker();
-    io.to(roomFor(ctx.meeting.state.id)).emit("speaker:changed", { participantId: null });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
   // Any participant can take the floor for themselves. grantSpeaker already
   // no-ops outside running/paused, so no phase guard is needed here.
-  socket.on("speaker:claim", (ack) => {
+  on("speaker:claim", (ack) => {
     const ctx = socket.ctx;
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     ctx.meeting.grantSpeaker(ctx.participant.id);
-    io.to(roomFor(ctx.meeting.state.id)).emit("speaker:changed", {
-      participantId: ctx.meeting.state.currentSpeakerId ?? null,
-      startedAt: ctx.meeting.state.currentSpeakerStartedAt,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
   // Releasing only affects the caller's own turn; a participant can never
   // revoke someone else.
-  socket.on("speaker:release", (ack) => {
+  on("speaker:release", (ack) => {
     const ctx = socket.ctx;
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     if (ctx.meeting.state.currentSpeakerId !== ctx.participant.id) return ack?.({ ok: true });
     ctx.meeting.revokeSpeaker();
-    io.to(roomFor(ctx.meeting.state.id)).emit("speaker:changed", { participantId: null });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("topic:add", (payload, ack) => {
+  on("topic:add", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -350,28 +347,20 @@ function onConnection(io: IO, socket: SK): void {
     } catch (e) {
       return ack?.({ ok: false, error: (e as Error).message || "internal_error" });
     }
-    io.to(roomFor(ctx.meeting.state.id)).emit("topic:changed", {
-      topics: ctx.meeting.state.topics,
-      currentTopicId: ctx.meeting.state.currentTopicId,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("topic:remove", (payload, ack) => {
+  on("topic:remove", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.removeTopic(payload.topicId);
-    io.to(roomFor(ctx.meeting.state.id)).emit("topic:changed", {
-      topics: ctx.meeting.state.topics,
-      currentTopicId: ctx.meeting.state.currentTopicId,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("topic:reorder", (payload, ack) => {
+  on("topic:reorder", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
@@ -379,23 +368,15 @@ function onConnection(io: IO, socket: SK): void {
       return ack?.({ ok: false, error: "invalid_direction" });
     }
     ctx.meeting.reorderTopic(payload.topicId, payload.direction);
-    io.to(roomFor(ctx.meeting.state.id)).emit("topic:changed", {
-      topics: ctx.meeting.state.topics,
-      currentTopicId: ctx.meeting.state.currentTopicId,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
 
-  socket.on("topic:setCurrent", (payload, ack) => {
+  on("topic:setCurrent", (payload, ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.setCurrentTopic(payload.topicId);
-    io.to(roomFor(ctx.meeting.state.id)).emit("topic:changed", {
-      topics: ctx.meeting.state.topics,
-      currentTopicId: ctx.meeting.state.currentTopicId,
-    });
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
@@ -407,9 +388,6 @@ function onConnection(io: IO, socket: SK): void {
     // connected; only mark them gone once their last socket drops.
     if (hasOtherSocketFor(io, ctx.meeting.state.id, ctx.participant.id, socket.id)) return;
     ctx.meeting.setConnected(ctx.participant.id, false);
-    io.to(roomFor(ctx.meeting.state.id)).emit("participant:left", {
-      participantId: ctx.participant.id,
-    });
     broadcastState(io, ctx.meeting);
   });
 }

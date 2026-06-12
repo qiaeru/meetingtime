@@ -2,9 +2,12 @@ import type { IncomingMessage } from "node:http";
 
 // Per-IP connection budget. In-memory only: meant to deter spray attacks,
 // not to defeat an attacker rotating IPs. Pair with an upstream WAF or
-// reverse proxy for stricter posture.
+// reverse proxy for stricter posture. The budget is shared by static HTTP,
+// the Socket.IO handshake and the Yjs upgrade; a cold SPA load alone is
+// 10-30 requests, so several colleagues behind one office NAT need
+// substantially more than a per-person allowance.
 const WINDOW_MS = 60_000;
-const LIMIT = 60;
+const LIMIT = 300;
 
 interface Counter {
   windowStart: number;

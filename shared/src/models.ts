@@ -49,17 +49,3 @@ export interface Meeting {
   currentSpeakerId?: string;
   currentSpeakerStartedAt?: number;
 }
-
-export interface MeetingSummary {
-  id: string;
-  startedAt?: number;
-  endedAt?: number;
-  totalDurationMs: number;
-  participants: Array<{
-    id: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-    totalSpeakingMs: number;
-  }>;
-}

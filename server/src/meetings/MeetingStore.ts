@@ -57,11 +57,6 @@ export class MeetingStore {
     return this.entries.get(id)?.ydoc;
   }
 
-  touch(id: string): void {
-    const e = this.entries.get(id);
-    if (e) e.lastActivity = Date.now();
-  }
-
   delete(id: string): void {
     const e = this.entries.get(id);
     if (!e) return;
@@ -85,7 +80,14 @@ export class MeetingStore {
     const now = Date.now();
     for (const [id, entry] of this.entries) {
       const anyConnected = Object.values(entry.meeting.state.participants).some((p) => p.connected);
-      if (!anyConnected && now - entry.lastActivity > config.hostTimeoutMs) {
+      // Presence counts as activity: without this, lastActivity stays frozen
+      // at the last join and a momentary full disconnect (network blip) after
+      // hostTimeoutMs of meeting would delete a live meeting on the next sweep.
+      if (anyConnected) {
+        entry.lastActivity = now;
+        continue;
+      }
+      if (now - entry.lastActivity > config.hostTimeoutMs) {
         this.delete(id);
       }
     }
