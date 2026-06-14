@@ -105,7 +105,7 @@ httpServer.listen(config.port, () => {
 // prevents a stuck connection from blocking the container restart.
 
 let shuttingDown = false;
-function shutdown(signal: string): void {
+function shutdown(signal: string, exitCode = 0): void {
   if (shuttingDown) return;
   shuttingDown = true;
   log.info({ signal }, "shutting down");
@@ -123,8 +123,10 @@ function shutdown(signal: string): void {
   io.close();
   yjsBridge.close();
 
-  // Give in-flight close frames a tick to flush, then exit cleanly.
-  setTimeout(() => process.exit(0), 500).unref();
+  // Give in-flight close frames a tick to flush, then exit. A crash exits
+  // non-zero so an orchestrator with restart=on-failure still restarts it
+  // (exit 0 would read as a clean stop and skip the restart).
+  setTimeout(() => process.exit(exitCode), 500).unref();
 }
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
@@ -135,10 +137,10 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 // an unknown state where data corruption becomes likely.
 process.on("uncaughtException", (err) => {
   log.fatal({ err: err.message, stack: err.stack }, "uncaught exception");
-  shutdown("uncaughtException");
+  shutdown("uncaughtException", 1);
 });
 process.on("unhandledRejection", (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
   log.fatal({ err: err.message, stack: err.stack }, "unhandled promise rejection");
-  shutdown("unhandledRejection");
+  shutdown("unhandledRejection", 1);
 });
