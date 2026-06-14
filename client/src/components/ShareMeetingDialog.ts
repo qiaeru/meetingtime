@@ -10,6 +10,13 @@ interface ShareInfo {
 
 export function showShareMeetingDialog(info: ShareInfo): Promise<void> {
   return new Promise((resolve) => {
+    // Two triggers open this dialog (the invite-hint CTA and the header share
+    // button), so a double-tap could stack two modals and leak the first one's
+    // focus-trap keydown listener. Bail if one is already up.
+    if (document.querySelector(".dialog-backdrop[data-share]")) {
+      resolve();
+      return;
+    }
     const backdrop = document.createElement("div");
     backdrop.className = "dialog-backdrop";
     backdrop.dataset.share = "1";
