@@ -214,5 +214,6 @@
   "errors.missing_credentials": "Verbindungsdaten fehlen. Bitte treten Sie dem Meeting erneut bei.",
   "errors.rate_limited": "Zu viele Versuche. Bitte eine Minute warten.",
   "errors.meeting_ended": "Das Meeting ist beendet, diese Aktion ist nicht mehr verfügbar.",
+  "errors.not_joined": "Sie sind diesem Meeting nicht beigetreten.",
   "errors.internal_error": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
 }

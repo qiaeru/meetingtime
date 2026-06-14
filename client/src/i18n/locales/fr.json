@@ -214,5 +214,6 @@
   "errors.missing_credentials": "Informations de connexion manquantes. Veuillez rejoindre à nouveau la réunion.",
   "errors.rate_limited": "Trop de tentatives. Veuillez patienter une minute.",
   "errors.meeting_ended": "La réunion est terminée, cette action n'est plus disponible.",
+  "errors.not_joined": "Vous n'avez pas rejoint cette réunion.",
   "errors.internal_error": "Une erreur est survenue. Veuillez réessayer."
 }

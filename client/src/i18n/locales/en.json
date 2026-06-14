@@ -214,5 +214,6 @@
   "errors.missing_credentials": "Missing connection details. Please join the meeting again.",
   "errors.rate_limited": "Too many attempts. Please wait a minute.",
   "errors.meeting_ended": "The meeting has ended; this action is no longer available.",
+  "errors.not_joined": "You have not joined this meeting.",
   "errors.internal_error": "Something went wrong. Please try again."
 }
