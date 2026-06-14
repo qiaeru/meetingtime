@@ -8,7 +8,7 @@ import { confirmDialog } from "./ConfirmDialog.js";
 import { toast } from "./Toaster.js";
 
 // Module-scoped so it survives the update() rebuild on every meeting-state push.
-let topicDragState: { sourceId: string; sourceIdx: number } | null = null;
+let topicDragState: { sourceId: string } | null = null;
 
 interface Args {
   getMeeting: () => Meeting | null;
@@ -46,6 +46,9 @@ export function renderAgenda(args: Args): AgendaHandle {
   // without rebuilding the row (which would interrupt hover and drag).
   const timeRefs = new Map<string, HTMLElement>();
   let focusedTopicId: string | null = null;
+  // Signature of the last rendered structure; a push that only advances topic
+  // time leaves it unchanged so update() can skip the full rebuild.
+  let lastSig: string | null = null;
 
   const header = document.createElement("div");
   header.className = "list-header";
@@ -86,13 +89,27 @@ export function renderAgenda(args: Args): AgendaHandle {
 
   const update = () => {
     const m = args.getMeeting();
+    if (!m) {
+      list.innerHTML = "";
+      timeRefs.clear();
+      lastSig = null;
+      return;
+    }
+    // Topic identity + order + the active topic + phase + whether I host +
+    // which row has focus. Time is refreshed by tick() without a rebuild, so
+    // it stays out of the signature.
+    const sig =
+      m.topics.map((tp) => `${tp.id}.${tp.label}`).join("|") +
+      `#${m.currentTopicId ?? ""}#${m.phase}#${+args.isHost()}#${focusedTopicId ?? ""}`;
+    if (sig === lastSig) return;
+    lastSig = sig;
+
     // Same focus-preservation dance as ParticipantList: the rebuild destroys
     // the focused row button, so re-focus its successor after the rebuild.
     const active = document.activeElement as HTMLElement | null;
     const focusKey = active && list.contains(active) ? active.dataset.focusKey : undefined;
     list.innerHTML = "";
     timeRefs.clear();
-    if (!m) return;
     countBadge.textContent = String(m.topics.length);
     addBtn.hidden = !args.isHost();
     const ended = m.phase === "ended";
@@ -145,7 +162,7 @@ export function renderAgenda(args: Args): AgendaHandle {
         li.addEventListener("mouseup", resetDraggable);
         li.addEventListener("mouseleave", resetDraggable);
         li.addEventListener("dragstart", (ev) => {
-          topicDragState = { sourceId: topic.id, sourceIdx: idx };
+          topicDragState = { sourceId: topic.id };
           if (ev.dataTransfer) {
             ev.dataTransfer.effectAllowed = "move";
             ev.dataTransfer.setData("text/plain", topic.id);
@@ -172,11 +189,9 @@ export function renderAgenda(args: Args): AgendaHandle {
           const state = topicDragState;
           topicDragState = null;
           if (!state || state.sourceId === topic.id) return;
-          const direction = idx > state.sourceIdx ? "down" : "up";
-          const steps = Math.abs(idx - state.sourceIdx);
-          for (let i = 0; i < steps; i++) {
-            args.socket.emit("topic:reorder", { topicId: state.sourceId, direction });
-          }
+          // One atomic move to this row's index, not a burst of single-step
+          // swaps that would each race the next meeting:state push.
+          args.socket.emit("topic:reorder", { topicId: state.sourceId, toIndex: idx });
         });
       }
 

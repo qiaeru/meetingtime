@@ -291,6 +291,26 @@ export class Meeting {
     b.order = ao;
   }
 
+  // Atomic absolute move (drag-and-drop). Splicing the sorted list to the
+  // target index then redistributing the existing order values keeps the new
+  // sequence stable and leaves freshly added participants (order = now)
+  // sorting last, without the race of N single-step swaps.
+  moveParticipant(participantId: string, toIndex: number): void {
+    const sorted = Object.values(this.state.participants).sort(
+      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
+    );
+    const from = sorted.findIndex((p) => p.id === participantId);
+    if (from < 0) return;
+    const target = Math.max(0, Math.min(Math.trunc(toIndex), sorted.length - 1));
+    if (target === from) return;
+    const [moved] = sorted.splice(from, 1);
+    sorted.splice(target, 0, moved);
+    const orders = sorted.map((p) => p.order ?? p.joinedAt).sort((a, b) => a - b);
+    sorted.forEach((p, i) => {
+      p.order = orders[i];
+    });
+  }
+
   reorderTopic(topicId: string, direction: "up" | "down"): void {
     const idx = this.state.topics.findIndex((t) => t.id === topicId);
     if (idx < 0) return;
@@ -298,6 +318,15 @@ export class Meeting {
     if (swap < 0 || swap >= this.state.topics.length) return;
     const list = this.state.topics;
     [list[idx], list[swap]] = [list[swap], list[idx]];
+  }
+
+  moveTopic(topicId: string, toIndex: number): void {
+    const from = this.state.topics.findIndex((t) => t.id === topicId);
+    if (from < 0) return;
+    const target = Math.max(0, Math.min(Math.trunc(toIndex), this.state.topics.length - 1));
+    if (target === from) return;
+    const [moved] = this.state.topics.splice(from, 1);
+    this.state.topics.splice(target, 0, moved);
   }
 
   setCurrentTopic(topicId: string | null): void {

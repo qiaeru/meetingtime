@@ -9,10 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Polish UI strings in all five languages: French non-breaking spaces before punctuation, consistent imperative mood on the Italian floor buttons, corrected German grammar on the take-over label, and a clearer "Template imported." confirmation everywhere.
+- Large meetings render more smoothly: the participant list, agenda and host controls now rebuild only when something actually changes, not on every half-second tick.
 
 ### Fixed
 
+- Dragging a participant or an agenda topic across several rows now lands it exactly where you drop it, as a single move.
+- On a phone, reloading the page while you hold the floor no longer replays the "you have the floor" chime and buzz.
+- The Share dialog can no longer open twice on a fast double-click.
+- Screen readers now speak the hours in long speaking times (for example "1 hour 15 minutes") instead of collapsing them into minutes.
 - Screen readers now hear the avatar label as "name, role, status" with spoken pauses, as documented, instead of a dash-separated string.
+- A server crash now exits with a failure code, so a restart-on-failure orchestrator brings it back up instead of treating the crash as a clean stop.
 
 ## [1.3.0] - 2026-06-12
 

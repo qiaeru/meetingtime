@@ -18,7 +18,7 @@ export const sortedParticipants = (m: Meeting): Participant[] =>
 
 // Module-scoped so it survives the update() rebuild that runs on every
 // meeting-state push.
-let dragState: { sourceId: string; sourceIdx: number } | null = null;
+let dragState: { sourceId: string } | null = null;
 
 // Must match the just-spoke-fade animation duration in animations.css.
 const JUST_SPOKE_MS = 3000;
@@ -59,6 +59,9 @@ export function renderParticipantList(args: Args): {
 
   let focused: string | null = null;
   const rowRefs = new Map<string, RowRefs>();
+  // Signature of the last rendered structure; a push that only advances
+  // speaking time leaves it unchanged so update() can skip the full rebuild.
+  let lastSig: string | null = null;
 
   const computeTotals = (m: Meeting): { totals: Map<string, number>; sum: number } => {
     const totals = new Map<string, number>();
@@ -77,6 +80,30 @@ export function renderParticipantList(args: Args): {
 
   const update = () => {
     const m = args.getMeeting();
+    if (!m) {
+      el.innerHTML = "";
+      rowRefs.clear();
+      lastSig = null;
+      return;
+    }
+    const meId = args.myId();
+    const meIsHost = meId ? m.participants[meId]?.isHost : false;
+    const participants = sortedParticipants(m);
+    // Everything update() renders that tick() does not: identity, order, host/
+    // connection/hand flags, the floor holder, phase, who I am and which row
+    // holds virtual focus. Speaking time is deliberately excluded (tick() owns
+    // it), so a plain timer push no longer tears down and rebuilds every row.
+    const sig =
+      participants
+        .map(
+          (p) =>
+            `${p.id}.${p.firstName}.${p.lastName}.${p.role}.${+p.isHost}.${+p.connected}.${+Boolean(p.handRaised)}`
+        )
+        .join("|") +
+      `#${m.currentSpeakerId ?? ""}#${m.phase}#${meId ?? ""}#${+Boolean(meIsHost)}#${focused ?? ""}`;
+    if (sig === lastSig) return;
+    lastSig = sig;
+
     // The rebuild destroys the focused element; remember which action button
     // held keyboard focus so it can be re-focused on the fresh DOM (without
     // this, every chevron press dumps the user back to the top of the page).
@@ -84,7 +111,6 @@ export function renderParticipantList(args: Args): {
     const focusKey = active && el.contains(active) ? active.dataset.focusKey : undefined;
     el.innerHTML = "";
     rowRefs.clear();
-    if (!m) return;
 
     // Speaker transitions live here (not in tick()) because they come from a
     // meeting-state push, not from wall-clock time.
@@ -96,9 +122,6 @@ export function renderParticipantList(args: Args): {
     for (const [id, ts] of justSpokeAt) {
       if (now - ts >= JUST_SPOKE_MS) justSpokeAt.delete(id);
     }
-    const meId = args.myId();
-    const meIsHost = meId ? m.participants[meId]?.isHost : false;
-    const participants = sortedParticipants(m);
 
     if (participants.length === 0) {
       const empty = document.createElement("li");
@@ -383,7 +406,7 @@ function renderRow(
     li.addEventListener("mouseup", resetDraggable);
     li.addEventListener("mouseleave", resetDraggable);
     li.addEventListener("dragstart", (ev) => {
-      dragState = { sourceId: p.id, sourceIdx: idx };
+      dragState = { sourceId: p.id };
       if (ev.dataTransfer) {
         ev.dataTransfer.effectAllowed = "move";
         ev.dataTransfer.setData("text/plain", p.id);
@@ -410,11 +433,9 @@ function renderRow(
       const state = dragState;
       dragState = null;
       if (!state || state.sourceId === p.id) return;
-      const direction = idx > state.sourceIdx ? "down" : "up";
-      const steps = Math.abs(idx - state.sourceIdx);
-      for (let i = 0; i < steps; i++) {
-        socket.emit("participant:reorder", { participantId: state.sourceId, direction });
-      }
+      // One atomic move to this row's index, not a burst of single-step swaps
+      // that would each race the next meeting:state push.
+      socket.emit("participant:reorder", { participantId: state.sourceId, toIndex: idx });
     });
   }
 

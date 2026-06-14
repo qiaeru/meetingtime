@@ -32,8 +32,13 @@ export interface ClientToServerEvents {
 
   "participant:add": (payload: { identity: ParticipantIdentity }, ack?: AckSimple) => void;
   "participant:remove": (payload: { participantId: string }, ack?: AckSimple) => void;
+  // Single-step swap (the keyboard chevron buttons) or an absolute move to a
+  // target index (drag-and-drop, applied atomically so a multi-row drag is one
+  // event instead of a burst of adjacent swaps racing the state broadcast).
   "participant:reorder": (
-    payload: { participantId: string; direction: "up" | "down" },
+    payload:
+      | { participantId: string; direction: "up" | "down" }
+      | { participantId: string; toIndex: number },
     ack?: AckSimple
   ) => void;
 
@@ -53,7 +58,12 @@ export interface ClientToServerEvents {
   "topic:add": (payload: { label: string }, ack?: AckSimple) => void;
   "topic:remove": (payload: { topicId: string }, ack?: AckSimple) => void;
   "topic:setCurrent": (payload: { topicId: string | null }, ack?: AckSimple) => void;
-  "topic:reorder": (payload: { topicId: string; direction: "up" | "down" }, ack?: AckSimple) => void;
+  "topic:reorder": (
+    payload:
+      | { topicId: string; direction: "up" | "down" }
+      | { topicId: string; toIndex: number },
+    ack?: AckSimple
+  ) => void;
 }
 
 // The full state broadcast is the only downstream event: clients derive every

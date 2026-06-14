@@ -153,7 +153,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
 
   const headerControls = document.createElement("div");
   headerControls.className = "header-controls";
+  // The control set depends only on phase and host status; skip the rebuild
+  // (and its focus save/restore) when neither changed on a state push.
+  let lastHeaderKey: string | null = null;
   const refreshHeaderControls = () => {
+    const m = getMeeting();
+    const key = m ? `${m.phase}#${+amIHost()}` : "none";
+    if (key === lastHeaderKey) return;
+    lastHeaderKey = key;
     // Same focus dance as the lists: the rebuild on every state push would
     // otherwise drop keyboard focus the instant Start/Pause is pressed.
     // Start and Pause share one key so focus follows the phase swap.
@@ -161,7 +168,6 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     const focusKey =
       active && headerControls.contains(active) ? active.dataset.focusKey : undefined;
     headerControls.innerHTML = "";
-    const m = getMeeting();
     if (!m || !amIHost()) return;
     const phase = m.phase;
     const start = headerBtn(
