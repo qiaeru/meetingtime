@@ -209,7 +209,10 @@ export function renderMobileMeeting(
   // Declared before refresh(): the first refresh() runs before the wake-lock
   // block below and must be able to release an already-ended meeting's lock.
   let wakeLock: WakeLockSentinel | null = null;
-  let wasSpeaker = false;
+  // Seed from the current floor holder: reloading the page (or crossing into
+  // the mobile breakpoint) while already holding the floor must not replay the
+  // "you have the floor" gong + buzz as if it had just been granted.
+  let wasSpeaker = Boolean(getMyId() && getMeeting()?.currentSpeakerId === getMyId());
 
   const refresh = (): void => {
     const m = getMeeting();
