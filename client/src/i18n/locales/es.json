@@ -214,5 +214,6 @@
   "errors.missing_credentials": "Faltan los datos de conexión. Vuelve a unirte a la reunión.",
   "errors.rate_limited": "Demasiados intentos. Espera un minuto.",
   "errors.meeting_ended": "La reunión ha finalizado, esta acción ya no está disponible.",
+  "errors.not_joined": "No te has unido a esta reunión.",
   "errors.internal_error": "Algo ha salido mal. Vuelve a intentarlo."
 }

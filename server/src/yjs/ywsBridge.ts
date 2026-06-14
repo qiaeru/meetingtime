@@ -34,6 +34,9 @@ interface DocState {
   ydoc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
   conns: Map<WebSocket, Set<number>>;
+  // Kept so releaseDocState can detach it; awareness.destroy() clears its own
+  // observers, but the ydoc "update" listener must be removed explicitly.
+  onUpdate: (update: Uint8Array, origin: unknown) => void;
 }
 
 const docStates = new Map<string, DocState>();
@@ -46,6 +49,7 @@ export function releaseDocState(meetingId: string): void {
   for (const ws of state.conns.keys()) {
     try { ws.close(); } catch { /* socket may already be gone */ }
   }
+  state.ydoc.off("update", state.onUpdate);
   state.awareness.destroy();
   docStates.delete(meetingId);
 }
@@ -56,18 +60,21 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
   const ydoc = meetingStore.getYDoc(meetingId);
   if (!ydoc) return undefined;
   const awareness = new awarenessProtocol.Awareness(ydoc);
-  state = { ydoc, awareness, conns: new Map() };
-  docStates.set(meetingId, state);
+  const conns = new Map<WebSocket, Set<number>>();
 
-  ydoc.on("update", (update: Uint8Array, origin: unknown) => {
+  const onUpdate = (update: Uint8Array, origin: unknown): void => {
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MESSAGE_SYNC);
     syncProtocol.writeUpdate(encoder, update);
     const msg = encoding.toUint8Array(encoder);
-    for (const ws of state!.conns.keys()) {
+    for (const ws of conns.keys()) {
       if (ws !== origin) safeSend(ws, msg);
     }
-  });
+  };
+  ydoc.on("update", onUpdate);
+
+  state = { ydoc, awareness, conns, onUpdate };
+  docStates.set(meetingId, state);
 
   awareness.on(
     "update",
@@ -75,7 +82,7 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
       // Track which awareness clientIDs each connection controls, so cleanup
       // can remove them the moment the socket closes; otherwise the departed
       // user's cursor lingers until the 30 s awareness timeout.
-      const controlled = state!.conns.get(origin as WebSocket);
+      const controlled = conns.get(origin as WebSocket);
       if (controlled) {
         for (const clientID of added) controlled.add(clientID);
         for (const clientID of removed) controlled.delete(clientID);
@@ -85,7 +92,7 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
       encoding.writeVarUint(encoder, MESSAGE_AWARENESS);
       encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, changed));
       const msg = encoding.toUint8Array(encoder);
-      for (const ws of state!.conns.keys()) {
+      for (const ws of conns.keys()) {
         if (ws !== origin) safeSend(ws, msg);
       }
     }

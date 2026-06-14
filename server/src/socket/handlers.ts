@@ -257,10 +257,14 @@ function onConnection(io: IO, socket: SK): void {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    if (payload.direction !== "up" && payload.direction !== "down") {
+    if ("toIndex" in payload) {
+      if (!Number.isInteger(payload.toIndex)) return ack?.({ ok: false, error: "invalid_payload" });
+      ctx.meeting.moveParticipant(payload.participantId, payload.toIndex);
+    } else if (payload.direction === "up" || payload.direction === "down") {
+      ctx.meeting.reorderParticipant(payload.participantId, payload.direction);
+    } else {
       return ack?.({ ok: false, error: "invalid_direction" });
     }
-    ctx.meeting.reorderParticipant(payload.participantId, payload.direction);
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
@@ -364,10 +368,14 @@ function onConnection(io: IO, socket: SK): void {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    if (payload.direction !== "up" && payload.direction !== "down") {
+    if ("toIndex" in payload) {
+      if (!Number.isInteger(payload.toIndex)) return ack?.({ ok: false, error: "invalid_payload" });
+      ctx.meeting.moveTopic(payload.topicId, payload.toIndex);
+    } else if (payload.direction === "up" || payload.direction === "down") {
+      ctx.meeting.reorderTopic(payload.topicId, payload.direction);
+    } else {
       return ack?.({ ok: false, error: "invalid_direction" });
     }
-    ctx.meeting.reorderTopic(payload.topicId, payload.direction);
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
