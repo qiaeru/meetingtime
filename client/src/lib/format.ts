@@ -12,23 +12,29 @@ import type { Locale } from "@meetingtime/shared";
 
 // Locale-aware spoken units for screen-reader output. Plural is the form
 // used for any count !== 1 (zero and 2+), adequate for FR, EN, ES, IT and DE.
-const SPOKEN_UNITS: Record<Locale, { min: [string, string]; sec: [string, string] }> = {
-  fr: { min: ["minute", "minutes"], sec: ["seconde", "secondes"] },
-  en: { min: ["minute", "minutes"], sec: ["second", "seconds"] },
-  es: { min: ["minuto", "minutos"], sec: ["segundo", "segundos"] },
-  it: { min: ["minuto", "minuti"],  sec: ["secondo", "secondi"] },
-  de: { min: ["Minute", "Minuten"], sec: ["Sekunde", "Sekunden"] },
+const SPOKEN_UNITS: Record<Locale, { hr: [string, string]; min: [string, string]; sec: [string, string] }> = {
+  fr: { hr: ["heure", "heures"],   min: ["minute", "minutes"], sec: ["seconde", "secondes"] },
+  en: { hr: ["hour", "hours"],     min: ["minute", "minutes"], sec: ["second", "seconds"] },
+  es: { hr: ["hora", "horas"],     min: ["minuto", "minutos"], sec: ["segundo", "segundos"] },
+  it: { hr: ["ora", "ore"],        min: ["minuto", "minuti"],  sec: ["secondo", "secondi"] },
+  de: { hr: ["Stunde", "Stunden"], min: ["Minute", "Minuten"], sec: ["Sekunde", "Sekunden"] },
 };
 
 export function formatMsSpoken(ms: number, lang: Locale = "fr"): string {
   if (!Number.isFinite(ms) || ms < 0) ms = 0;
   const total = Math.floor(ms / 1000);
-  const m = Math.floor(total / 60);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   const units = SPOKEN_UNITS[lang] ?? SPOKEN_UNITS.fr;
-  const mUnit = units.min[m === 1 ? 0 : 1];
-  const sUnit = units.sec[s === 1 ? 0 : 1];
-  return `${m} ${mUnit} ${s} ${sUnit}`;
+  // Mirror formatMs: speak the hours component once the duration passes an
+  // hour, otherwise the spoken time ("75 minutes") diverges from the visible
+  // chrono ("1:15:00") on long meetings.
+  const parts: string[] = [];
+  if (h > 0) parts.push(`${h} ${units.hr[h === 1 ? 0 : 1]}`);
+  parts.push(`${m} ${units.min[m === 1 ? 0 : 1]}`);
+  parts.push(`${s} ${units.sec[s === 1 ? 0 : 1]}`);
+  return parts.join(" ");
 }
 
 export function formatDateDMY(ts: number = Date.now()): string {
