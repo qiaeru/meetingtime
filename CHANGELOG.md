@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- An attribution footer ("Developed by Qiaeru | Source code on GitHub", with the Qiaeru and GitHub logos) now appears on the home, create-meeting and join screens. It is absent from the meeting room to keep that view uncluttered.
+
 ### Changed
 
 - Polish UI strings in all five languages: French non-breaking spaces before punctuation, consistent imperative mood on the Italian floor buttons, corrected German grammar on the take-over label, and a clearer "Template imported." confirmation everywhere.

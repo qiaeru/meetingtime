@@ -191,6 +191,9 @@
   "share.messageTemplate": "You're invited to join a Meetingtime meeting.\nDirect link: {link}\nMeeting ID: {id}\nPassword: {password}",
   "share.messageTemplateNoPassword": "You're invited to join a Meetingtime meeting.\nDirect link: {link}\nMeeting ID: {id}",
 
+  "footer.developedBy": "Developed by",
+  "footer.sourceCode": "Source code on",
+
   "a11y.themeToggle": "Switch between light and dark mode",
   "a11y.languageToggle": "Change language",
   "a11y.help": "Show keyboard shortcuts",

@@ -191,6 +191,9 @@
   "share.messageTemplate": "Vous êtes invité à rejoindre la réunion Meetingtime.\nLien direct : {link}\nIdentifiant : {id}\nMot de passe : {password}",
   "share.messageTemplateNoPassword": "Vous êtes invité à rejoindre la réunion Meetingtime.\nLien direct : {link}\nIdentifiant : {id}",
 
+  "footer.developedBy": "Développé par",
+  "footer.sourceCode": "Code source sur",
+
   "a11y.themeToggle": "Basculer entre mode clair et sombre",
   "a11y.languageToggle": "Changer la langue",
   "a11y.help": "Afficher les raccourcis",
