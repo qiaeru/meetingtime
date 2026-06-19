@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-19
+
 ### Added
 
 - An attribution footer ("Developed by Qiaeru | Source code on GitHub", with the Qiaeru and GitHub logos) now appears on the home, create-meeting and join screens. It is absent from the meeting room to keep that view uncluttered.
