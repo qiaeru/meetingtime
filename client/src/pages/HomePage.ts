@@ -5,6 +5,7 @@ import { renderLocaleSwitcher } from "../components/LocaleSwitcher.js";
 import { icon } from "../components/Icon.js";
 import { showKeyboardHelp } from "../components/KeyboardHelpDialog.js";
 import { mountFloatingBackground } from "../components/FloatingBackground.js";
+import { siteFooter } from "../components/SiteFooter.js";
 
 export function renderHome(root: HTMLElement): void {
   // Visibility on/off is owned by FloatingBackground itself (CSS keyed on
@@ -53,6 +54,7 @@ export function renderHome(root: HTMLElement): void {
   hero.append(h1, p, cta);
   page.appendChild(hero);
 
+  page.appendChild(siteFooter());
   root.appendChild(page);
 }
 

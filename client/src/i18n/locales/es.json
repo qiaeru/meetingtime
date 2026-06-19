@@ -191,6 +191,9 @@
   "share.messageTemplate": "Te invitamos a unirte a una reunión Meetingtime.\nEnlace directo: {link}\nIdentificador: {id}\nContraseña: {password}",
   "share.messageTemplateNoPassword": "Te invitamos a unirte a una reunión Meetingtime.\nEnlace directo: {link}\nIdentificador: {id}",
 
+  "footer.developedBy": "Desarrollado por",
+  "footer.sourceCode": "Código fuente en",
+
   "a11y.themeToggle": "Cambiar entre modo claro y oscuro",
   "a11y.languageToggle": "Cambiar el idioma",
   "a11y.help": "Mostrar los atajos",

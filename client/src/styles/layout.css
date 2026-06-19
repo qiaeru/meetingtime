@@ -203,6 +203,72 @@ body[data-route="/"] .floating-bg {
   align-self: center;
 }
 
+/* ---- Attribution footer (home, host-setup and join screens) ---- */
+
+.site-footer {
+  /* Pushes to the bottom of the .page flex column on short pages; harmless on
+     the home hero, which already grows via flex: 1. */
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 32px;
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+}
+.page-home .site-footer {
+  /* Above the floating background, like the hero. */
+  position: relative;
+  z-index: 1;
+}
+.site-footer-link {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+}
+.site-footer-link:hover {
+  color: var(--fg);
+}
+.site-footer-logo {
+  height: 1.35em;
+  width: auto;
+  display: block;
+}
+.site-footer-sep {
+  opacity: 0.45;
+}
+
+/* qiae.ru lockup: the head sits on an organic orange blob, mirroring the
+   source site (CSS blob, not part of the SVG). The blob tracks the theme like
+   qiae.ru's own accent: a deeper orange in light mode, a lighter one in dark.
+   Brand color, kept off the global palette since the footer is its only user. */
+.qiaeru-logo {
+  position: relative;
+  display: inline-flex;
+  transition: transform 0.2s ease;
+}
+.qiaeru-logo:hover {
+  transform: scale(1.08);
+}
+.qiaeru-logo::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: 0;
+  background-color: #bf6242;
+  border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+  transition: background-color 0.3s ease;
+}
+:root[data-theme="dark"] .qiaeru-logo::before {
+  background-color: #e3a282;
+}
+.qiaeru-logo img {
+  position: relative;
+  z-index: 1;
+}
+
 /* ---- Forms ---- */
 
 .page-form {

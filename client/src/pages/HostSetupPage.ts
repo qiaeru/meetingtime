@@ -8,6 +8,7 @@ import { icon } from "../components/Icon.js";
 import { toast } from "../components/Toaster.js";
 import { downloadMeetingTemplate, parseMeetingJSON, type MeetingDraft } from "../lib/meetingImport.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
+import { siteFooter } from "../components/SiteFooter.js";
 
 export function renderHostSetup(root: HTMLElement): void {
   const page = document.createElement("main");
@@ -434,6 +435,7 @@ export function renderHostSetup(root: HTMLElement): void {
   });
 
   page.appendChild(wrap);
+  page.appendChild(siteFooter());
   root.appendChild(page);
   // No field autofocus: the router focuses <main> after every render (skip
   // link target), which would clobber it anyway.

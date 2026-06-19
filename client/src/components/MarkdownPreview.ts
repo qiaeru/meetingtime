@@ -1,41 +1,49 @@
 import { Marked } from "marked";
 import DOMPurify from "dompurify";
-// Shiki is type-only at the top level so the runtime (~1.5 MB of grammars and
-// themes once bundled) is split into its own chunk and only fetched on the
-// first preview open. See `loadHighlighter()` below for the dynamic import.
-import type { Highlighter, BundledLanguage } from "shiki";
+// Shiki's runtime (grammars, themes, the Oniguruma wasm) loads lazily on the
+// first preview open, in its own chunk. We use the fine-grained `shiki/core`
+// API with explicit grammar/theme imports rather than the full `shiki` bundle:
+// that bundle registers all ~340 languages, which makes the bundler emit a
+// (never-fetched) chunk for every one of them. See `loadHighlighter()` below.
+import type { HighlighterCore } from "shiki/core";
 import { t } from "../i18n/index.js";
-
-// Keep narrow: every entry pulls a TextMate grammar into the Shiki chunk.
-const LANGS: BundledLanguage[] = [
-  "bash",
-  "css",
-  "diff",
-  "html",
-  "ini",
-  "java",
-  "javascript",
-  "json",
-  "markdown",
-  "python",
-  "shell",
-  "sql",
-  "typescript",
-  "xml",
-  "yaml",
-];
 
 const THEMES = { light: "github-light", dark: "github-dark" } as const;
 
-let highlighter: Highlighter | null = null;
-let highlighterPromise: Promise<Highlighter> | null = null;
-function loadHighlighter(): Promise<Highlighter> {
+let highlighter: HighlighterCore | null = null;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
+function loadHighlighter(): Promise<HighlighterCore> {
   if (!highlighterPromise) {
-    highlighterPromise = import("shiki")
-      .then(({ createHighlighter }) =>
-        createHighlighter({
-          themes: [THEMES.light, THEMES.dark],
-          langs: LANGS,
+    // Each import() is a grammar/theme chunk fetched only now. One `bash` import
+    // covers the bash/sh/shell/zsh aliases. Keep this list in sync with the
+    // languages we advertise as highlightable.
+    highlighterPromise = Promise.all([
+      import("shiki/core"),
+      import("shiki/engine/oniguruma"),
+    ])
+      .then(([{ createHighlighterCore }, { createOnigurumaEngine }]) =>
+        createHighlighterCore({
+          themes: [
+            import("@shikijs/themes/github-light"),
+            import("@shikijs/themes/github-dark"),
+          ],
+          langs: [
+            import("@shikijs/langs/bash"),
+            import("@shikijs/langs/css"),
+            import("@shikijs/langs/diff"),
+            import("@shikijs/langs/html"),
+            import("@shikijs/langs/ini"),
+            import("@shikijs/langs/java"),
+            import("@shikijs/langs/javascript"),
+            import("@shikijs/langs/json"),
+            import("@shikijs/langs/markdown"),
+            import("@shikijs/langs/python"),
+            import("@shikijs/langs/sql"),
+            import("@shikijs/langs/typescript"),
+            import("@shikijs/langs/xml"),
+            import("@shikijs/langs/yaml"),
+          ],
+          engine: createOnigurumaEngine(import("shiki/wasm")),
         })
       )
       .then((h) => {

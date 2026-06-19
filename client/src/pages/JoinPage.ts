@@ -5,6 +5,7 @@ import { clearSession, loadSession, saveSession, savePassword } from "../state/s
 import { navigate } from "../router.js";
 import { toast } from "../components/Toaster.js";
 import { icon } from "../components/Icon.js";
+import { siteFooter } from "../components/SiteFooter.js";
 
 export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   const page = document.createElement("main");
@@ -187,6 +188,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
 
   wrap.appendChild(form);
   page.appendChild(wrap);
+  page.appendChild(siteFooter());
   root.appendChild(page);
   // No field autofocus: the router focuses <main> after every render (skip
   // link target), which would clobber it anyway.
