@@ -19,7 +19,7 @@
     "@meetingtime/shared": "*",
     "codemirror": "^6.0.1",
     "dompurify": "^3.4.11",
-    "lucide": "^1.18.0",
+    "lucide": "^1.21.0",
     "marked": "^18.0.5",
     "shiki": "^4.2.0",
     "socket.io-client": "^4.8.1",
