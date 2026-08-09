@@ -18,7 +18,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@meetingtime/shared": "*",
     "codemirror": "^6.0.1",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.13",
     "lucide": "^1.27.0",
     "marked": "^18.0.7",
     "shiki": "^4.3.1",
