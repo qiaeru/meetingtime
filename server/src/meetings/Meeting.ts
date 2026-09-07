@@ -107,7 +107,10 @@ export class Meeting {
     );
   }
 
-  addParticipant(identity: ParticipantIdentity, asHost = false): { participant: Participant; token: string } {
+  addParticipant(
+    identity: ParticipantIdentity,
+    asHost = false
+  ): { participant: Participant; token: string } {
     if (Object.keys(this.state.participants).length >= MAX_PARTICIPANTS) {
       throw new Error("participant_cap_reached");
     }

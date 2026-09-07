@@ -1,5 +1,11 @@
 import type { Meeting } from "@meetingtime/shared";
-import { formatDateDMY, formatDateYMDCompact, formatMs, formatTime, formatPercent } from "./format.js";
+import {
+  formatDateDMY,
+  formatDateYMDCompact,
+  formatMs,
+  formatTime,
+  formatPercent,
+} from "./format.js";
 import { t } from "../i18n/index.js";
 
 // Filename pattern: YYYYMMDD_Meetingtime_<id-with-underscores>.md so files
@@ -48,7 +54,9 @@ export function buildMarkdown(meeting: Meeting, notesBody: string): string {
 
   lines.push(`## ${t("export.participantsHeading")}`);
   lines.push("");
-  lines.push(`| ${t("export.colParticipant")} | ${t("export.colRole")} | ${t("export.colSpeakingTime")} |`);
+  lines.push(
+    `| ${t("export.colParticipant")} | ${t("export.colRole")} | ${t("export.colSpeakingTime")} |`
+  );
   lines.push("|---|---|---|");
   for (const p of Object.values(meeting.participants).sort(
     (a, b) => b.totalSpeakingMs - a.totalSpeakingMs

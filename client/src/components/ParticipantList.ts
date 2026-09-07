@@ -280,9 +280,7 @@ function renderRow(
   if (meIsHost && (m.currentSpeakerId === p.id || meetingLive)) {
     li.dataset.leading = "true";
     if (m.currentSpeakerId === p.id) {
-      const stop = iconBtn("Square", t("meeting.revokeFloor"), () =>
-        socket.emit("speaker:revoke")
-      );
+      const stop = iconBtn("Square", t("meeting.revokeFloor"), () => socket.emit("speaker:revoke"));
       stop.classList.add("danger");
       stop.dataset.focusKey = `${p.id}:floor`;
       li.appendChild(stop);
@@ -339,10 +337,7 @@ function renderRow(
   pctText.textContent = `(${formatPercent(ratio)})`;
   timing.append(timeText, pctText);
   const timingDescription = `${formatMsSpoken(total, locale$.get())}, ${formatPercent(ratio)}`;
-  timing.setAttribute(
-    "aria-label",
-    `${p.firstName} ${p.lastName}: ${timingDescription}`
-  );
+  timing.setAttribute("aria-label", `${p.firstName} ${p.lastName}: ${timingDescription}`);
   // Hover tooltip exposes the long-form breakdown that doesn't fit in the
   // compact mm:ss chrono.
   timing.title = `${t("meeting.totalSpeakingTime")}: ${timingDescription}`;

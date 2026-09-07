@@ -98,9 +98,7 @@ function renderQueueChip(p: Participant, args: Args): HTMLLIElement {
     btn.setAttribute("aria-label", `${t("meeting.giveFloor")}: ${fullName}`);
     btn.title = `${t("meeting.giveFloor")}: ${fullName}`;
     btn.textContent = fullName;
-    btn.addEventListener("click", () =>
-      args.socket.emit("speaker:grant", { participantId: p.id })
-    );
+    btn.addEventListener("click", () => args.socket.emit("speaker:grant", { participantId: p.id }));
     li.appendChild(btn);
   } else {
     const span = document.createElement("span");

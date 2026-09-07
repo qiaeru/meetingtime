@@ -107,4 +107,3 @@ export function renderLocaleSwitcher(): HTMLElement {
 
   return wrap;
 }
-

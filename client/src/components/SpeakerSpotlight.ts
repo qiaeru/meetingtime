@@ -18,7 +18,11 @@ interface Args {
 // DOM is built once and only text + bar width mutate on tick. A separate
 // visually-hidden live region only updates on speaker identity changes so
 // assistive tech is not spammed with every chrono frame.
-export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: () => void; stop: () => void } {
+export function renderSpeakerSpotlight(args: Args): {
+  el: HTMLElement;
+  update: () => void;
+  stop: () => void;
+} {
   const root = document.createElement("div");
   root.className = "speaker-spotlight-root";
 
@@ -227,4 +231,3 @@ export function renderSpeakerSpotlight(args: Args): { el: HTMLElement; update: (
   // setInterval so all visible seconds agree.
   return { el: root, update, stop: () => undefined };
 }
-

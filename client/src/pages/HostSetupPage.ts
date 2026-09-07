@@ -6,7 +6,11 @@ import { saveSession, savePassword } from "../state/session.js";
 import { navigate } from "../router.js";
 import { icon } from "../components/Icon.js";
 import { toast } from "../components/Toaster.js";
-import { downloadMeetingTemplate, parseMeetingJSON, type MeetingDraft } from "../lib/meetingImport.js";
+import {
+  downloadMeetingTemplate,
+  parseMeetingJSON,
+  type MeetingDraft,
+} from "../lib/meetingImport.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
 import { siteFooter } from "../components/SiteFooter.js";
 
@@ -99,7 +103,11 @@ export function renderHostSetup(root: HTMLElement): void {
       const f = makeInput(t("common.firstName"), p.firstName, (v) => (p.firstName = v));
       const l = makeInput(t("common.lastName"), p.lastName, (v) => (p.lastName = v));
       const r = makeInput(t("common.role"), p.role, (v) => (p.role = v));
-      const up = reorderBtn("ChevronUp", () => move(preParticipants, idx, -1, renderPreList), idx === 0);
+      const up = reorderBtn(
+        "ChevronUp",
+        () => move(preParticipants, idx, -1, renderPreList),
+        idx === 0
+      );
       const down = reorderBtn(
         "ChevronDown",
         () => move(preParticipants, idx, 1, renderPreList),
@@ -367,10 +375,13 @@ export function renderHostSetup(root: HTMLElement): void {
       }
       return;
     }
-    const cleanedPre = preParticipants.filter((p) => p.firstName.trim() && p.lastName.trim() && p.role.trim());
+    const cleanedPre = preParticipants.filter(
+      (p) => p.firstName.trim() && p.lastName.trim() && p.role.trim()
+    );
     const cleanedTopics = topics.map((t) => t.trim()).filter(Boolean);
     const minutes = parseFloat(timeboxInput.value);
-    const timeboxMs = Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes * 60_000) : undefined;
+    const timeboxMs =
+      Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes * 60_000) : undefined;
     const plannedMinutes = parseFloat(plannedInput.value);
     const plannedDurationMs =
       Number.isFinite(plannedMinutes) && plannedMinutes > 0
@@ -420,7 +431,11 @@ export function renderHostSetup(root: HTMLElement): void {
         }
         meeting$.set(resp.meeting);
         myParticipantId$.set(resp.participantId);
-        saveSession({ meetingId: resp.meetingId, participantId: resp.participantId, token: resp.token });
+        saveSession({
+          meetingId: resp.meetingId,
+          participantId: resp.participantId,
+          token: resp.token,
+        });
         // The share dialog (re-openable later from the meeting header) reads
         // the password back from sessionStorage on the meeting page.
         savePassword(resp.meetingId, password);
@@ -492,7 +507,11 @@ function placeholderInput(placeholder: string): HTMLInputElement {
   return input;
 }
 
-function makeInput(placeholder: string, value: string, onChange: (v: string) => void): HTMLInputElement {
+function makeInput(
+  placeholder: string,
+  value: string,
+  onChange: (v: string) => void
+): HTMLInputElement {
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = placeholder;
@@ -550,4 +569,3 @@ function sectionHeading(text: string): HTMLElement {
   h.textContent = text;
   return h;
 }
-

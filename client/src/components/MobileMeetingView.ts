@@ -290,12 +290,12 @@ export function renderMobileMeeting(
       iAmSpeaker &&
       Boolean(
         m &&
-          m.timeboxEnabled &&
-          m.timeboxMs &&
-          m.timeboxMs > 0 &&
-          m.currentSpeakerStartedAt &&
-          m.phase === "running" &&
-          Date.now() - m.currentSpeakerStartedAt >= m.timeboxMs
+        m.timeboxEnabled &&
+        m.timeboxMs &&
+        m.timeboxMs > 0 &&
+        m.currentSpeakerStartedAt &&
+        m.phase === "running" &&
+        Date.now() - m.currentSpeakerStartedAt >= m.timeboxMs
       );
     claimBtn.dataset.over = String(over);
     if (over && !turnOverAlerted) {

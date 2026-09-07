@@ -2,7 +2,6 @@
 // them is a breaking change for every connected client mid-rollout.
 import type { Meeting, ParticipantIdentity } from "./models.js";
 
-
 export interface ClientToServerEvents {
   "meeting:create": (
     payload: {
@@ -59,9 +58,7 @@ export interface ClientToServerEvents {
   "topic:remove": (payload: { topicId: string }, ack?: AckSimple) => void;
   "topic:setCurrent": (payload: { topicId: string | null }, ack?: AckSimple) => void;
   "topic:reorder": (
-    payload:
-      | { topicId: string; direction: "up" | "down" }
-      | { topicId: string; toIndex: number },
+    payload: { topicId: string; direction: "up" | "down" } | { topicId: string; toIndex: number },
     ack?: AckSimple
   ) => void;
 }

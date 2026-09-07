@@ -2,7 +2,10 @@ import type { Meeting } from "@meetingtime/shared";
 import { formatMs } from "../lib/format.js";
 import { t } from "../i18n/index.js";
 
-export function renderMeetingTimer(getMeeting: () => Meeting | null): { el: HTMLElement; stop: () => void } {
+export function renderMeetingTimer(getMeeting: () => Meeting | null): {
+  el: HTMLElement;
+  stop: () => void;
+} {
   const el = document.createElement("div");
   el.className = "global-timer";
   el.dataset.zone = "none";

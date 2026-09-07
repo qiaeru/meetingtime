@@ -2,7 +2,13 @@ import type { Meeting } from "@meetingtime/shared";
 import { headerBar } from "./HomePage.js";
 import { t } from "../i18n/index.js";
 import { meeting$, myParticipantId$, socket$, connection$ } from "../state/socket.js";
-import { clearSession, loadSession, loadPassword, savePassword, saveSession } from "../state/session.js";
+import {
+  clearSession,
+  loadSession,
+  loadPassword,
+  savePassword,
+  saveSession,
+} from "../state/session.js";
 import { navigate, rerender } from "../router.js";
 import { renderMobileMeeting } from "../components/MobileMeetingView.js";
 import { renderMeetingTimer } from "../components/MeetingTimer.js";
@@ -49,7 +55,11 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
         if (resp.ok) {
           meeting$.set(resp.meeting);
           myParticipantId$.set(resp.participantId);
-          saveSession({ meetingId: resp.meetingId, participantId: resp.participantId, token: resp.token });
+          saveSession({
+            meetingId: resp.meetingId,
+            participantId: resp.participantId,
+            token: resp.token,
+          });
         } else {
           // Wipe the stale session so the next visit lands on the join form
           // instead of looping through this rejoin path.
@@ -425,7 +435,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   };
   void import("../components/NotesPanel.js").then(({ renderNotesPanel }) => {
     if (tornDown) return;
-    notes = renderNotesPanel({ getMeeting, meetingId, participantId, displayName, token, readOnly: !amIHost() });
+    notes = renderNotesPanel({
+      getMeeting,
+      meetingId,
+      participantId,
+      displayName,
+      token,
+      readOnly: !amIHost(),
+    });
     grid.appendChild(notes.el);
     const color = myColor();
     if (color) {
@@ -549,12 +566,32 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       if (focused) socket.emit("speaker:grant", { participantId: focused });
     }
   });
-  shortcut("ArrowDown", (e) => { e.preventDefault(); list.focusNext(1); });
-  shortcut("ArrowUp", (e) => { e.preventDefault(); list.focusNext(-1); });
+  shortcut("ArrowDown", (e) => {
+    e.preventDefault();
+    list.focusNext(1);
+  });
+  shortcut("ArrowUp", (e) => {
+    e.preventDefault();
+    list.focusNext(-1);
+  });
   // Agenda uses Ctrl+Shift to avoid clashing with the notes editor where
   // Shift+Arrow extends the text selection.
-  shortcut("ArrowDown", (e) => { e.preventDefault(); agenda.focusNext(1); }, { shift: true });
-  shortcut("ArrowUp", (e) => { e.preventDefault(); agenda.focusNext(-1); }, { shift: true });
+  shortcut(
+    "ArrowDown",
+    (e) => {
+      e.preventDefault();
+      agenda.focusNext(1);
+    },
+    { shift: true }
+  );
+  shortcut(
+    "ArrowUp",
+    (e) => {
+      e.preventDefault();
+      agenda.focusNext(-1);
+    },
+    { shift: true }
+  );
   shortcut(
     "Enter",
     (e) => {
@@ -579,7 +616,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     },
     { alt: true }
   );
-  shortcut("n", (e) => { e.preventDefault(); notes?.toggleCollapsed(); }, { alt: true });
+  shortcut(
+    "n",
+    (e) => {
+      e.preventDefault();
+      notes?.toggleCollapsed();
+    },
+    { alt: true }
+  );
 
   const toggleHand = (): void => {
     const m = getMeeting();

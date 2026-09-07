@@ -1,9 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  Meeting,
-} from "@meetingtime/shared";
+import type { ClientToServerEvents, ServerToClientEvents, Meeting } from "@meetingtime/shared";
 import { Observable } from "./store.js";
 
 export type MeetingSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

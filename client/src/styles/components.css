@@ -8,7 +8,10 @@
   border-radius: var(--radius);
   border: 1px solid transparent;
   font-weight: 600;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease,
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.08s ease,
     filter 0.15s ease;
   min-height: 44px;
 }
@@ -85,7 +88,10 @@
   color: var(--fg);
   gap: 4px;
   /* Smooth hover/press feedback (was a hard background swap before). */
-  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
 }
 .icon-btn:active {
   transform: scale(0.96);
@@ -153,7 +159,10 @@ textarea {
   background: var(--bg);
   width: 100%;
   min-height: 40px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 input[type="text"]:hover:not(:focus):not(:disabled),
 input[type="number"]:hover:not(:focus):not(:disabled),
@@ -225,8 +234,12 @@ textarea:focus-visible {
   color: white;
   z-index: 1;
 }
-.avatar-badge--speaking { background: var(--success); }
-.avatar-badge--hand { background: var(--accent); }
+.avatar-badge--speaking {
+  background: var(--success);
+}
+.avatar-badge--hand {
+  background: var(--accent);
+}
 
 /* ---- Speaker spotlight ---- */
 
@@ -243,14 +256,20 @@ textarea:focus-visible {
   /* Sized to fit the tallest state (avec anneau de progression = 96px) so the
      card doesn't visually resize between idle / speaking / limit states. */
   min-height: 132px;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 .speaker-spotlight[data-state="idle"] {
   background: var(--bg-muted);
   color: var(--fg-muted);
 }
-.speaker-spotlight[data-zone="ok"] { border-left-color: var(--success); }
-.speaker-spotlight[data-zone="warn"] { border-left-color: var(--warn); }
+.speaker-spotlight[data-zone="ok"] {
+  border-left-color: var(--success);
+}
+.speaker-spotlight[data-zone="warn"] {
+  border-left-color: var(--warn);
+}
 .speaker-spotlight[data-zone="over"] {
   border-left-color: var(--over);
   /* The over-limit pulse is scoped to the small turn chrono + its bar (see
@@ -399,7 +418,9 @@ textarea:focus-visible {
   --water-wave: color-mix(in srgb, var(--water) 35%, transparent);
   --water-wave-front: color-mix(in srgb, var(--water) 28%, transparent);
   background: var(--water-bg);
-  transition: height 0.5s linear, background 0.3s ease;
+  transition:
+    height 0.5s linear,
+    background 0.3s ease;
   pointer-events: none;
   z-index: 0;
 }
@@ -443,8 +464,12 @@ textarea:focus-visible {
   animation-direction: reverse;
 }
 @keyframes global-timer-wave-rotate {
-  from { transform: translateX(-50%) rotate(0deg); }
-  to   { transform: translateX(-50%) rotate(360deg); }
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .global-timer-fill::before,
@@ -496,7 +521,9 @@ textarea:focus-visible {
   border: 1px solid color-mix(in srgb, var(--warn) 50%, transparent);
   font-size: 0.9rem;
 }
-.connection-banner[hidden] { display: none; }
+.connection-banner[hidden] {
+  display: none;
+}
 .connection-banner[data-status="disconnected"] {
   background: color-mix(in srgb, var(--danger) 18%, var(--bg-elev));
   border-color: color-mix(in srgb, var(--danger) 50%, transparent);
@@ -634,7 +661,9 @@ textarea:focus-visible {
   border-radius: var(--radius-sm);
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
   overflow: hidden;
   isolation: isolate;
   /* Keep natural height so the list scrolls instead of squeezing rows when full. */
@@ -662,7 +691,9 @@ textarea:focus-visible {
   color: var(--fg-muted);
   cursor: grab;
   opacity: 0.5;
-  transition: opacity 0.12s ease, color 0.12s ease;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
   flex: 0 0 auto;
   touch-action: none;
 }
@@ -800,7 +831,9 @@ textarea:focus-visible {
   height: 32px;
   border-radius: var(--radius-sm);
   color: var(--fg-muted);
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 .row-action:hover:not(:disabled) {
   background: var(--bg);
@@ -919,8 +952,14 @@ textarea:focus-visible {
 }
 
 @keyframes dialog-backdrop-in {
-  from { opacity: 0; backdrop-filter: blur(0); }
-  to   { opacity: 1; backdrop-filter: blur(4px); }
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
 }
 
 .dialog {
@@ -945,8 +984,14 @@ textarea:focus-visible {
 }
 
 @keyframes dialog-pop-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .dialog-wide {
   max-width: 640px;
@@ -1088,7 +1133,9 @@ textarea:focus-visible {
   height: 100%;
   width: 0%;
   background: var(--success, #16a34a);
-  transition: width 0.4s linear, background 0.3s ease;
+  transition:
+    width 0.4s linear,
+    background 0.3s ease;
 }
 .speaker-spotlight[data-zone="warn"] .spotlight-turn-bar-fill {
   background: var(--warn);

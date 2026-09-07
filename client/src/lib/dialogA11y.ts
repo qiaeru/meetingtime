@@ -7,17 +7,18 @@ export function installDialogA11y(
   backdrop: HTMLElement,
   dialog: HTMLElement,
   close: () => void,
-  opts: { initialFocus?: HTMLElement } = {},
+  opts: { initialFocus?: HTMLElement } = {}
 ): () => void {
   const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   const getFocusables = (): HTMLElement[] =>
     Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-      (el) => !el.hidden && el.offsetParent !== null,
+      (el) => !el.hidden && el.offsetParent !== null
     );
 
-  const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const previouslyFocused =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   const onKey = (e: KeyboardEvent): void => {
     if (e.key === "Escape") {
