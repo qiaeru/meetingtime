@@ -76,8 +76,16 @@
 }
 body[data-route="/"] {
   background:
-    radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
-    radial-gradient(circle at 80% 90%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+    radial-gradient(
+      circle at 20% 10%,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 90%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 60%
+    ),
     linear-gradient(180deg, var(--bg) 0%, var(--bg-muted) 100%);
 }
 
@@ -146,7 +154,11 @@ body[data-route="/"] .floating-bg {
   font-size: clamp(2.6rem, 5.5vw, 4.2rem);
   font-weight: 800;
   letter-spacing: -0.035em;
-  background: linear-gradient(135deg, var(--fg) 0%, color-mix(in srgb, var(--accent) 70%, var(--fg)) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--fg) 0%,
+    color-mix(in srgb, var(--accent) 70%, var(--fg)) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -166,7 +178,6 @@ body[data-route="/"] .floating-bg {
   flex-wrap: wrap;
   justify-content: center;
 }
-
 
 /* Grid layout so the icon always sits in a fixed-width slot and the label
    text starts at the same x position in every CTA, regardless of which
@@ -401,7 +412,10 @@ body[data-route="/"] .floating-bg {
   cursor: pointer;
   text-align: left;
   color: var(--fg);
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.12s ease;
 }
 .import-zone:hover {
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-muted));
@@ -617,7 +631,8 @@ body[data-route="/"] .floating-bg {
   z-index: 2;
   cursor: col-resize;
   /* Faint idle grip so the affordance is discoverable without hovering. */
-  background: linear-gradient(var(--border-strong), var(--border-strong)) center / 2px 40px no-repeat;
+  background: linear-gradient(var(--border-strong), var(--border-strong)) center / 2px 40px
+    no-repeat;
   transition: background 0.15s ease;
 }
 .notes-resizer:hover,
@@ -732,10 +747,19 @@ body[data-route="/"] .floating-bg {
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--border);
 }
-.notes-preview h3 { font-size: 1.2em; }
-.notes-preview h4 { font-size: 1em; }
-.notes-preview h5 { font-size: 0.9em; }
-.notes-preview h6 { font-size: 0.85em; color: var(--fg-muted); }
+.notes-preview h3 {
+  font-size: 1.2em;
+}
+.notes-preview h4 {
+  font-size: 1em;
+}
+.notes-preview h5 {
+  font-size: 0.9em;
+}
+.notes-preview h6 {
+  font-size: 0.85em;
+  color: var(--fg-muted);
+}
 
 .notes-preview > *:first-child {
   margin-top: 0;

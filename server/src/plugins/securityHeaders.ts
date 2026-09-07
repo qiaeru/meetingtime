@@ -27,7 +27,7 @@ export function securityHeaders(): RequestHandler {
         "form-action 'self'",
         "base-uri 'self'",
         "object-src 'none'",
-      ].join("; "),
+      ].join("; ")
     );
 
     // HSTS only when the request actually arrived over HTTPS so plain-HTTP

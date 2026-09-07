@@ -23,7 +23,10 @@ function audio(): AudioContext | null {
   if (muted$.get()) return null;
   if (!ctx) {
     try {
-      ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      ctx = new (
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      )();
     } catch {
       return null;
     }
@@ -33,7 +36,13 @@ function audio(): AudioContext | null {
   return ctx;
 }
 
-type Tone = { freq: number; durationMs: number; type?: OscillatorType; gain?: number; freqEnd?: number };
+type Tone = {
+  freq: number;
+  durationMs: number;
+  type?: OscillatorType;
+  gain?: number;
+  freqEnd?: number;
+};
 
 function play(tones: Tone[]): void {
   const ac = audio();
@@ -44,7 +53,8 @@ function play(tones: Tone[]): void {
     const gain = ac.createGain();
     osc.type = tone.type ?? "sine";
     osc.frequency.setValueAtTime(tone.freq, when);
-    if (tone.freqEnd) osc.frequency.exponentialRampToValueAtTime(tone.freqEnd, when + tone.durationMs / 1000);
+    if (tone.freqEnd)
+      osc.frequency.exponentialRampToValueAtTime(tone.freqEnd, when + tone.durationMs / 1000);
     const peak = tone.gain ?? 0.15;
     gain.gain.setValueAtTime(0.0001, when);
     gain.gain.exponentialRampToValueAtTime(peak, when + 0.01);
@@ -57,7 +67,10 @@ function play(tones: Tone[]): void {
 }
 
 export function playHandRaise(): void {
-  play([{ freq: 880, durationMs: 120, type: "sine" }, { freq: 1320, durationMs: 120, type: "sine" }]);
+  play([
+    { freq: 880, durationMs: 120, type: "sine" },
+    { freq: 1320, durationMs: 120, type: "sine" },
+  ]);
 }
 
 export function playGrant(): void {

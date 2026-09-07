@@ -12,11 +12,14 @@ import type { Locale } from "@meetingtime/shared";
 
 // Locale-aware spoken units for screen-reader output. Plural is the form
 // used for any count !== 1 (zero and 2+), adequate for FR, EN, ES, IT and DE.
-const SPOKEN_UNITS: Record<Locale, { hr: [string, string]; min: [string, string]; sec: [string, string] }> = {
-  fr: { hr: ["heure", "heures"],   min: ["minute", "minutes"], sec: ["seconde", "secondes"] },
-  en: { hr: ["hour", "hours"],     min: ["minute", "minutes"], sec: ["second", "seconds"] },
-  es: { hr: ["hora", "horas"],     min: ["minuto", "minutos"], sec: ["segundo", "segundos"] },
-  it: { hr: ["ora", "ore"],        min: ["minuto", "minuti"],  sec: ["secondo", "secondi"] },
+const SPOKEN_UNITS: Record<
+  Locale,
+  { hr: [string, string]; min: [string, string]; sec: [string, string] }
+> = {
+  fr: { hr: ["heure", "heures"], min: ["minute", "minutes"], sec: ["seconde", "secondes"] },
+  en: { hr: ["hour", "hours"], min: ["minute", "minutes"], sec: ["second", "seconds"] },
+  es: { hr: ["hora", "horas"], min: ["minuto", "minutos"], sec: ["segundo", "segundos"] },
+  it: { hr: ["ora", "ore"], min: ["minuto", "minuti"], sec: ["secondo", "secondi"] },
   de: { hr: ["Stunde", "Stunden"], min: ["Minute", "Minuten"], sec: ["Sekunde", "Sekunden"] },
 };
 

@@ -19,8 +19,8 @@ export function colorByPosition(idx: number, total: number, salt = ""): string {
   // when participant count is high. White initials sit on this color, so
   // the high-luminance band (yellow through cyan) gets a darker base to keep
   // them legible.
-  const sat = 65 + ((idx % 2) * 10);
+  const sat = 65 + (idx % 2) * 10;
   const highLuminance = hue > 40 && hue < 200;
-  const light = (highLuminance ? 36 : 44) + ((idx % 3) * 3);
+  const light = (highLuminance ? 36 : 44) + (idx % 3) * 3;
   return `hsl(${hue.toFixed(0)}, ${sat}%, ${light}%)`;
 }

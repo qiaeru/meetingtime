@@ -77,7 +77,8 @@ function parseIdentity(raw: unknown, path: string): ParticipantIdentity {
 
 function strField(o: Record<string, unknown>, key: string, path: string): string {
   const v = o[key];
-  if (typeof v !== "string" || !v.trim()) throw new Error(`${path}.${key} is required and must be a non-empty string`);
+  if (typeof v !== "string" || !v.trim())
+    throw new Error(`${path}.${key} is required and must be a non-empty string`);
   return v.trim();
 }
 

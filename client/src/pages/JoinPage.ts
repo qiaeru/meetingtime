@@ -113,26 +113,34 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
     }
     // Disabled until the ack so an impatient double-tap doesn't fire twice.
     resumeBtn.disabled = true;
-    s.timeout(10_000).emit("meeting:join", { meetingId: id, token: sess.token }, (timeoutErr, resp) => {
-      resumeBtn.disabled = false;
-      if (timeoutErr) {
-        toast(t("errors.connection"), { type: "error" });
-        return;
-      }
-      if (!resp.ok) {
-        toast(t(`errors.${resp.error}`), { type: "error" });
-        // Stale session: clean it so the banner stops showing.
-        if (resp.error === "invalid_token" || resp.error === "meeting_not_found") {
-          clearSession(id);
-          refreshResume();
+    s.timeout(10_000).emit(
+      "meeting:join",
+      { meetingId: id, token: sess.token },
+      (timeoutErr, resp) => {
+        resumeBtn.disabled = false;
+        if (timeoutErr) {
+          toast(t("errors.connection"), { type: "error" });
+          return;
         }
-        return;
+        if (!resp.ok) {
+          toast(t(`errors.${resp.error}`), { type: "error" });
+          // Stale session: clean it so the banner stops showing.
+          if (resp.error === "invalid_token" || resp.error === "meeting_not_found") {
+            clearSession(id);
+            refreshResume();
+          }
+          return;
+        }
+        meeting$.set(resp.meeting);
+        myParticipantId$.set(resp.participantId);
+        saveSession({
+          meetingId: resp.meetingId,
+          participantId: resp.participantId,
+          token: resp.token,
+        });
+        navigate("/meeting", { id: resp.meetingId });
       }
-      meeting$.set(resp.meeting);
-      myParticipantId$.set(resp.participantId);
-      saveSession({ meetingId: resp.meetingId, participantId: resp.participantId, token: resp.token });
-      navigate("/meeting", { id: resp.meetingId });
-    });
+    );
   });
 
   const submit = document.createElement("button");
@@ -161,29 +169,37 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
     submitLabel.textContent = " " + t("join.joining");
     const password = passwordInput.value.trim() || undefined;
     // 10 s ack timeout: see HostSetupPage for the rationale.
-    s.timeout(10_000).emit("meeting:join", { meetingId: id, identity, password }, (timeoutErr, resp) => {
-      submit.disabled = false;
-      submitLabel.textContent = " " + t("join.join");
-      if (timeoutErr) {
-        toast(t("errors.connection"), { type: "error" });
-        return;
-      }
-      if (!resp.ok) {
-        toast(t(`errors.${resp.error}`), { type: "error" });
-        if (resp.error === "invalid_password") {
-          passwordInput.setAttribute("aria-invalid", "true");
-          passwordInput.focus();
+    s.timeout(10_000).emit(
+      "meeting:join",
+      { meetingId: id, identity, password },
+      (timeoutErr, resp) => {
+        submit.disabled = false;
+        submitLabel.textContent = " " + t("join.join");
+        if (timeoutErr) {
+          toast(t("errors.connection"), { type: "error" });
+          return;
         }
-        return;
+        if (!resp.ok) {
+          toast(t(`errors.${resp.error}`), { type: "error" });
+          if (resp.error === "invalid_password") {
+            passwordInput.setAttribute("aria-invalid", "true");
+            passwordInput.focus();
+          }
+          return;
+        }
+        meeting$.set(resp.meeting);
+        myParticipantId$.set(resp.participantId);
+        saveSession({
+          meetingId: resp.meetingId,
+          participantId: resp.participantId,
+          token: resp.token,
+        });
+        // Stays tab-scoped (sessionStorage) so the guest can re-share it
+        // from the meeting page if needed.
+        savePassword(resp.meetingId, password);
+        navigate("/meeting", { id: resp.meetingId });
       }
-      meeting$.set(resp.meeting);
-      myParticipantId$.set(resp.participantId);
-      saveSession({ meetingId: resp.meetingId, participantId: resp.participantId, token: resp.token });
-      // Stays tab-scoped (sessionStorage) so the guest can re-share it
-      // from the meeting page if needed.
-      savePassword(resp.meetingId, password);
-      navigate("/meeting", { id: resp.meetingId });
-    });
+    );
   });
 
   wrap.appendChild(form);
@@ -194,7 +210,11 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   // link target), which would clobber it anyway.
 }
 
-function identityFields(): { el: HTMLElement; value: () => { firstName: string; lastName: string; role: string } | undefined; firstInput: HTMLInputElement } {
+function identityFields(): {
+  el: HTMLElement;
+  value: () => { firstName: string; lastName: string; role: string } | undefined;
+  firstInput: HTMLInputElement;
+} {
   const fs = document.createElement("fieldset");
   fs.className = "fieldset";
   const leg = document.createElement("legend");

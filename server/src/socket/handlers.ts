@@ -447,9 +447,15 @@ function passthroughOrInternal(e: unknown): string {
 
 function sanitizeIdentity(raw: ParticipantIdentity | undefined): ParticipantIdentity | undefined {
   if (!raw) return undefined;
-  const firstName = String(raw.firstName ?? "").trim().slice(0, 60);
-  const lastName = String(raw.lastName ?? "").trim().slice(0, 60);
-  const role = String(raw.role ?? "").trim().slice(0, 60);
+  const firstName = String(raw.firstName ?? "")
+    .trim()
+    .slice(0, 60);
+  const lastName = String(raw.lastName ?? "")
+    .trim()
+    .slice(0, 60);
+  const role = String(raw.role ?? "")
+    .trim()
+    .slice(0, 60);
   if (!firstName || !lastName || !role) return undefined;
   return { firstName, lastName, role };
 }

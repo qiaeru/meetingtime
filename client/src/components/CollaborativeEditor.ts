@@ -1,5 +1,11 @@
 import { Compartment, EditorState } from "@codemirror/state";
-import { EditorView, lineNumbers, highlightActiveLine, keymap, placeholder } from "@codemirror/view";
+import {
+  EditorView,
+  lineNumbers,
+  highlightActiveLine,
+  keymap,
+  placeholder,
+} from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import * as Y from "yjs";
@@ -31,7 +37,9 @@ const lightTheme = EditorView.theme(
       border: "none",
     },
     ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--accent) 8%, transparent)" },
-    ".cm-activeLineGutter": { backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)" },
+    ".cm-activeLineGutter": {
+      backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)",
+    },
     ".cm-cursor": { borderLeftColor: "var(--fg)" },
     // Override y-codemirror.next which hardcodes `font-family: serif` on the
     // floating remote-cursor name tag.
@@ -58,7 +66,9 @@ const darkTheme = EditorView.theme(
       border: "none",
     },
     ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)" },
-    ".cm-activeLineGutter": { backgroundColor: "color-mix(in srgb, var(--accent) 18%, transparent)" },
+    ".cm-activeLineGutter": {
+      backgroundColor: "color-mix(in srgb, var(--accent) 18%, transparent)",
+    },
     ".cm-cursor": { borderLeftColor: "var(--fg)" },
     // Override y-codemirror.next which hardcodes `font-family: serif` on the
     // floating remote-cursor name tag.
@@ -99,12 +109,9 @@ export interface CollaborativeEditor {
 
 export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
   const ydoc = new Y.Doc();
-  const provider = new WebsocketProvider(
-    YJS_WS_URL.replace(/\/$/, ""),
-    args.meetingId,
-    ydoc,
-    { params: { token: args.token } }
-  );
+  const provider = new WebsocketProvider(YJS_WS_URL.replace(/\/$/, ""), args.meetingId, ydoc, {
+    params: { token: args.token },
+  });
 
   const initialColor = sanitizeColor(args.color ?? colorFromId(args.participantId));
   provider.awareness.setLocalStateField("user", {

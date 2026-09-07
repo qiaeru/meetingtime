@@ -10,7 +10,9 @@ export const MAX_TIMEBOX_MS = 60 * 60 * 1000;
 export const MAX_PLANNED_MS = 24 * 60 * 60 * 1000;
 
 export function clampString(value: unknown, max: number): string {
-  return String(value ?? "").trim().slice(0, max);
+  return String(value ?? "")
+    .trim()
+    .slice(0, max);
 }
 
 export function clampPositiveMs(value: unknown, max: number): number | undefined {

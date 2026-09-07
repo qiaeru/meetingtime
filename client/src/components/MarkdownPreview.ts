@@ -17,16 +17,10 @@ function loadHighlighter(): Promise<HighlighterCore> {
     // Each import() is a grammar/theme chunk fetched only now. One `bash` import
     // covers the bash/sh/shell/zsh aliases. Keep this list in sync with the
     // languages we advertise as highlightable.
-    highlighterPromise = Promise.all([
-      import("shiki/core"),
-      import("shiki/engine/oniguruma"),
-    ])
+    highlighterPromise = Promise.all([import("shiki/core"), import("shiki/engine/oniguruma")])
       .then(([{ createHighlighterCore }, { createOnigurumaEngine }]) =>
         createHighlighterCore({
-          themes: [
-            import("@shikijs/themes/github-light"),
-            import("@shikijs/themes/github-dark"),
-          ],
+          themes: [import("@shikijs/themes/github-light"), import("@shikijs/themes/github-dark")],
           langs: [
             import("@shikijs/langs/bash"),
             import("@shikijs/langs/css"),
@@ -67,10 +61,7 @@ const md = new Marked({
           defaultColor: false,
         });
       }
-      const escaped = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+      const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const langAttr = language ? ` class="language-${language}"` : "";
       // CSS ::before reads data-syntax-loading to show a "loading highlighter"
       // hint until the proper colors arrive.

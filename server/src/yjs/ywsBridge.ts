@@ -47,7 +47,11 @@ export function releaseDocState(meetingId: string): void {
   const state = docStates.get(meetingId);
   if (!state) return;
   for (const ws of state.conns.keys()) {
-    try { ws.close(); } catch { /* socket may already be gone */ }
+    try {
+      ws.close();
+    } catch {
+      /* socket may already be gone */
+    }
   }
   state.ydoc.off("update", state.onUpdate);
   state.awareness.destroy();
@@ -78,7 +82,10 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
 
   awareness.on(
     "update",
-    ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => {
+    (
+      { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+      origin: unknown
+    ) => {
       // Track which awareness clientIDs each connection controls, so cleanup
       // can remove them the moment the socket closes; otherwise the departed
       // user's cursor lingers until the 30 s awareness timeout.
@@ -90,7 +97,10 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
       const changed = added.concat(updated, removed);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_AWARENESS);
-      encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, changed));
+      encoding.writeVarUint8Array(
+        encoder,
+        awarenessProtocol.encodeAwarenessUpdate(awareness, changed)
+      );
       const msg = encoding.toUint8Array(encoder);
       for (const ws of conns.keys()) {
         if (ws !== origin) safeSend(ws, msg);
@@ -174,7 +184,10 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
         encoding.writeVarUint(enc, MESSAGE_AWARENESS);
         encoding.writeVarUint8Array(
           enc,
-          awarenessProtocol.encodeAwarenessUpdate(state.awareness, Array.from(awarenessStates.keys()))
+          awarenessProtocol.encodeAwarenessUpdate(
+            state.awareness,
+            Array.from(awarenessStates.keys())
+          )
         );
         safeSend(ws, encoding.toUint8Array(enc));
       }
@@ -198,7 +211,11 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
       ws.on("message", (raw: Buffer) => {
         if (!allowMessage()) {
           log.warn({ meetingId, participantId }, "yjs ws message budget exceeded; terminating");
-          try { ws.terminate(); } catch { /* already gone */ }
+          try {
+            ws.terminate();
+          } catch {
+            /* already gone */
+          }
           return;
         }
         try {
@@ -251,11 +268,19 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
       });
       const heartbeat = setInterval(() => {
         if (!alive) {
-          try { ws.terminate(); } catch { /* already gone */ }
+          try {
+            ws.terminate();
+          } catch {
+            /* already gone */
+          }
           return;
         }
         alive = false;
-        try { ws.ping(); } catch { /* socket may be closing */ }
+        try {
+          ws.ping();
+        } catch {
+          /* socket may be closing */
+        }
       }, PING_INTERVAL_MS);
 
       const cleanup = () => {
@@ -275,7 +300,11 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
   return {
     close: () => {
       for (const client of wss.clients) {
-        try { client.close(1001, "server_shutting_down"); } catch { /* already gone */ }
+        try {
+          client.close(1001, "server_shutting_down");
+        } catch {
+          /* already gone */
+        }
       }
       wss.close();
     },
