@@ -240,9 +240,9 @@ body[data-route="/"] .floating-bg {
   opacity: 0.45;
 }
 
-/* qiae.ru lockup: the head sits on an organic orange blob, mirroring the
+/* qiaeru.com lockup: the head sits on an organic orange blob, mirroring the
    source site (CSS blob, not part of the SVG). The blob tracks the theme like
-   qiae.ru's own accent: a deeper orange in light mode, a lighter one in dark.
+   qiaeru.com's own accent: a deeper orange in light mode, a lighter one in dark.
    Brand color, kept off the global palette since the footer is its only user. */
 .qiaeru-logo {
   position: relative;
