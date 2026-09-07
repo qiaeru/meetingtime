@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- The author link in the attribution footer now points to qiaeru.com, following the domain move.
+
 ## [1.4.0] - 2026-06-19
 
 ### Added
