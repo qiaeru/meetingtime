@@ -15,7 +15,12 @@ import {
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
 import { siteFooter } from "../components/SiteFooter.js";
 
-export function renderHostSetup(root: HTMLElement): void {
+// What the host typed, kept in module memory (never in storage) until the
+// meeting is created: the page rebuild of a language switch would otherwise
+// wipe the participant and topic rows, which only live in this closure.
+let savedDraft: { draft: MeetingDraft; passwordConfirm: string } | null = null;
+
+export function renderHostSetup(root: HTMLElement): () => void {
   const page = document.createElement("div");
   page.className = "page page-form";
   page.appendChild(headerBar());
@@ -281,6 +286,13 @@ export function renderHostSetup(root: HTMLElement): void {
     }
   };
 
+  if (savedDraft) {
+    applyDraft(savedDraft.draft);
+    // applyDraft fills the confirmation too; restore what was actually typed.
+    passwordConfirmInput.value = savedDraft.passwordConfirm;
+  }
+  const optionalNumber = (v: string): number | undefined => (v ? Number(v) : undefined);
+
   async function handleImportFile(file: File): Promise<void> {
     try {
       const text = await file.text();
@@ -346,6 +358,7 @@ export function renderHostSetup(root: HTMLElement): void {
   actions.append(submit, exportBtn);
   form.appendChild(actions);
 
+  let created = false;
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const host = hostFields.value();
@@ -423,6 +436,7 @@ export function renderHostSetup(root: HTMLElement): void {
           toast(t(`errors.${resp.error}`), { type: "error" });
           return;
         }
+        created = true;
         meeting$.set(resp.meeting);
         myParticipantId$.set(resp.participantId);
         saveSession({
@@ -448,11 +462,29 @@ export function renderHostSetup(root: HTMLElement): void {
   root.appendChild(page);
   // No field autofocus: the router focuses <main> after every render (skip
   // link target), which would clobber it anyway.
+
+  return () => {
+    savedDraft = created
+      ? null
+      : {
+          draft: {
+            host: hostFields.raw(),
+            participants: preParticipants.map((p) => ({ ...p })),
+            topics: [...topics],
+            timeboxMinutes: optionalNumber(timeboxInput.value),
+            plannedDurationMinutes: optionalNumber(plannedInput.value),
+            password: passwordInput.value || undefined,
+          },
+          passwordConfirm: passwordConfirmInput.value,
+        };
+  };
 }
 
 interface IdentityFieldsHandle {
   el: HTMLElement;
   value: () => ParticipantIdentity | undefined;
+  // As typed, even when incomplete.
+  raw: () => ParticipantIdentity;
   set: (identity: ParticipantIdentity) => void;
 }
 
@@ -485,6 +517,11 @@ function identityFields(legendText: string): IdentityFieldsHandle {
       if (!f || !l || !r) return undefined;
       return { firstName: f, lastName: l, role: r };
     },
+    raw: () => ({
+      firstName: first.input.value,
+      lastName: last.input.value,
+      role: role.input.value,
+    }),
     set: (identity) => {
       first.input.value = identity.firstName;
       last.input.value = identity.lastName;
