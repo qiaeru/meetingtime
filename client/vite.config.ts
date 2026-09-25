@@ -15,5 +15,8 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "../server/dist/public"),
     emptyOutDir: true,
     target: "es2022",
+    // A small font subset would otherwise be inlined as a data: URL, which the
+    // server's CSP (font-src 'self') blocks.
+    assetsInlineLimit: (file) => (file.endsWith(".woff2") ? false : undefined),
   },
 });
