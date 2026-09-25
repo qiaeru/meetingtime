@@ -179,7 +179,7 @@ export function renderParticipantList(args: Args): {
       refs.pctText.textContent = `(${formatPercent(ratio)})`;
       refs.fill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
       const desc = `${formatMsSpoken(total, locale$.get())}, ${formatPercent(ratio)}`;
-      refs.timing.title = t("a11y.actionOn", {
+      refs.timing.dataset.tooltip = t("a11y.actionOn", {
         action: t("meeting.totalSpeakingTime"),
         target: desc,
       });
@@ -261,7 +261,7 @@ function renderRow(
     dragHandle = document.createElement("span");
     dragHandle.className = "drag-handle";
     dragHandle.setAttribute("aria-hidden", "true");
-    dragHandle.title = t("meeting.dragToReorder");
+    dragHandle.dataset.tooltip = t("meeting.dragToReorder");
     dragHandle.appendChild(icon("GripVertical", { size: 14 }));
   }
 
@@ -314,7 +314,7 @@ function renderRow(
   const name = document.createElement("span");
   name.className = "participant-name";
   name.textContent = fullName;
-  name.title = fullName;
+  name.dataset.tooltip = fullName;
   nameRow.appendChild(name);
   if (p.id === meId) {
     const meTag = document.createElement("span");
@@ -341,7 +341,7 @@ function renderRow(
   const role = document.createElement("div");
   role.className = "participant-role";
   role.textContent = p.role;
-  role.title = p.role;
+  role.dataset.tooltip = p.role;
   main.append(nameRow, role);
 
   const timing = document.createElement("div");
@@ -363,7 +363,7 @@ function renderRow(
   timing.append(timeText, pctText, timingSpoken);
   // Hover tooltip exposes the long-form breakdown that doesn't fit in the
   // compact mm:ss chrono.
-  timing.title = t("a11y.actionOn", {
+  timing.dataset.tooltip = t("a11y.actionOn", {
     action: t("meeting.totalSpeakingTime"),
     target: timingDescription,
   });
@@ -473,7 +473,7 @@ function iconBtn(
   b.type = "button";
   b.className = "row-action";
   b.setAttribute("aria-label", label);
-  b.title = label;
+  b.dataset.tooltip = label;
   b.appendChild(icon(iconName, { size: 14 }));
   b.addEventListener("click", (e) => {
     e.stopPropagation();

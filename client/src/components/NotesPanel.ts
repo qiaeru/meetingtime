@@ -70,7 +70,7 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
   handle.type = "button";
   handle.className = "notes-handle icon-btn";
   handle.setAttribute("aria-label", t("a11y.notesPanelToggle"));
-  handle.title = t("a11y.notesPanelToggle");
+  handle.dataset.tooltip = t("a11y.notesPanelToggle");
   handle.setAttribute("aria-expanded", String(!collapsed));
   handle.appendChild(icon("ChevronRight"));
   handle.addEventListener("click", () => toggleCollapsed());
@@ -88,14 +88,14 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
   previewBtn.type = "button";
   previewBtn.className = "btn btn-secondary btn-compact btn-icon-only";
   previewBtn.setAttribute("aria-label", t("notes.preview"));
-  previewBtn.title = t("notes.preview");
+  previewBtn.dataset.tooltip = t("notes.preview");
   previewBtn.appendChild(icon("Eye", { size: 16 }));
 
   const splitBtn = document.createElement("button");
   splitBtn.type = "button";
   splitBtn.className = "btn btn-secondary btn-compact btn-icon-only";
   splitBtn.setAttribute("aria-label", t("notes.split"));
-  splitBtn.title = t("notes.split");
+  splitBtn.dataset.tooltip = t("notes.split");
   splitBtn.appendChild(icon("Rows2", { size: 16 }));
 
   const exportBtn = document.createElement("button");
@@ -252,7 +252,7 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     body.dataset.split = String(splitting);
     const previewLabel = previewing ? t("notes.edit") : t("notes.preview");
     previewBtn.setAttribute("aria-label", previewLabel);
-    previewBtn.title = previewLabel;
+    previewBtn.dataset.tooltip = previewLabel;
     previewBtn.dataset.active = String(previewing);
     const previewIconFresh = icon(previewing ? "Pencil" : "Eye", { size: 16 });
     previewBtn.replaceChild(previewIconFresh, previewBtn.firstChild as Node);

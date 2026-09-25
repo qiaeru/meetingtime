@@ -11,7 +11,7 @@ export function renderLocaleSwitcher(): HTMLElement {
   btn.type = "button";
   btn.className = "icon-btn";
   btn.setAttribute("aria-label", t("a11y.languageToggle"));
-  btn.title = t("a11y.languageToggle");
+  btn.dataset.tooltip = t("a11y.languageToggle");
   btn.setAttribute("aria-haspopup", "menu");
   btn.setAttribute("aria-expanded", "false");
   btn.appendChild(icon("Languages"));

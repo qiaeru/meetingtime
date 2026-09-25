@@ -70,7 +70,7 @@ export function headerBar(): HTMLElement {
   home.href = "#/";
   home.className = "icon-btn";
   home.setAttribute("aria-label", t("common.backHome"));
-  home.title = t("common.backHome");
+  home.dataset.tooltip = t("common.backHome");
   home.appendChild(icon("Home"));
   left.append(home, brand);
 
@@ -80,7 +80,7 @@ export function headerBar(): HTMLElement {
   help.type = "button";
   help.className = "icon-btn";
   help.setAttribute("aria-label", t("a11y.help"));
-  help.title = t("a11y.help");
+  help.dataset.tooltip = t("a11y.help");
   help.appendChild(icon("HelpCircle"));
   help.addEventListener("click", showKeyboardHelp);
   right.append(renderLocaleSwitcher(), renderThemeToggle(), help);

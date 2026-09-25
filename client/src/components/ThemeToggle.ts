@@ -57,7 +57,7 @@ export function renderThemeToggle(): HTMLButtonElement {
   btn.type = "button";
   btn.className = "icon-btn";
   btn.setAttribute("aria-label", t("a11y.themeToggle"));
-  btn.title = t("a11y.themeToggle");
+  btn.dataset.tooltip = t("a11y.themeToggle");
   // The router rebuilds the header on every render; a subscription kept past
   // the page would accumulate listeners and retain detached buttons.
   const unsub = theme$.subscribe(() => {

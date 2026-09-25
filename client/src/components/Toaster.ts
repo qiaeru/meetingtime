@@ -51,7 +51,7 @@ export function toast(message: string, opts: ToastOpts = {}): void {
     close.type = "button";
     close.className = "toast-close";
     close.setAttribute("aria-label", t("common.close"));
-    close.title = t("common.close");
+    close.dataset.tooltip = t("common.close");
     close.appendChild(icon("X", { size: 16 }));
     close.addEventListener("click", dismiss);
     el.appendChild(close);

@@ -50,7 +50,7 @@ export function renderMobileMeeting(
   muteBtn.type = "button";
   muteBtn.className = "icon-btn";
   muteBtn.setAttribute("aria-label", t("a11y.muteToggle"));
-  muteBtn.title = t("a11y.muteToggle");
+  muteBtn.dataset.tooltip = t("a11y.muteToggle");
   const refreshMute = (): void => {
     muteBtn.replaceChildren(icon(muted$.get() ? "VolumeX" : "Volume2"));
     muteBtn.setAttribute("aria-pressed", String(muted$.get()));
@@ -65,7 +65,7 @@ export function renderMobileMeeting(
     vibrationBtn.type = "button";
     vibrationBtn.className = "icon-btn";
     vibrationBtn.setAttribute("aria-label", t("a11y.vibrationToggle"));
-    vibrationBtn.title = t("a11y.vibrationToggle");
+    vibrationBtn.dataset.tooltip = t("a11y.vibrationToggle");
     const refreshVibration = (): void => {
       vibrationBtn.replaceChildren(icon(vibrationEnabled$.get() ? "Vibrate" : "VibrateOff"));
       vibrationBtn.setAttribute("aria-pressed", String(vibrationEnabled$.get()));

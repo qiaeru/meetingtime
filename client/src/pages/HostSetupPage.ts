@@ -228,7 +228,7 @@ export function renderHostSetup(root: HTMLElement): void {
       toggle.setAttribute("aria-pressed", String(visible));
       const label = visible ? t("host.passwordHide") : t("host.passwordShow");
       toggle.setAttribute("aria-label", label);
-      toggle.title = label;
+      toggle.dataset.tooltip = label;
       toggle.innerHTML = "";
       toggle.appendChild(icon(visible ? "EyeOff" : "Eye", { size: 16 }));
     };
@@ -605,7 +605,7 @@ function rowButton(
   b.type = "button";
   b.className = "icon-btn";
   b.setAttribute("aria-label", label);
-  b.title = label;
+  b.dataset.tooltip = label;
   b.appendChild(icon(iconName));
   b.addEventListener("click", onClick);
   return b;

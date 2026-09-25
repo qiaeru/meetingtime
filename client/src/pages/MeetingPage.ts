@@ -120,7 +120,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   muteBtn.type = "button";
   muteBtn.className = "icon-btn";
   muteBtn.setAttribute("aria-label", t("a11y.muteToggle"));
-  muteBtn.title = t("a11y.muteToggle");
+  muteBtn.dataset.tooltip = t("a11y.muteToggle");
   const refreshMute = () => {
     muteBtn.innerHTML = "";
     muteBtn.appendChild(icon(muted$.get() ? "VolumeX" : "Volume2"));
@@ -139,7 +139,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   shareBtn.type = "button";
   shareBtn.className = "icon-btn";
   shareBtn.setAttribute("aria-label", t("share.title"));
-  shareBtn.title = t("share.title");
+  shareBtn.dataset.tooltip = t("share.title");
   shareBtn.appendChild(icon("Share2"));
   shareBtn.addEventListener("click", () => {
     const m = getMeeting();
@@ -345,7 +345,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     const raised = Boolean(me?.handRaised);
     handBtn.dataset.raised = String(raised);
     handBtn.setAttribute("aria-label", raised ? t("meeting.lowerHand") : t("meeting.raiseHand"));
-    handBtn.title = raised ? t("meeting.lowerHand") : t("meeting.raiseHand");
+    handBtn.dataset.tooltip = raised ? t("meeting.lowerHand") : t("meeting.raiseHand");
     handBtn.disabled = m?.phase === "ended";
   };
 
@@ -374,14 +374,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
         ? t("meeting.timeboxDisable")
         : t("meeting.timeboxEnable");
     timeboxBtn.setAttribute("aria-label", label);
-    timeboxBtn.title = label;
+    timeboxBtn.dataset.tooltip = label;
   };
 
   const addParticipantBtn = document.createElement("button");
   addParticipantBtn.type = "button";
   addParticipantBtn.className = "icon-btn list-header-icon-btn";
   addParticipantBtn.setAttribute("aria-label", t("common.addParticipant"));
-  addParticipantBtn.title = t("common.addParticipant");
+  addParticipantBtn.dataset.tooltip = t("common.addParticipant");
   addParticipantBtn.appendChild(icon("UserPlus", { size: 16 }));
   addParticipantBtn.addEventListener("click", () => openAddParticipantDialog());
   const refreshAddP = () => {

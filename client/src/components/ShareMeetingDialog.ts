@@ -129,7 +129,7 @@ function addRow(
   copyBtn.type = "button";
   copyBtn.className = "icon-btn share-copy";
   copyBtn.setAttribute("aria-label", copyLabel);
-  copyBtn.title = copyLabel;
+  copyBtn.dataset.tooltip = copyLabel;
   copyBtn.appendChild(icon("Copy", { size: 14 }));
   copyBtn.addEventListener("click", () => copyToClipboard(value, copyBtn, 14));
   valueWrap.append(valueText, copyBtn);

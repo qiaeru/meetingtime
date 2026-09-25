@@ -110,7 +110,7 @@ function renderQueueChip(p: Participant, grantable: boolean, args: Args): HTMLLI
     btn.className = "hand-banner-chip hand-banner-chip-button";
     const label = t("a11y.actionOn", { action: t("meeting.giveFloor"), target: fullName });
     btn.setAttribute("aria-label", label);
-    btn.title = label;
+    btn.dataset.tooltip = label;
     btn.textContent = fullName;
     btn.addEventListener("click", () => args.socket.emit("speaker:grant", { participantId: p.id }));
     li.appendChild(btn);
@@ -118,7 +118,7 @@ function renderQueueChip(p: Participant, grantable: boolean, args: Args): HTMLLI
     const span = document.createElement("span");
     span.className = "hand-banner-chip";
     span.textContent = fullName;
-    span.title = fullName;
+    span.dataset.tooltip = fullName;
     li.appendChild(span);
   }
   return li;

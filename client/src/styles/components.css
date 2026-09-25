@@ -1347,3 +1347,67 @@ textarea:focus-visible {
   z-index: 5;
   backdrop-filter: blur(2px);
 }
+
+/* ---- Tooltips (lib/tooltip.ts) ---- */
+
+/* Inverted surface so the bubble stands out from both palettes. Above dialogs
+   and toasts, below the skip link. */
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 300;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--tooltip-shift, 3px));
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease,
+    visibility 0s linear 0.12s;
+}
+.tooltip[data-placement="bottom"] {
+  --tooltip-shift: -3px;
+}
+.tooltip[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+.tooltip::after {
+  content: "";
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+}
+.tooltip[data-placement="top"]::after {
+  bottom: -4px;
+}
+.tooltip[data-placement="bottom"]::after {
+  top: -4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    transform: none;
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .tooltip {
+    border: 1px solid CanvasText;
+  }
+}

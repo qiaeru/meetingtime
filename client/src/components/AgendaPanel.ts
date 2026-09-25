@@ -55,7 +55,7 @@ export function renderAgenda(args: Args): AgendaHandle {
   addBtn.type = "button";
   addBtn.className = "icon-btn list-header-icon-btn";
   addBtn.setAttribute("aria-label", t("host.addTopic"));
-  addBtn.title = t("host.addTopic");
+  addBtn.dataset.tooltip = t("host.addTopic");
   addBtn.appendChild(icon("Plus", { size: 16 }));
   // The server can refuse the add (topic cap, empty label); without the ack
   // the dialog would close and nothing would happen, with zero feedback.
@@ -140,7 +140,7 @@ export function renderAgenda(args: Args): AgendaHandle {
         const topicHandle = document.createElement("span");
         topicHandle.className = "drag-handle";
         topicHandle.setAttribute("aria-hidden", "true");
-        topicHandle.title = t("meeting.dragToReorder");
+        topicHandle.dataset.tooltip = t("meeting.dragToReorder");
         topicHandle.appendChild(icon("GripVertical", { size: 14 }));
         li.appendChild(topicHandle);
 
@@ -198,7 +198,7 @@ export function renderAgenda(args: Args): AgendaHandle {
           isActive ? t("meeting.clearCurrentTopic") : t("meeting.setCurrentTopic")
         );
         playBtn.setAttribute("aria-label", playLabel);
-        playBtn.title = playLabel;
+        playBtn.dataset.tooltip = playLabel;
         playBtn.appendChild(icon(isActive ? "Pause" : "Play", { size: 14 }));
         playBtn.addEventListener("click", () =>
           args.socket.emit("topic:setCurrent", { topicId: isActive ? null : topic.id })
@@ -292,7 +292,7 @@ function rowIconBtn(
   b.type = "button";
   b.className = "row-action";
   b.setAttribute("aria-label", label);
-  b.title = label;
+  b.dataset.tooltip = label;
   b.appendChild(icon(iconName, { size: 14 }));
   b.addEventListener("click", onClick);
   return b;
