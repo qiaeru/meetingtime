@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Code blocks in the notes preview now get their syntax colors instead of staying on "Loading syntax highlighter…": the content security policy blocked the WebAssembly engine the highlighter needs. If it still cannot load, the code shows without colors.
 - The monospace font no longer fails to load for Cyrillic characters in the notes.
 - The focus outline of the notes editor now shows on its left edge too.
+- After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 - The "Skip to main content" link no longer sends you back to the home page, which could make you leave a meeting in progress.
 - Turning the per-turn speaking time on while the meeting is paused now restarts the current speaker's countdown from zero, as it already did while the meeting runs.
 - Changing the language while filling in the meeting creation form no longer wipes the participants, topics and settings already entered. The form keeps what you typed until the meeting is created.
@@ -30,13 +31,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A tab left open across a server upgrade now reloads once to fetch the new version when a page fails to load, instead of doing nothing.
 - The button borders on the hand-raise banner are visible again in dark mode.
 
-- After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
-
 ### Security
 
 - The server accepts at most ten new meetings per minute from one IP address, so a single client can no longer fill its memory with abandoned meetings.
-
 - A meeting deleted a few minutes after it ends is no longer reachable from a tab left open on it.
+
 ## [1.5.0] - 2026-09-25
 
 ### Changed
