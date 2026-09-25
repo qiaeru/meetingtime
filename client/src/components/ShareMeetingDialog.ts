@@ -46,10 +46,12 @@ export function showShareMeetingDialog(info: ShareInfo): Promise<void> {
     const grid = document.createElement("div");
     grid.className = "share-grid";
 
-    addRow(grid, t("share.link"), joinLink);
-    addRow(grid, t("share.meetingId"), info.meetingId);
+    addRow(grid, t("share.link"), t("share.copyLink"), joinLink);
+    addRow(grid, t("share.meetingId"), t("share.copyId"), info.meetingId);
     if (info.password) {
-      addRow(grid, t("common.password"), info.password, { sensitive: true });
+      addRow(grid, t("common.password"), t("share.copyPassword"), info.password, {
+        sensitive: true,
+      });
     }
 
     dlg.appendChild(grid);
@@ -57,6 +59,7 @@ export function showShareMeetingDialog(info: ShareInfo): Promise<void> {
     const messageLabel = document.createElement("label");
     messageLabel.className = "share-message-label";
     messageLabel.textContent = t("share.message");
+    messageLabel.htmlFor = "share-message";
     dlg.appendChild(messageLabel);
 
     const messageText = info.password
@@ -64,24 +67,21 @@ export function showShareMeetingDialog(info: ShareInfo): Promise<void> {
       : t("share.messageTemplateNoPassword", { link: joinLink, id: info.meetingId });
 
     const messageArea = document.createElement("textarea");
+    messageArea.id = "share-message";
     messageArea.className = "share-message";
     messageArea.rows = info.password ? 5 : 4;
     messageArea.readOnly = true;
     messageArea.value = messageText;
     dlg.appendChild(messageArea);
 
-    const messageActions = document.createElement("div");
-    messageActions.className = "share-message-actions";
     const copyMessage = document.createElement("button");
     copyMessage.type = "button";
     copyMessage.className = "btn btn-secondary";
     copyMessage.appendChild(icon("Copy", { size: 14 }));
     const copyLbl = document.createElement("span");
-    copyLbl.textContent = " " + t("share.copyMessage");
+    copyLbl.textContent = t("share.copyMessage");
     copyMessage.appendChild(copyLbl);
     copyMessage.addEventListener("click", () => copyToClipboard(messageText, copyMessage, 14));
-    messageActions.appendChild(copyMessage);
-    dlg.appendChild(messageActions);
 
     const actions = document.createElement("div");
     actions.className = "dialog-actions";
@@ -89,7 +89,7 @@ export function showShareMeetingDialog(info: ShareInfo): Promise<void> {
     close.type = "button";
     close.className = "btn btn-primary";
     close.textContent = t("common.close");
-    actions.appendChild(close);
+    actions.append(copyMessage, close);
     dlg.appendChild(actions);
 
     backdrop.appendChild(dlg);
@@ -109,6 +109,7 @@ export function showShareMeetingDialog(info: ShareInfo): Promise<void> {
 function addRow(
   grid: HTMLElement,
   label: string,
+  copyLabel: string,
   value: string,
   opts: { sensitive?: boolean } = {}
 ): void {
@@ -127,8 +128,8 @@ function addRow(
   const copyBtn = document.createElement("button");
   copyBtn.type = "button";
   copyBtn.className = "icon-btn share-copy";
-  copyBtn.setAttribute("aria-label", t("common.copy"));
-  copyBtn.title = t("common.copy");
+  copyBtn.setAttribute("aria-label", copyLabel);
+  copyBtn.title = copyLabel;
   copyBtn.appendChild(icon("Copy", { size: 14 }));
   copyBtn.addEventListener("click", () => copyToClipboard(value, copyBtn, 14));
   valueWrap.append(valueText, copyBtn);

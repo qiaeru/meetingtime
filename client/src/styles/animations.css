@@ -92,7 +92,6 @@
   /* Kill recurring / attention-grabbing animations that would otherwise loop
      continuously (speaker pulse, hand icon, etc.). */
   .hand-icon-pulse,
-  .speaker-spotlight[data-zone="over"] .spotlight-turn-timer,
   .speaker-spotlight[data-zone="over"] .spotlight-turn-bar-fill,
   .mobile-claim-btn[data-over="true"],
   .participant[data-just-spoke="true"],
@@ -104,10 +103,21 @@
     animation: none !important;
   }
 
-  /* Disable global transitions to avoid motion on hover / state change. */
+  /* The fade is the only cue that this row just yielded the floor; without
+     motion, show its starting tint for the same 3 s instead. */
+  .participant[data-just-spoke="true"]:not([data-speaking="true"]) {
+    background-color: color-mix(in srgb, var(--success) 16%, transparent);
+  }
+
+  /* Disable global transitions to avoid motion on hover / state change.
+     The theme cross-fade (reset.css) is as specific, so it is listed too. */
   *,
   *::before,
-  *::after {
+  *::after,
+  .theme-transitioning,
+  .theme-transitioning *,
+  .theme-transitioning *::before,
+  .theme-transitioning *::after {
     transition: none !important;
   }
 }

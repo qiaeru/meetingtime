@@ -34,6 +34,7 @@ interface RowRefs {
   pctText: HTMLElement;
   fill: HTMLElement;
   timing: HTMLElement;
+  timingSpoken: HTMLElement;
 }
 
 interface Args {
@@ -178,11 +179,13 @@ export function renderParticipantList(args: Args): {
       refs.pctText.textContent = `(${formatPercent(ratio)})`;
       refs.fill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
       const desc = `${formatMsSpoken(total, locale$.get())}, ${formatPercent(ratio)}`;
-      refs.timing.title = `${t("meeting.totalSpeakingTime")}: ${desc}`;
+      refs.timing.title = t("a11y.actionOn", {
+        action: t("meeting.totalSpeakingTime"),
+        target: desc,
+      });
       // Keep the spoken description in step with the visible chrono, or a
       // screen reader inspecting the row reads a stale duration.
-      const p = m.participants[id];
-      if (p) refs.timing.setAttribute("aria-label", `${p.firstName} ${p.lastName}: ${desc}`);
+      refs.timingSpoken.textContent = desc;
     }
   };
 
@@ -236,8 +239,12 @@ function renderRow(
   // Halo only applies when not currently speaking; the speaking style wins.
   if (!isSpeaking) {
     const yieldedAt = justSpokeAt.get(p.id);
-    if (yieldedAt && Date.now() - yieldedAt < 3000) {
+    const sinceYield = yieldedAt ? Date.now() - yieldedAt : Infinity;
+    if (sinceYield < JUST_SPOKE_MS) {
       li.dataset.justSpoke = "true";
+      // A rebuild inside the window resumes the fade where it was instead of
+      // restarting it at full intensity.
+      li.style.animationDelay = `-${sinceYield}ms`;
     }
   }
   li.dataset.host = String(p.isHost);
@@ -274,15 +281,19 @@ function renderRow(
 
   // Hidden entirely when the meeting hasn't started: the action would no-op.
   const meetingLive = m.phase === "running" || m.phase === "paused";
+  const fullName = `${p.firstName} ${p.lastName}`;
+  const on = (action: string): string => t("a11y.actionOn", { action, target: fullName });
   if (meIsHost && (m.currentSpeakerId === p.id || meetingLive)) {
     li.dataset.leading = "true";
     if (m.currentSpeakerId === p.id) {
-      const stop = iconBtn("Square", t("meeting.revokeFloor"), () => socket.emit("speaker:revoke"));
+      const stop = iconBtn("Square", on(t("meeting.revokeFloor")), () =>
+        socket.emit("speaker:revoke")
+      );
       stop.classList.add("danger");
       stop.dataset.focusKey = `${p.id}:floor`;
       li.appendChild(stop);
     } else {
-      const give = iconBtn("Speech", t("meeting.giveFloor"), () =>
+      const give = iconBtn("Speech", on(t("meeting.giveFloor")), () =>
         socket.emit("speaker:grant", { participantId: p.id })
       );
       give.classList.add("primary-action");
@@ -302,7 +313,8 @@ function renderRow(
   nameRow.className = "participant-name-row";
   const name = document.createElement("span");
   name.className = "participant-name";
-  name.textContent = `${p.firstName} ${p.lastName}`;
+  name.textContent = fullName;
+  name.title = fullName;
   nameRow.appendChild(name);
   if (p.id === meId) {
     const meTag = document.createElement("span");
@@ -319,9 +331,17 @@ function renderRow(
     hostTag.appendChild(hostLabel);
     nameRow.appendChild(hostTag);
   }
+  // Dimming the avatar alone does not say "offline" to everyone.
+  if (!p.connected) {
+    const offTag = document.createElement("span");
+    offTag.className = "tag tag-muted";
+    offTag.textContent = t("meeting.offlineTag");
+    nameRow.appendChild(offTag);
+  }
   const role = document.createElement("div");
   role.className = "participant-role";
   role.textContent = p.role;
+  role.title = p.role;
   main.append(nameRow, role);
 
   const timing = document.createElement("div");
@@ -332,19 +352,28 @@ function renderRow(
   const pctText = document.createElement("span");
   pctText.className = "participant-time-pct";
   pctText.textContent = `(${formatPercent(ratio)})`;
-  timing.append(timeText, pctText);
   const timingDescription = `${formatMsSpoken(total, locale$.get())}, ${formatPercent(ratio)}`;
-  timing.setAttribute("aria-label", `${p.firstName} ${p.lastName}: ${timingDescription}`);
+  // The compact chrono is visual only; screen readers get the long form (a
+  // div cannot carry an aria-label, so it lives in a visually hidden span).
+  timeText.setAttribute("aria-hidden", "true");
+  pctText.setAttribute("aria-hidden", "true");
+  const timingSpoken = document.createElement("span");
+  timingSpoken.className = "sr-only";
+  timingSpoken.textContent = timingDescription;
+  timing.append(timeText, pctText, timingSpoken);
   // Hover tooltip exposes the long-form breakdown that doesn't fit in the
   // compact mm:ss chrono.
-  timing.title = `${t("meeting.totalSpeakingTime")}: ${timingDescription}`;
+  timing.title = t("a11y.actionOn", {
+    action: t("meeting.totalSpeakingTime"),
+    target: timingDescription,
+  });
 
   const actions = document.createElement("div");
   actions.className = "participant-actions";
   if (meIsHost) {
     const ended = m.phase === "ended";
     if (p.isHost && p.id !== meId) {
-      const demote = iconBtn("ShieldOff", t("meeting.demoteHost"), () =>
+      const demote = iconBtn("ShieldOff", on(t("meeting.demoteHost")), () =>
         socket.emit("host:demote", { participantId: p.id })
       );
       demote.disabled = ended;
@@ -352,29 +381,30 @@ function renderRow(
       demote.dataset.focusKey = `${p.id}:hostrole`;
       actions.appendChild(demote);
     } else if (!p.isHost) {
-      const promote = iconBtn("Crown", t("meeting.promoteHost"), () =>
+      const promote = iconBtn("Crown", on(t("meeting.promoteHost")), () =>
         socket.emit("host:promote", { participantId: p.id })
       );
       promote.disabled = ended;
       promote.dataset.focusKey = `${p.id}:hostrole`;
       actions.appendChild(promote);
     }
-    const up = iconBtn("ChevronUp", t("meeting.moveUp"), () =>
+    const up = iconBtn("ChevronUp", on(t("meeting.moveUp")), () =>
       socket.emit("participant:reorder", { participantId: p.id, direction: "up" })
     );
     up.disabled = isFirst || ended;
     up.dataset.focusKey = `${p.id}:up`;
     actions.appendChild(up);
-    const down = iconBtn("ChevronDown", t("meeting.moveDown"), () =>
+    const down = iconBtn("ChevronDown", on(t("meeting.moveDown")), () =>
       socket.emit("participant:reorder", { participantId: p.id, direction: "down" })
     );
     down.disabled = isLast || ended;
     down.dataset.focusKey = `${p.id}:down`;
     actions.appendChild(down);
-    const remove = iconBtn("Trash2", t("common.remove"), async () => {
-      const ok = await confirmDialog(
-        t("meeting.removeConfirm", { name: `${p.firstName} ${p.lastName}` })
-      );
+    const remove = iconBtn("Trash2", on(t("common.remove")), async () => {
+      const ok = await confirmDialog(t("meeting.removeConfirm", { name: fullName }), {
+        okLabel: t("common.remove"),
+        danger: true,
+      });
       if (ok) socket.emit("participant:remove", { participantId: p.id });
     });
     remove.classList.add("danger");
@@ -431,7 +461,7 @@ function renderRow(
     });
   }
 
-  return { el: li, refs: { timeText, pctText, fill, timing } };
+  return { el: li, refs: { timeText, pctText, fill, timing, timingSpoken } };
 }
 
 function iconBtn(

@@ -27,6 +27,15 @@ function sanitizeColor(input: string): string {
   return HEX_RE.test(input) || HSL_RE.test(input) ? input : FALLBACK_COLOR;
 }
 
+// Remote selections are painted behind body text, so they get a light tint of
+// the participant color instead of the solid color (which drops the text
+// below 2:1). Takes a sanitized color and keeps the same strict formats.
+function selectionTint(color: string): string {
+  if (color.startsWith("hsl(")) return color.replace(/^hsl\((.*)\)$/, "hsla($1, 0.25)");
+  const hex = color.length === 4 ? "#" + [...color.slice(1)].map((c) => c + c).join("") : color;
+  return `${hex}40`;
+}
+
 const lightTheme = EditorView.theme(
   {
     "&": { height: "100%", color: "var(--fg)", backgroundColor: "var(--bg-elev)" },
@@ -41,6 +50,7 @@ const lightTheme = EditorView.theme(
       backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)",
     },
     ".cm-cursor": { borderLeftColor: "var(--fg)" },
+    "&.cm-focused": { outline: "2px solid var(--accent)", outlineOffset: "-2px" },
     // Override y-codemirror.next which hardcodes `font-family: serif` on the
     // floating remote-cursor name tag.
     ".cm-ySelectionInfo": {
@@ -70,6 +80,7 @@ const darkTheme = EditorView.theme(
       backgroundColor: "color-mix(in srgb, var(--accent) 18%, transparent)",
     },
     ".cm-cursor": { borderLeftColor: "var(--fg)" },
+    "&.cm-focused": { outline: "2px solid var(--accent)", outlineOffset: "-2px" },
     // Override y-codemirror.next which hardcodes `font-family: serif` on the
     // floating remote-cursor name tag.
     ".cm-ySelectionInfo": {
@@ -118,7 +129,7 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
   provider.awareness.setLocalStateField("user", {
     name: "?",
     color: initialColor,
-    colorLight: initialColor,
+    colorLight: selectionTint(initialColor),
     participantId: args.participantId,
   });
 
@@ -138,6 +149,9 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
       history(),
       keymap.of([...defaultKeymap, ...historyKeymap]),
       markdown(),
+      // The placeholder is not a name; without this the notes editor is an
+      // unnamed textbox for screen readers.
+      EditorView.contentAttributes.of({ "aria-label": t("notes.title") }),
       readOnlyCompartment.of(EditorState.readOnly.of(args.readOnly)),
       yCollab(ytext, provider.awareness),
       EditorView.lineWrapping,
@@ -172,7 +186,7 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
       provider.awareness.setLocalStateField("user", {
         name,
         color: safe,
-        colorLight: safe,
+        colorLight: selectionTint(safe),
         participantId: args.participantId,
       });
     },

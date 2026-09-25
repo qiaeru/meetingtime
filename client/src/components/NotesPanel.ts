@@ -11,10 +11,11 @@ const WIDTH_KEY = "mt:notes:width";
 const MIN_WIDTH = 320;
 // Cap relative to the viewport so the panel can never swallow the meeting
 // column whole, with a hard ceiling for very wide monitors and a guaranteed
-// 380px for the left column (just above the JS mobile breakpoint, 70% of the
-// window would otherwise crush the spotlight below its intrinsic minimum).
+// 600px for the left column (a host's participant row needs about 460px
+// before the name gets any room; mirrored by the panel's CSS max-width for
+// window resizes).
 const maxWidth = (): number =>
-  Math.min(820, Math.round(window.innerWidth * 0.7), window.innerWidth - 380);
+  Math.max(MIN_WIDTH, Math.min(820, Math.round(window.innerWidth * 0.7), window.innerWidth - 600));
 const clampWidth = (w: number): number => Math.max(MIN_WIDTH, Math.min(maxWidth(), w));
 
 interface Args {
@@ -256,6 +257,7 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     const previewIconFresh = icon(previewing ? "Pencil" : "Eye", { size: 16 });
     previewBtn.replaceChild(previewIconFresh, previewBtn.firstChild as Node);
     splitBtn.dataset.active = String(splitting);
+    splitBtn.setAttribute("aria-pressed", String(splitting));
     refreshPreview();
   };
 

@@ -97,7 +97,9 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     };
   }
 
-  const page = document.createElement("main");
+  // The header sits outside <main> so it stays a banner landmark and the
+  // skip link actually skips it; the router focuses the <main> below.
+  const page = document.createElement("div");
   page.className = "page page-meeting";
 
   // Hides the empty meeting UI flash while the auto-rejoin round-trip and the
@@ -151,11 +153,24 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
 
   page.appendChild(header);
 
-  const grid = document.createElement("div");
+  const grid = document.createElement("main");
   grid.className = "meeting-grid";
 
   const left = document.createElement("section");
   left.className = "meeting-left";
+
+  const pageTitle = document.createElement("h1");
+  pageTitle.className = "sr-only";
+  pageTitle.textContent = t("meeting.title", { id: meetingId });
+  left.appendChild(pageTitle);
+
+  // Speaks the row picked by the Ctrl+Arrow virtual focus, which only moves
+  // a visual highlight; a blind host would otherwise act on an unheard row.
+  const focusAnnouncer = document.createElement("div");
+  focusAnnouncer.className = "sr-only";
+  focusAnnouncer.setAttribute("role", "status");
+  focusAnnouncer.setAttribute("aria-live", "polite");
+  left.appendChild(focusAnnouncer);
 
   // meeting$ may still hold another meeting (deep link while a previous one
   // is loaded, or a late broadcast from it); never render that one here.
@@ -168,6 +183,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     const m = getMeeting();
     const id = getMyId();
     return Boolean(id && m?.participants[id]?.isHost);
+  };
+
+  const confirmEnd = async (): Promise<void> => {
+    const ok = await confirmDialog(t("meeting.endConfirm"), {
+      okLabel: t("meeting.end"),
+      danger: true,
+    });
+    if (ok) socket.emit("meeting:end");
   };
 
   const headerControls = document.createElement("div");
@@ -200,9 +223,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       socket.emit("meeting:pause")
     );
     pause.dataset.focusKey = "phase";
-    const end = headerBtn("Square", t("meeting.end"), "btn-danger", async () => {
-      if (await confirmDialog(t("meeting.endConfirm"))) socket.emit("meeting:end");
-    });
+    const end = headerBtn("Square", t("meeting.end"), "btn-danger", () => void confirmEnd());
     end.dataset.focusKey = "end";
     if (phase === "ended") {
       start.disabled = true;
@@ -266,7 +287,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   endedBtn.className = "btn btn-on-accent";
   endedBtn.appendChild(icon("Home", { size: 16 }));
   const endedBtnLabel = document.createElement("span");
-  endedBtnLabel.textContent = " " + t("common.backHome");
+  endedBtnLabel.textContent = t("common.backHome");
   endedBtn.appendChild(endedBtnLabel);
   endedBtn.addEventListener("click", () => {
     // Drop the local trace (token + password) when the user explicitly
@@ -290,7 +311,10 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     getMeeting,
     myId: getMyId,
     socket,
-    onFocusChange: () => undefined,
+    onFocusChange: (id) => {
+      const p = id ? getMeeting()?.participants[id] : undefined;
+      if (p) focusAnnouncer.textContent = `${p.firstName} ${p.lastName}`;
+    },
   });
 
   const listWrap = document.createElement("div");
@@ -396,7 +420,14 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   listWrap.append(listHeader, list.el, inviteHint);
   left.appendChild(listWrap);
 
-  const agenda = renderAgenda({ getMeeting, socket, isHost: amIHost });
+  const agenda = renderAgenda({
+    getMeeting,
+    socket,
+    isHost: amIHost,
+    onFocusChange: (label) => {
+      focusAnnouncer.textContent = label;
+    },
+  });
   left.appendChild(agenda.el);
 
   grid.appendChild(left);
@@ -425,11 +456,12 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const promptNotesExport = (): void => {
     if (exportPromptedFor.has(meetingId) || !notes?.hasContent()) return;
     exportPromptedFor.add(meetingId);
-    void confirmDialog(t("meeting.exportNotesPrompt"), { okLabel: t("notes.export") }).then(
-      (ok) => {
-        if (ok) notes?.exportNow();
-      }
-    );
+    void confirmDialog(t("meeting.exportNotesPrompt"), {
+      okLabel: t("notes.exportNotes"),
+      cancelLabel: t("common.later"),
+    }).then((ok) => {
+      if (ok) notes?.exportNow();
+    });
   };
   // Pushes my name and the color the participant list uses for me into Yjs
   // awareness, so my remote cursor matches my row for everyone else. Both
@@ -556,7 +588,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       const m = getMeeting();
       if (!m || m.phase === "ended") return;
       e.preventDefault();
-      if (await confirmDialog(t("meeting.endConfirm"))) socket.emit("meeting:end");
+      await confirmEnd();
     },
     { alt: true }
   );
@@ -675,7 +707,7 @@ function headerBtn(
   b.className = `btn ${variantClass} header-btn`;
   b.appendChild(icon(iconName, { size: 16 }));
   const span = document.createElement("span");
-  span.textContent = " " + label;
+  span.textContent = label;
   b.appendChild(span);
   b.addEventListener("click", onClick);
   return b;

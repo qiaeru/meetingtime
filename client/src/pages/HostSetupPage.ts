@@ -16,11 +16,11 @@ import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
 import { siteFooter } from "../components/SiteFooter.js";
 
 export function renderHostSetup(root: HTMLElement): void {
-  const page = document.createElement("main");
+  const page = document.createElement("div");
   page.className = "page page-form";
   page.appendChild(headerBar());
 
-  const wrap = document.createElement("section");
+  const wrap = document.createElement("main");
   wrap.className = "form-card";
 
   const h = document.createElement("h1");
@@ -92,35 +92,23 @@ export function renderHostSetup(root: HTMLElement): void {
   addPreBtn.type = "button";
   addPreBtn.className = "btn btn-secondary";
   addPreBtn.appendChild(icon("Plus", { size: 14 }));
-  addPreBtn.appendChild(document.createTextNode(" " + t("common.addParticipant")));
+  addPreBtn.appendChild(document.createTextNode(t("common.addParticipant")));
   preWrap.appendChild(addPreBtn);
   form.appendChild(preWrap);
 
-  const renderPreList = (): void => {
+  const renderPreList = (focusKey?: string): void => {
     preList.innerHTML = "";
     preParticipants.forEach((p, idx) => {
-      const row = document.createElement("div");
-      row.className = "inline-row";
-      const f = makeInput(t("common.firstName"), p.firstName, (v) => (p.firstName = v));
-      const l = makeInput(t("common.lastName"), p.lastName, (v) => (p.lastName = v));
-      const r = makeInput(t("common.role"), p.role, (v) => (p.role = v));
-      const up = reorderBtn(
-        "ChevronUp",
-        () => move(preParticipants, idx, -1, renderPreList),
-        idx === 0
-      );
-      const down = reorderBtn(
-        "ChevronDown",
-        () => move(preParticipants, idx, 1, renderPreList),
-        idx === preParticipants.length - 1
-      );
-      const remove = removeBtn(() => {
-        preParticipants.splice(idx, 1);
-        renderPreList();
-      });
-      row.append(f, l, r, up, down, remove);
+      const rowName = t("host.participantRow", { n: idx + 1 });
+      const row = listRow(rowName);
+      const f = labeledInput(t("common.firstName"), p.firstName, (v) => (p.firstName = v));
+      const l = labeledInput(t("common.lastName"), p.lastName, (v) => (p.lastName = v));
+      const r = labeledInput(t("common.role"), p.role, (v) => (p.role = v));
+      row.append(f.wrap, l.wrap, r.wrap);
+      appendRowActions(row, rowName, idx, preParticipants, renderPreList);
       preList.appendChild(row);
     });
+    restoreRowFocus(preList, focusKey, addPreBtn);
   };
   addPreBtn.addEventListener("click", () => {
     preParticipants.push({ firstName: "", lastName: "", role: "" });
@@ -142,29 +130,21 @@ export function renderHostSetup(root: HTMLElement): void {
   addTopicBtn.type = "button";
   addTopicBtn.className = "btn btn-secondary";
   addTopicBtn.appendChild(icon("Plus", { size: 14 }));
-  addTopicBtn.appendChild(document.createTextNode(" " + t("host.addTopic")));
+  addTopicBtn.appendChild(document.createTextNode(t("host.addTopic")));
   topicsWrap.appendChild(addTopicBtn);
   form.appendChild(topicsWrap);
 
-  const renderTopicsList = (): void => {
+  const renderTopicsList = (focusKey?: string): void => {
     topicsList.innerHTML = "";
     topics.forEach((label, idx) => {
-      const row = document.createElement("div");
-      row.className = "inline-row";
-      const i = makeInput(t("host.addTopic"), label, (v) => (topics[idx] = v));
-      const up = reorderBtn("ChevronUp", () => move(topics, idx, -1, renderTopicsList), idx === 0);
-      const down = reorderBtn(
-        "ChevronDown",
-        () => move(topics, idx, 1, renderTopicsList),
-        idx === topics.length - 1
-      );
-      const remove = removeBtn(() => {
-        topics.splice(idx, 1);
-        renderTopicsList();
-      });
-      row.append(i, up, down, remove);
+      const rowName = t("host.topicRow", { n: idx + 1 });
+      const row = listRow(rowName);
+      const i = labeledInput(rowName, label, (v) => (topics[idx] = v));
+      row.append(i.wrap);
+      appendRowActions(row, rowName, idx, topics, renderTopicsList);
       topicsList.appendChild(row);
     });
+    restoreRowFocus(topicsList, focusKey, addTopicBtn);
   };
   addTopicBtn.addEventListener("click", () => {
     topics.push("");
@@ -184,13 +164,16 @@ export function renderHostSetup(root: HTMLElement): void {
   plannedInput.type = "number";
   plannedInput.min = "0";
   plannedInput.max = "600";
-  plannedInput.step = "5";
+  // Whole minutes, no coarser step: the hint announces no other constraint.
+  plannedInput.step = "1";
   // No numeric placeholder: "60" reads as a default, but blank means "no
   // planned duration" (the hint below spells it out).
   plannedInput.setAttribute("aria-label", t("host.plannedDuration"));
   const plannedHint = document.createElement("p");
   plannedHint.className = "hint";
+  plannedHint.id = "host-planned-hint";
   plannedHint.textContent = t("host.plannedDurationHint");
+  plannedInput.setAttribute("aria-describedby", plannedHint.id);
   plannedWrap.append(plannedInput, plannedHint);
   form.appendChild(plannedWrap);
 
@@ -207,7 +190,9 @@ export function renderHostSetup(root: HTMLElement): void {
   timeboxInput.setAttribute("aria-label", t("host.timebox"));
   const hint = document.createElement("p");
   hint.className = "hint";
+  hint.id = "host-timebox-hint";
   hint.textContent = t("host.timeboxHint");
+  timeboxInput.setAttribute("aria-describedby", hint.id);
   timeboxWrap.append(timeboxInput, hint);
   form.appendChild(timeboxWrap);
 
@@ -267,7 +252,10 @@ export function renderHostSetup(root: HTMLElement): void {
 
   const passwordHint = document.createElement("p");
   passwordHint.className = "hint";
+  passwordHint.id = "host-password-hint";
   passwordHint.textContent = t("host.passwordHint");
+  passwordInput.setAttribute("aria-describedby", passwordHint.id);
+  passwordConfirmInput.setAttribute("aria-describedby", passwordHint.id);
   passwordWrap.appendChild(passwordHint);
   form.appendChild(passwordWrap);
 
@@ -479,90 +467,154 @@ function identityFields(legendText: string): IdentityFieldsHandle {
   const row = document.createElement("div");
   row.className = "inline-row";
 
-  const first = placeholderInput(t("common.firstName"));
-  const last = placeholderInput(t("common.lastName"));
-  const role = placeholderInput(t("common.role"));
+  // Visible labels, as on the join page: a placeholder vanishes on the first
+  // keystroke and leaves the field unnamed on screen.
+  const first = identityInput(t("common.firstName"), "given-name");
+  const last = identityInput(t("common.lastName"), "family-name");
+  const role = identityInput(t("common.role"), "organization-title");
 
-  row.append(first, last, role);
+  row.append(first.wrap, last.wrap, role.wrap);
   fs.appendChild(row);
 
   return {
     el: fs,
     value: () => {
-      const f = first.value.trim();
-      const l = last.value.trim();
-      const r = role.value.trim();
+      const f = first.input.value.trim();
+      const l = last.input.value.trim();
+      const r = role.input.value.trim();
       if (!f || !l || !r) return undefined;
       return { firstName: f, lastName: l, role: r };
     },
     set: (identity) => {
-      first.value = identity.firstName;
-      last.value = identity.lastName;
-      role.value = identity.role;
+      first.input.value = identity.firstName;
+      last.input.value = identity.lastName;
+      role.input.value = identity.role;
     },
   };
 }
 
-function placeholderInput(placeholder: string): HTMLInputElement {
-  const input = document.createElement("input");
-  input.type = "text";
+function identityInput(
+  label: string,
+  autocomplete: string
+): { wrap: HTMLElement; input: HTMLInputElement } {
+  const { wrap, input } = labeledField(label);
   input.required = true;
   input.maxLength = 60;
-  input.placeholder = placeholder;
-  input.setAttribute("aria-label", placeholder);
-  return input;
+  // setAttribute: TypeScript's AutoFill type lacks "organization-title".
+  input.setAttribute("autocomplete", autocomplete);
+  return { wrap, input };
 }
 
-function makeInput(
-  placeholder: string,
+// Rows describing other people: the browser must not offer the host's own
+// saved name there.
+function labeledInput(
+  label: string,
   value: string,
   onChange: (v: string) => void
-): HTMLInputElement {
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = placeholder;
-  input.setAttribute("aria-label", placeholder);
+): { wrap: HTMLElement; input: HTMLInputElement } {
+  const { wrap, input } = labeledField(label);
+  input.autocomplete = "off";
   input.value = value;
   input.addEventListener("input", () => {
     input.removeAttribute("aria-invalid");
     onChange(input.value);
   });
-  return input;
+  return { wrap, input };
 }
 
-function reorderBtn(
-  iconName: "ChevronUp" | "ChevronDown",
-  onClick: () => void,
-  disabled: boolean
+function labeledField(label: string): { wrap: HTMLElement; input: HTMLInputElement } {
+  const wrap = document.createElement("label");
+  wrap.className = "field";
+  const span = document.createElement("span");
+  span.textContent = label;
+  const input = document.createElement("input");
+  input.type = "text";
+  wrap.append(span, input);
+  return { wrap, input };
+}
+
+// A group named after the row ("Participant 2"), so its fields and buttons
+// are announced with the row they act on.
+function listRow(name: string): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "inline-row list-row";
+  row.setAttribute("role", "group");
+  row.setAttribute("aria-label", name);
+  return row;
+}
+
+// Each rebuild receives the key of the button that should hold focus next, so
+// a keyboard user stays on the row they just moved.
+function appendRowActions<T>(
+  row: HTMLElement,
+  rowName: string,
+  idx: number,
+  arr: T[],
+  rerender: (focusKey?: string) => void
+): void {
+  const on = (action: string): string => t("a11y.actionOn", { action, target: rowName });
+  const up = rowButton("ChevronUp", on(t("meeting.moveUp")), () => {
+    move(arr, idx, -1);
+    rerender(`${idx - 1}:up`);
+  });
+  up.disabled = idx === 0;
+  up.dataset.focusKey = `${idx}:up`;
+  const down = rowButton("ChevronDown", on(t("meeting.moveDown")), () => {
+    move(arr, idx, 1);
+    rerender(`${idx + 1}:down`);
+  });
+  down.disabled = idx === arr.length - 1;
+  down.dataset.focusKey = `${idx}:down`;
+  const remove = rowButton("Trash2", on(t("common.remove")), () => {
+    arr.splice(idx, 1);
+    rerender(`${Math.min(idx, arr.length - 1)}:remove`);
+  });
+  remove.classList.add("danger");
+  remove.dataset.focusKey = `${idx}:remove`;
+  const actions = document.createElement("div");
+  actions.className = "list-row-actions";
+  actions.append(up, down, remove);
+  row.appendChild(actions);
+}
+
+function restoreRowFocus(
+  list: HTMLElement,
+  focusKey: string | undefined,
+  fallback: HTMLElement
+): void {
+  if (!focusKey) return;
+  const target = list.querySelector<HTMLButtonElement>(`[data-focus-key="${focusKey}"]`);
+  if (target && !target.disabled) {
+    target.focus();
+    return;
+  }
+  // The moved row reached an end of the list (its chevron is now disabled),
+  // or the last row was removed: land on a still-usable control.
+  const usable = target
+    ?.closest(".list-row")
+    ?.querySelector<HTMLButtonElement>(".list-row-actions button:not(:disabled)");
+  (usable ?? fallback).focus();
+}
+
+function rowButton(
+  iconName: "ChevronUp" | "ChevronDown" | "Trash2",
+  label: string,
+  onClick: () => void
 ): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
   b.className = "icon-btn";
-  const label = t(iconName === "ChevronUp" ? "meeting.moveUp" : "meeting.moveDown");
   b.setAttribute("aria-label", label);
   b.title = label;
   b.appendChild(icon(iconName));
-  b.disabled = disabled;
   b.addEventListener("click", onClick);
   return b;
 }
 
-function removeBtn(onClick: () => void): HTMLButtonElement {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.className = "icon-btn danger";
-  b.setAttribute("aria-label", t("common.remove"));
-  b.title = t("common.remove");
-  b.appendChild(icon("Trash2"));
-  b.addEventListener("click", onClick);
-  return b;
-}
-
-function move<T>(arr: T[], idx: number, dir: -1 | 1, rerender: () => void): void {
+function move<T>(arr: T[], idx: number, dir: -1 | 1): void {
   const next = idx + dir;
   if (next < 0 || next >= arr.length) return;
   [arr[idx], arr[next]] = [arr[next], arr[idx]];
-  rerender();
 }
 
 /** Small caption rendered between two groups of fieldsets. Visually splits

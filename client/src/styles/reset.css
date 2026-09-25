@@ -27,6 +27,8 @@ h2,
 h3,
 h4 {
   margin: 0;
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 button {
@@ -76,6 +78,12 @@ svg {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* The router focuses each page's <main> (tabindex -1) so keyboard users start
+   in the new view; the container itself is not a control, so no ring. */
+main[tabindex="-1"]:focus {
+  outline: none;
 }
 
 /* The default 2 px outline blends into compact icon-only controls. A

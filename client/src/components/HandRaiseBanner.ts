@@ -73,8 +73,15 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
       grant.className = "btn btn-on-accent";
       grant.appendChild(icon("Megaphone", { size: 16 }));
       const span = document.createElement("span");
-      span.textContent = " " + t("meeting.giveFloor");
+      span.textContent = t("meeting.giveFloor");
       grant.appendChild(span);
+      grant.setAttribute(
+        "aria-label",
+        t("a11y.actionOn", {
+          action: t("meeting.giveFloor"),
+          target: `${first.firstName} ${first.lastName}`,
+        })
+      );
       grant.addEventListener("click", () =>
         args.socket.emit("speaker:grant", { participantId: first.id })
       );
@@ -101,8 +108,9 @@ function renderQueueChip(p: Participant, grantable: boolean, args: Args): HTMLLI
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "hand-banner-chip hand-banner-chip-button";
-    btn.setAttribute("aria-label", `${t("meeting.giveFloor")}: ${fullName}`);
-    btn.title = `${t("meeting.giveFloor")}: ${fullName}`;
+    const label = t("a11y.actionOn", { action: t("meeting.giveFloor"), target: fullName });
+    btn.setAttribute("aria-label", label);
+    btn.title = label;
     btn.textContent = fullName;
     btn.addEventListener("click", () => args.socket.emit("speaker:grant", { participantId: p.id }));
     li.appendChild(btn);
@@ -110,6 +118,7 @@ function renderQueueChip(p: Participant, grantable: boolean, args: Args): HTMLLI
     const span = document.createElement("span");
     span.className = "hand-banner-chip";
     span.textContent = fullName;
+    span.title = fullName;
     li.appendChild(span);
   }
   return li;

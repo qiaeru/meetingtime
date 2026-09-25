@@ -1,6 +1,9 @@
 // Self-hosted fonts: Vite bundles the woff2 at build time so the app stays
 // runnable on an air-gapped host (no fonts.googleapis.com fetch).
 import "@fontsource-variable/inter";
+// Real italic face for hints and Markdown emphasis instead of a synthesized
+// slant; unicode-range means it only downloads once italic text is shown.
+import "@fontsource-variable/inter/wght-italic.css";
 import "@fontsource-variable/jetbrains-mono";
 
 import "./styles/reset.css";

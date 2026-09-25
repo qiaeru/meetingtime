@@ -17,8 +17,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The update procedure in the docs now rebuilds the image (`git pull`, then `up -d --build`); `docker compose pull` alone kept running the old version.
 - Multi-architecture release images build faster: the build stage no longer runs under emulation for arm64.
 - The `ws` override is gone: Socket.IO now requires the patched `ws` release itself.
+- Confirmation buttons now name their action ("End the meeting", "Remove", "Delete topic") instead of a generic "Confirm", in red for irreversible actions, and the questions say what is lost.
+- Error messages now say what to do next, and error notifications stay on screen until you close them.
+- The meeting creation form shows visible labels on every field (they used to vanish as you typed), and each participant or topic row is easier to tell apart.
+- The expected meeting duration accepts any number of minutes, not only multiples of five.
+- The per-turn speaking time uses one name everywhere, and its toggle explains why it does nothing when no duration was set.
+- Long topic titles wrap instead of being cut off, and long names or roles show in full on hover.
+- Offline participants get an "Offline" tag instead of a dimmed avatar alone.
+- On a phone held sideways, the take-the-floor and raise-hand buttons sit next to the timer instead of below the fold.
+- Each page now has its own browser tab title.
 
 ### Fixed
+
+- On a 320px phone, the header no longer pushes the theme or help button off the screen, and the current speaker's name no longer breaks one letter per line.
+- On narrow desktop windows, the notes panel no longer squeezes the meeting column until the participant list disappears, and the Start, Pause and End buttons no longer cover the share button.
+- Text over colored backgrounds (participant rows, avatar initials, hand-raise chips, the raised-hand button, the timer when overtime) and input borders now meet the WCAG contrast minimums in both themes.
+- Keyboard focus is visible on the "Back home" button of the ended-meeting banner, on the notes resize handle, on the notes editor in dark mode, and on text fields in Windows high-contrast mode.
+- Screen readers now name the notes editor and the invitation message, say which row a repeated button acts on, announce the participant or topic picked with the keyboard shortcuts, and tell which topic is running.
+- Reordering participants or topics on the creation form keeps keyboard focus on the moved row.
+- With reduced motion enabled, the row that just spoke keeps a static highlight, and switching themes no longer fades.
 
 - Creating a new meeting from the same tab no longer leaves the previous one attached: its broadcasts could replace the new meeting on screen, and the old meeting was never cleaned from memory.
 - An ended meeting can no longer be restarted.

@@ -33,7 +33,8 @@ export function renderMobileMeeting(
   let connected = true;
   let cleanedUp = false;
 
-  const page = document.createElement("main");
+  // Header outside <main>, as on the desktop page (banner landmark).
+  const page = document.createElement("div");
   page.className = "page page-meeting page-meeting-mobile";
 
   // Minimal header: brand as plain text (no home link), plus language and
@@ -80,8 +81,13 @@ export function renderMobileMeeting(
   header.append(brand, headerActions);
   page.appendChild(header);
 
-  const wrap = document.createElement("div");
+  const wrap = document.createElement("main");
   wrap.className = "mobile-meeting";
+
+  const pageTitle = document.createElement("h1");
+  pageTitle.className = "sr-only";
+  pageTitle.textContent = t("meeting.title", { id: meetingId });
+  wrap.appendChild(pageTitle);
 
   const connBanner = document.createElement("div");
   connBanner.className = "connection-banner";

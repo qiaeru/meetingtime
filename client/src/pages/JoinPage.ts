@@ -8,11 +8,11 @@ import { icon } from "../components/Icon.js";
 import { siteFooter } from "../components/SiteFooter.js";
 
 export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
-  const page = document.createElement("main");
+  const page = document.createElement("div");
   page.className = "page page-form";
   page.appendChild(headerBar());
 
-  const wrap = document.createElement("section");
+  const wrap = document.createElement("main");
   wrap.className = "form-card";
   const h = document.createElement("h1");
   h.textContent = t("join.title");
@@ -43,14 +43,21 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   idInput.value = normalizeId(params.get("id") ?? "");
   idInput.addEventListener("input", () => {
     idInput.value = normalizeId(idInput.value);
+    idInput.removeAttribute("aria-invalid");
     refreshResume();
   });
   idLabel.append(idSpan, idInput);
+  // Hints sit outside the <label> (which only takes phrasing content, and
+  // would otherwise fold the whole hint into the field's name) and are tied
+  // to the field as its description.
   const idHint = document.createElement("p");
   idHint.className = "hint";
+  idHint.id = "join-id-hint";
   idHint.textContent = t("join.idHint");
-  idLabel.appendChild(idHint);
-  form.appendChild(idLabel);
+  idInput.setAttribute("aria-describedby", idHint.id);
+  const idGroup = document.createElement("div");
+  idGroup.append(idLabel, idHint);
+  form.appendChild(idGroup);
 
   const fields = identityFields();
   form.appendChild(fields.el);
@@ -69,9 +76,12 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   passwordLabel.append(passwordSpan, passwordInput);
   const passwordHint = document.createElement("p");
   passwordHint.className = "hint";
+  passwordHint.id = "join-password-hint";
   passwordHint.textContent = t("join.passwordHint");
-  passwordLabel.appendChild(passwordHint);
-  form.appendChild(passwordLabel);
+  passwordInput.setAttribute("aria-describedby", passwordHint.id);
+  const passwordGroup = document.createElement("div");
+  passwordGroup.append(passwordLabel, passwordHint);
+  form.appendChild(passwordGroup);
 
   const resume = document.createElement("div");
   resume.className = "resume-banner";
@@ -97,7 +107,8 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   resumeBtn.addEventListener("click", () => {
     const id = idInput.value.trim();
     if (!id) {
-      toast(t("errors.invalid_identity"), { type: "error" });
+      toast(t("join.idRequired"), { type: "error" });
+      idInput.focus();
       return;
     }
     const sess = loadSession(id);
@@ -149,7 +160,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   submit.style.alignSelf = "flex-start";
   submit.appendChild(icon("CircleArrowRight", { size: 16 }));
   const submitLabel = document.createElement("span");
-  submitLabel.textContent = " " + t("join.join");
+  submitLabel.textContent = t("join.join");
   submit.appendChild(submitLabel);
   form.appendChild(submit);
 
@@ -166,7 +177,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
       return;
     }
     submit.disabled = true;
-    submitLabel.textContent = " " + t("join.joining");
+    submitLabel.textContent = t("join.joining");
     const password = passwordInput.value.trim() || undefined;
     // 10 s ack timeout: see HostSetupPage for the rationale.
     s.timeout(10_000).emit(
@@ -174,7 +185,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
       { meetingId: id, identity, password },
       (timeoutErr, resp) => {
         submit.disabled = false;
-        submitLabel.textContent = " " + t("join.join");
+        submitLabel.textContent = t("join.join");
         if (timeoutErr) {
           toast(t("errors.connection"), { type: "error" });
           return;
@@ -184,6 +195,9 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
           if (resp.error === "invalid_password") {
             passwordInput.setAttribute("aria-invalid", "true");
             passwordInput.focus();
+          } else if (resp.error === "meeting_not_found") {
+            idInput.setAttribute("aria-invalid", "true");
+            idInput.focus();
           }
           return;
         }
@@ -223,9 +237,9 @@ function identityFields(): {
   fs.appendChild(leg);
   const row = document.createElement("div");
   row.className = "inline-row";
-  const first = labeled(t("common.firstName"));
-  const last = labeled(t("common.lastName"));
-  const role = labeled(t("common.role"));
+  const first = labeled(t("common.firstName"), "given-name");
+  const last = labeled(t("common.lastName"), "family-name");
+  const role = labeled(t("common.role"), "organization-title");
   row.append(first.wrap, last.wrap, role.wrap);
   fs.appendChild(row);
   return {
@@ -241,7 +255,10 @@ function identityFields(): {
   };
 }
 
-function labeled(label: string): { wrap: HTMLElement; input: HTMLInputElement } {
+function labeled(
+  label: string,
+  autocomplete: string
+): { wrap: HTMLElement; input: HTMLInputElement } {
   const wrap = document.createElement("label");
   wrap.className = "field";
   const span = document.createElement("span");
@@ -249,6 +266,8 @@ function labeled(label: string): { wrap: HTMLElement; input: HTMLInputElement } 
   const input = document.createElement("input");
   input.required = true;
   input.maxLength = 60;
+  // setAttribute: TypeScript's AutoFill type lacks "organization-title".
+  input.setAttribute("autocomplete", autocomplete);
   wrap.append(span, input);
   return { wrap, input };
 }

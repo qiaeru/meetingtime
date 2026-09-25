@@ -52,6 +52,7 @@ import {
   VibrateOff,
   Volume2,
   VolumeX,
+  X,
 } from "lucide";
 
 // Explicit map so Vite tree-shakes the ~1500 unused Lucide icons. The
@@ -109,6 +110,7 @@ const ICONS = {
   VibrateOff,
   Volume2,
   VolumeX,
+  X,
 } satisfies Record<string, IconNode>;
 
 type Name = keyof typeof ICONS;

@@ -15,6 +15,8 @@ interface Args {
   getMeeting: () => Meeting | null;
   socket: MeetingSocket;
   isHost: () => boolean;
+  // Announces the virtual focus moved by the Ctrl+Shift+Arrow shortcuts.
+  onFocusChange?: (label: string) => void;
 }
 
 interface AgendaHandle {
@@ -72,6 +74,7 @@ export function renderAgenda(args: Args): AgendaHandle {
 
   const list = document.createElement("ul");
   list.className = "agenda-list";
+  list.setAttribute("aria-label", t("common.agenda"));
   wrap.appendChild(list);
 
   const update = () => {
@@ -128,7 +131,9 @@ export function renderAgenda(args: Args): AgendaHandle {
       const li = document.createElement("li");
       li.className = "agenda-item";
       li.dataset.current = String(m.currentTopicId === topic.id);
+      if (m.currentTopicId === topic.id) li.setAttribute("aria-current", "true");
       if (focusedTopicId === topic.id) li.dataset.focused = "true";
+      const on = (action: string): string => t("a11y.actionOn", { action, target: topic.label });
 
       if (args.isHost()) {
         li.dataset.draggable = "true";
@@ -189,11 +194,11 @@ export function renderAgenda(args: Args): AgendaHandle {
         const playBtn = document.createElement("button");
         playBtn.type = "button";
         playBtn.className = "row-action play-topic";
-        playBtn.setAttribute(
-          "aria-label",
+        const playLabel = on(
           isActive ? t("meeting.clearCurrentTopic") : t("meeting.setCurrentTopic")
         );
-        playBtn.title = playBtn.getAttribute("aria-label") ?? "";
+        playBtn.setAttribute("aria-label", playLabel);
+        playBtn.title = playLabel;
         playBtn.appendChild(icon(isActive ? "Pause" : "Play", { size: 14 }));
         playBtn.addEventListener("click", () =>
           args.socket.emit("topic:setCurrent", { topicId: isActive ? null : topic.id })
@@ -214,13 +219,13 @@ export function renderAgenda(args: Args): AgendaHandle {
       li.appendChild(time);
 
       if (args.isHost()) {
-        const up = rowIconBtn("ChevronUp", t("meeting.moveUp"), () =>
+        const up = rowIconBtn("ChevronUp", on(t("meeting.moveUp")), () =>
           args.socket.emit("topic:reorder", { topicId: topic.id, direction: "up" })
         );
         up.disabled = idx === 0 || ended;
         up.dataset.focusKey = `${topic.id}:up`;
         li.appendChild(up);
-        const down = rowIconBtn("ChevronDown", t("meeting.moveDown"), () =>
+        const down = rowIconBtn("ChevronDown", on(t("meeting.moveDown")), () =>
           args.socket.emit("topic:reorder", { topicId: topic.id, direction: "down" })
         );
         down.disabled = idx === m.topics.length - 1 || ended;
@@ -230,8 +235,11 @@ export function renderAgenda(args: Args): AgendaHandle {
         // Deletion is destructive (the accumulated time goes with the topic)
         // and the trash sits next to the reorder chevrons, so it confirms,
         // unlike the freely reversible actions around it.
-        const remove = rowIconBtn("Trash2", t("common.remove"), async () => {
-          const ok = await confirmDialog(t("meeting.deleteTopicConfirm", { label: topic.label }));
+        const remove = rowIconBtn("Trash2", on(t("meeting.deleteTopic")), async () => {
+          const ok = await confirmDialog(t("meeting.deleteTopicConfirm", { label: topic.label }), {
+            okLabel: t("meeting.deleteTopic"),
+            danger: true,
+          });
           if (ok) args.socket.emit("topic:remove", { topicId: topic.id });
         });
         remove.classList.add("danger");
@@ -268,6 +276,8 @@ export function renderAgenda(args: Args): AgendaHandle {
       const cur = focusedTopicId ? ids.indexOf(focusedTopicId) : -1;
       const next = ids[(cur + dir + ids.length) % ids.length];
       focusedTopicId = next;
+      const label = m.topics.find((tp) => tp.id === next)?.label;
+      if (label) args.onFocusChange?.(label);
       update();
     },
   };

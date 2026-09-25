@@ -3,7 +3,12 @@ import { installDialogA11y } from "../lib/dialogA11y.js";
 
 let dialogSeq = 0;
 
-export function confirmDialog(message: string, opts: { okLabel?: string } = {}): Promise<boolean> {
+// okLabel repeats the action ("End the meeting", not "Confirm") so the button
+// names its consequence; `danger` paints it red for irreversible actions.
+export function confirmDialog(
+  message: string,
+  opts: { okLabel: string; cancelLabel?: string; danger?: boolean }
+): Promise<boolean> {
   return new Promise((resolve) => {
     const backdrop = document.createElement("div");
     backdrop.className = "dialog-backdrop";
@@ -27,12 +32,12 @@ export function confirmDialog(message: string, opts: { okLabel?: string } = {}):
     const cancel = document.createElement("button");
     cancel.type = "button";
     cancel.className = "btn btn-secondary";
-    cancel.textContent = t("common.cancel");
+    cancel.textContent = opts.cancelLabel ?? t("common.cancel");
 
     const ok = document.createElement("button");
     ok.type = "button";
-    ok.className = "btn btn-primary";
-    ok.textContent = opts.okLabel ?? t("common.confirm");
+    ok.className = opts.danger ? "btn btn-danger" : "btn btn-primary";
+    ok.textContent = opts.okLabel;
 
     actions.append(cancel, ok);
     dlg.appendChild(actions);
@@ -59,7 +64,7 @@ export function confirmDialog(message: string, opts: { okLabel?: string } = {}):
 
     cancel.addEventListener("click", () => close(false));
     ok.addEventListener("click", () => close(true));
-    // Cancel takes the initial focus: every caller guards a destructive or
+    // Cancel takes the initial focus: most callers guard a destructive or
     // irreversible action, so a reflexive Enter must be the safe choice.
     teardown = installDialogA11y(backdrop, dlg, () => close(false), { initialFocus: cancel });
   });

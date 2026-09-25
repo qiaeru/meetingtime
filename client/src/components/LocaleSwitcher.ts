@@ -26,7 +26,10 @@ export function renderLocaleSwitcher(): HTMLElement {
   const renderMenu = (): void => {
     menu.innerHTML = "";
     for (const { code: c, native } of SUPPORTED_LOCALES) {
+      // The <li> is only a wrapper inside role="menu"; without role="none"
+      // it would break the menu > menuitem structure.
       const li = document.createElement("li");
+      li.setAttribute("role", "none");
       const item = document.createElement("button");
       item.type = "button";
       item.className = "locale-menu-item";
@@ -76,6 +79,10 @@ export function renderLocaleSwitcher(): HTMLElement {
     if (e.key === "Escape") {
       close();
       btn.focus();
+      return;
+    }
+    if (e.key === "Tab") {
+      close();
       return;
     }
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;

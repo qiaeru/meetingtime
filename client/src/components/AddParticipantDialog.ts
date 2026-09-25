@@ -69,6 +69,8 @@ function field(label: string): { wrap: HTMLElement; input: HTMLInputElement } {
   const input = document.createElement("input");
   input.required = true;
   input.maxLength = 60;
+  // Someone else's details: the browser must not offer the host's own name.
+  input.autocomplete = "off";
   wrap.append(span, input);
   return { wrap, input };
 }
