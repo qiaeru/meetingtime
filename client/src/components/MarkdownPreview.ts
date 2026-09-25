@@ -71,6 +71,16 @@ const md = new Marked({
   },
 });
 
+// Shiki (defaultColor: false) only emits `--shiki-*` custom properties, which
+// do nothing unless our stylesheet reads them. Any other inline CSS written in
+// the notes is dropped: it could, for example, pin a full-screen overlay over
+// the app for everyone who opens the preview.
+const isShikiStyle = (css: string): boolean =>
+  css.split(";").every((decl) => !decl.trim() || /^\s*--shiki-[\w-]+\s*:/.test(decl));
+DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => {
+  if (data.attrName === "style" && !isShikiStyle(data.attrValue)) data.keepAttr = false;
+});
+
 export function renderMarkdownInto(target: HTMLElement, source: string): void {
   const render = (): void => {
     const raw = md.parse(source, { async: false }) as string;

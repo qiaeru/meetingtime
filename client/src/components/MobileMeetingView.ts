@@ -8,6 +8,7 @@ import { renderLocaleSwitcher } from "./LocaleSwitcher.js";
 import { renderThemeToggle } from "./ThemeToggle.js";
 import { icon } from "./Icon.js";
 import { formatMs } from "../lib/format.js";
+import { topicDisplayMs } from "../lib/liveTime.js";
 import { muted$, toggleMute, playGong, playGrant, unlockAudio } from "../lib/sounds.js";
 import { vibrationEnabled$, toggleVibration, vibrate, hapticsSupported } from "../lib/haptics.js";
 import { t } from "../i18n/index.js";
@@ -23,7 +24,11 @@ export function renderMobileMeeting(
   meetingId: string,
   socket: MeetingSocket
 ): () => void {
-  const getMeeting = (): Meeting | null => meeting$.get();
+  // meeting$ may still hold another meeting; never render that one here.
+  const getMeeting = (): Meeting | null => {
+    const m = meeting$.get();
+    return m?.id === meetingId ? m : null;
+  };
   const getMyId = (): string | null => myParticipantId$.get();
   let connected = true;
   let cleanedUp = false;
@@ -137,15 +142,6 @@ export function renderMobileMeeting(
   stage.append(spotlight.el, topicEl);
   wrap.appendChild(stage);
 
-  const topicDisplayMs = (m: Meeting, topicId: string): number => {
-    const topic = m.topics.find((x) => x.id === topicId);
-    if (!topic) return 0;
-    const live =
-      m.currentTopicId === topicId && m.currentTopicStartedAt && m.phase === "running"
-        ? Date.now() - m.currentTopicStartedAt
-        : 0;
-    return topic.totalMs + live;
-  };
   const updateTopic = (): void => {
     const m = getMeeting();
     const topic = m?.currentTopicId ? m.topics.find((x) => x.id === m.currentTopicId) : undefined;
@@ -295,7 +291,7 @@ export function renderMobileMeeting(
         m.timeboxMs > 0 &&
         m.currentSpeakerStartedAt &&
         m.phase === "running" &&
-        Date.now() - m.currentSpeakerStartedAt >= m.timeboxMs
+        (m.currentSpeakerTurnMs ?? 0) + Date.now() - m.currentSpeakerStartedAt >= m.timeboxMs
       );
     claimBtn.dataset.over = String(over);
     if (over && !turnOverAlerted) {
@@ -326,9 +322,10 @@ export function renderMobileMeeting(
     updateClaimAlert();
   });
 
-  // Single ticker, like MeetingPage, so the speaker chrono, timebox bar and
-  // topic time advance every half second. The global timer self-ticks.
+  // Single ticker, like MeetingPage, so the global timer, speaker chrono,
+  // timebox bar and topic time advance together every half second.
   const ticker = window.setInterval(() => {
+    meetingTimer.tick();
     spotlight.update();
     updateTopic();
     updateClaimAlert();
@@ -362,7 +359,6 @@ export function renderMobileMeeting(
 
   return () => {
     spotlight.stop();
-    meetingTimer.stop();
     unsubMeeting();
     unsubConn();
     unsubMute();

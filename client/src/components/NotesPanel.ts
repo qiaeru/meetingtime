@@ -23,7 +23,6 @@ interface Args {
   // received its first state push (deep-link rejoin case).
   meetingId: string;
   participantId: string;
-  displayName: string;
   token: string;
   readOnly: boolean;
 }
@@ -36,7 +35,7 @@ export interface NotesPanelHandle {
   exportNow: () => void;
   hasContent: () => boolean;
   setReadOnly: (readOnly: boolean) => void;
-  setUserColor: (color: string) => void;
+  setUser: (name: string, color: string) => void;
   destroy: () => void;
 }
 
@@ -150,7 +149,8 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
       description.appendChild(ro);
     }
   };
-  refreshDescription(args.readOnly);
+  let readOnly = args.readOnly;
+  refreshDescription(readOnly);
 
   const resizer = document.createElement("div");
   resizer.className = "notes-resizer";
@@ -218,7 +218,6 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     container: editorMount,
     meetingId: args.meetingId,
     participantId: args.participantId,
-    displayName: args.displayName,
     token: args.token,
     readOnly: args.readOnly,
   });
@@ -306,11 +305,15 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     focusEditor,
     exportNow,
     hasContent: () => editor.ytext.toString().trim().length > 0,
+    // Called on every state push: only act on an actual permission change, so
+    // the description rebuild does not steal focus from its help button.
     setReadOnly: (ro: boolean) => {
+      if (ro === readOnly) return;
+      readOnly = ro;
       editor.setReadOnly(ro);
       refreshDescription(ro);
     },
-    setUserColor: (color: string) => editor.setUserColor(color),
+    setUser: (name: string, color: string) => editor.setUser(name, color),
     destroy: () => {
       window.clearTimeout(previewTimer);
       editor.destroy();

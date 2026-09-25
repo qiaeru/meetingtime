@@ -1,6 +1,7 @@
 import type { Locale } from "@meetingtime/shared";
 import { icon } from "./Icon.js";
 import { locale$, setLocale, SUPPORTED_LOCALES, t } from "../i18n/index.js";
+import { onRouteTeardown } from "../router.js";
 
 export function renderLocaleSwitcher(): HTMLElement {
   const wrap = document.createElement("div");
@@ -91,18 +92,15 @@ export function renderLocaleSwitcher(): HTMLElement {
     else close();
   });
 
-  // The picker is rebuilt on every page render; self-unsubscribe once this
-  // instance leaves the DOM so orphan subscriptions (and their detached menu)
-  // don't accumulate over the session. subscribe() fires synchronously before
-  // `wrap` is appended, so only later notifications check isConnected.
-  let first = true;
+  // The picker is rebuilt on every page render; drop this instance's
+  // subscription and document listeners with the page, so detached menus
+  // don't accumulate over the session.
   const unsub = locale$.subscribe(() => {
-    if (!first && !wrap.isConnected) {
-      unsub();
-      return;
-    }
-    first = false;
     if (!menu.hidden) renderMenu();
+  });
+  onRouteTeardown(() => {
+    unsub();
+    close();
   });
 
   return wrap;

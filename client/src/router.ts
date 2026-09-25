@@ -11,6 +11,9 @@ const routes: Array<{ path: string; load: RouteLoader }> = [
 ];
 
 let currentTeardown: (() => void) | void;
+// Cleanups registered by widgets built during the current render that the
+// page's own teardown does not own (the header controls every page shares).
+let widgetTeardowns: Array<() => void> = [];
 // Lets render() drop stale dynamic-import resolutions when the user
 // navigates again before the previous load finishes.
 let renderToken = 0;
@@ -25,6 +28,8 @@ async function render(): Promise<void> {
   const myToken = ++renderToken;
   if (typeof currentTeardown === "function") currentTeardown();
   currentTeardown = undefined;
+  for (const fn of widgetTeardowns) fn();
+  widgetTeardowns = [];
 
   const { path, params } = parseHash();
   const route = routes.find((r) => r.path === path) ?? routes[0];
@@ -53,6 +58,11 @@ async function render(): Promise<void> {
     main.setAttribute("tabindex", "-1");
     main.focus({ preventScroll: true });
   }
+}
+
+// Runs `fn` when the current page is torn down (navigation or re-render).
+export function onRouteTeardown(fn: () => void): void {
+  widgetTeardowns.push(fn);
 }
 
 export function navigate(path: string, params?: Record<string, string>): void {

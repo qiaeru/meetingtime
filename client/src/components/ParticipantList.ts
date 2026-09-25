@@ -7,6 +7,7 @@ import { t } from "../i18n/index.js";
 import { formatMs, formatMsSpoken, formatPercent } from "../lib/format.js";
 import { locale$ } from "../i18n/index.js";
 import { colorByPosition } from "../lib/color.js";
+import { speakingDisplayMs } from "../lib/liveTime.js";
 
 // Sort key falls back to joinedAt for legacy meetings written before the
 // `order` field existed. Exported because colorByPosition is keyed on the
@@ -67,11 +68,7 @@ export function renderParticipantList(args: Args): {
     const totals = new Map<string, number>();
     let sum = 0;
     for (const p of Object.values(m.participants)) {
-      let live = 0;
-      if (m.currentSpeakerId === p.id && m.currentSpeakerStartedAt && m.phase === "running") {
-        live = Date.now() - m.currentSpeakerStartedAt;
-      }
-      const total = p.totalSpeakingMs + live;
+      const total = speakingDisplayMs(m, p);
       totals.set(p.id, total);
       sum += total;
     }

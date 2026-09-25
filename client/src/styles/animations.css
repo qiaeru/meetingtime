@@ -90,13 +90,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   /* Kill recurring / attention-grabbing animations that would otherwise loop
-     continuously (speaker pulse, phase-pill pulse, hand icon, etc.). */
+     continuously (speaker pulse, hand icon, etc.). */
   .hand-icon-pulse,
   .speaker-spotlight[data-zone="over"] .spotlight-turn-timer,
   .speaker-spotlight[data-zone="over"] .spotlight-turn-bar-fill,
   .mobile-claim-btn[data-over="true"],
   .participant[data-just-spoke="true"],
-  .phase-pill[data-phase="running"]::before,
   .toast,
   .toast--leaving,
   .dialog-backdrop,

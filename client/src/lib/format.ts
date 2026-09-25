@@ -10,18 +10,10 @@ export function formatMs(ms: number): string {
 
 import type { Locale } from "@meetingtime/shared";
 
-// Locale-aware spoken units for screen-reader output. Plural is the form
-// used for any count !== 1 (zero and 2+), adequate for FR, EN, ES, IT and DE.
-const SPOKEN_UNITS: Record<
-  Locale,
-  { hr: [string, string]; min: [string, string]; sec: [string, string] }
-> = {
-  fr: { hr: ["heure", "heures"], min: ["minute", "minutes"], sec: ["seconde", "secondes"] },
-  en: { hr: ["hour", "hours"], min: ["minute", "minutes"], sec: ["second", "seconds"] },
-  es: { hr: ["hora", "horas"], min: ["minuto", "minutos"], sec: ["segundo", "segundos"] },
-  it: { hr: ["ora", "ore"], min: ["minuto", "minuti"], sec: ["secondo", "secondi"] },
-  de: { hr: ["Stunde", "Stunden"], min: ["Minute", "Minuten"], sec: ["Sekunde", "Sekunden"] },
-};
+// Screen-reader output. Intl carries the unit words and each language's
+// plural rules, so no locale table lives in code.
+const spokenUnit = (lang: Locale, unit: "hour" | "minute" | "second", n: number): string =>
+  new Intl.NumberFormat(lang, { style: "unit", unit, unitDisplay: "long" }).format(n);
 
 export function formatMsSpoken(ms: number, lang: Locale = "fr"): string {
   if (!Number.isFinite(ms) || ms < 0) ms = 0;
@@ -29,14 +21,13 @@ export function formatMsSpoken(ms: number, lang: Locale = "fr"): string {
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  const units = SPOKEN_UNITS[lang] ?? SPOKEN_UNITS.fr;
   // Mirror formatMs: speak the hours component once the duration passes an
   // hour, otherwise the spoken time ("75 minutes") diverges from the visible
   // chrono ("1:15:00") on long meetings.
   const parts: string[] = [];
-  if (h > 0) parts.push(`${h} ${units.hr[h === 1 ? 0 : 1]}`);
-  parts.push(`${m} ${units.min[m === 1 ? 0 : 1]}`);
-  parts.push(`${s} ${units.sec[s === 1 ? 0 : 1]}`);
+  if (h > 0) parts.push(spokenUnit(lang, "hour", h));
+  parts.push(spokenUnit(lang, "minute", m));
+  parts.push(spokenUnit(lang, "second", s));
   return parts.join(" ");
 }
 
@@ -58,10 +49,6 @@ export function formatTime(ts: number): string {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-export function safeFilename(input: string): string {
-  return input.replace(/[\\/:*?"<>|\s]+/g, "_");
 }
 
 // French typographic convention puts an NBSP between the number and the %

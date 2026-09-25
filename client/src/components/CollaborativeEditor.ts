@@ -89,7 +89,6 @@ interface Args {
   container: HTMLElement;
   meetingId: string;
   participantId: string;
-  displayName: string;
   token: string;
   readOnly: boolean;
   // Defaults to a hue derived from the participant id. Pass the meeting's
@@ -103,7 +102,8 @@ export interface CollaborativeEditor {
   ytext: Y.Text;
   provider: WebsocketProvider;
   setReadOnly: (readOnly: boolean) => void;
-  setUserColor: (color: string) => void;
+  // Name and color shown on my remote cursor to the other participants.
+  setUser: (name: string, color: string) => void;
   destroy: () => void;
 }
 
@@ -114,8 +114,9 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
   });
 
   const initialColor = sanitizeColor(args.color ?? colorFromId(args.participantId));
+  // Placeholder identity until the page calls setUser() with the real one.
   provider.awareness.setLocalStateField("user", {
-    name: args.displayName,
+    name: "?",
     color: initialColor,
     colorLight: initialColor,
     participantId: args.participantId,
@@ -125,6 +126,9 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
 
   const themeCompartment = new Compartment();
   const readOnlyCompartment = new Compartment();
+  const placeholderCompartment = new Compartment();
+  const placeholderFor = (readOnly: boolean) =>
+    placeholder(readOnly ? t("notes.placeholderReadOnly") : t("notes.placeholder"));
 
   const state = EditorState.create({
     doc: ytext.toString(),
@@ -137,7 +141,7 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
       readOnlyCompartment.of(EditorState.readOnly.of(args.readOnly)),
       yCollab(ytext, provider.awareness),
       EditorView.lineWrapping,
-      placeholder(args.readOnly ? t("notes.placeholderReadOnly") : t("notes.placeholder")),
+      placeholderCompartment.of(placeholderFor(args.readOnly)),
       themeCompartment.of(theme$.get() === "dark" ? darkTheme : lightTheme),
     ],
   });
@@ -157,13 +161,16 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
     provider,
     setReadOnly: (readOnly: boolean) => {
       view.dispatch({
-        effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)),
+        effects: [
+          readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)),
+          placeholderCompartment.reconfigure(placeholderFor(readOnly)),
+        ],
       });
     },
-    setUserColor: (color: string) => {
+    setUser: (name: string, color: string) => {
       const safe = sanitizeColor(color);
       provider.awareness.setLocalStateField("user", {
-        name: args.displayName,
+        name,
         color: safe,
         colorLight: safe,
         participantId: args.participantId,

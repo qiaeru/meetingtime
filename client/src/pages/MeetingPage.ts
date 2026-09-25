@@ -26,6 +26,10 @@ import { playHandRaise, playGong, toggleMute, muted$ } from "../lib/sounds.js";
 import { registerShortcut } from "../lib/keyboard.js";
 import { colorByPosition } from "../lib/color.js";
 
+// Module scope so a re-render (language switch, breakpoint crossing) does not
+// offer the export again for a meeting already prompted in this tab.
+const exportPromptedFor = new Set<string>();
+
 export function renderMeeting(root: HTMLElement, params: URLSearchParams): () => void {
   const meetingId = params.get("id") ?? meeting$.get()?.id;
   if (!meetingId) {
@@ -136,7 +140,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   shareBtn.title = t("share.title");
   shareBtn.appendChild(icon("Share2"));
   shareBtn.addEventListener("click", () => {
-    const m = meeting$.get();
+    const m = getMeeting();
     if (!m) return;
     void showShareMeetingDialog({
       meetingId: m.id,
@@ -153,7 +157,12 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const left = document.createElement("section");
   left.className = "meeting-left";
 
-  const getMeeting = (): Meeting | null => meeting$.get();
+  // meeting$ may still hold another meeting (deep link while a previous one
+  // is loaded, or a late broadcast from it); never render that one here.
+  const getMeeting = (): Meeting | null => {
+    const m = meeting$.get();
+    return m?.id === meetingId ? m : null;
+  };
   const getMyId = (): string | null => myParticipantId$.get();
   const amIHost = (): boolean => {
     const m = getMeeting();
@@ -395,12 +404,10 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   const sess = loadSession(meetingId);
   const participantId = getMyId() ?? sess?.participantId ?? "";
   const token = sess?.token ?? "";
-  const me = getMeeting()?.participants[participantId];
-  const displayName = me ? `${me.firstName} ${me.lastName}` : "?";
 
   let prevHandRaised = new Set<string>();
   let prevPhase: Meeting["phase"] | null = null;
-  let lastNotesColor: string | null = null;
+  let lastNotesUser: string | null = null;
 
   // The notes editor (CodeMirror + Yjs + Shiki) is the heaviest module on this
   // route. Loading it dynamically keeps it out of the mobile path entirely:
@@ -415,23 +422,31 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   // Offered once, either on the ended transition or, if the meeting was
   // already over when the notes chunk finished loading, from the import
   // callback (otherwise that race would silently skip the prompt).
-  let exportPrompted = false;
   const promptNotesExport = (): void => {
-    if (exportPrompted || !notes?.hasContent()) return;
-    exportPrompted = true;
+    if (exportPromptedFor.has(meetingId) || !notes?.hasContent()) return;
+    exportPromptedFor.add(meetingId);
     void confirmDialog(t("meeting.exportNotesPrompt"), { okLabel: t("notes.export") }).then(
       (ok) => {
         if (ok) notes?.exportNow();
       }
     );
   };
-  const myColor = (): string | null => {
+  // Pushes my name and the color the participant list uses for me into Yjs
+  // awareness, so my remote cursor matches my row for everyone else. Both
+  // can be unknown at render (reload before the first state push).
+  const refreshNotesUser = (): void => {
     const m = getMeeting();
     const myId = getMyId();
-    if (!m || !myId || !m.participants[myId]) return null;
+    const me = myId ? m?.participants[myId] : undefined;
+    if (!notes || !m || !me) return;
     const sorted = sortedParticipants(m);
-    const idx = sorted.findIndex((p) => p.id === myId);
-    return idx >= 0 ? colorByPosition(idx, sorted.length, m.id) : null;
+    const idx = sorted.findIndex((p) => p.id === me.id);
+    const name = `${me.firstName} ${me.lastName}`;
+    const color = colorByPosition(idx, sorted.length, m.id);
+    const key = `${name}|${color}`;
+    if (key === lastNotesUser) return;
+    lastNotesUser = key;
+    notes.setUser(name, color);
   };
   void import("../components/NotesPanel.js").then(({ renderNotesPanel }) => {
     if (tornDown) return;
@@ -439,22 +454,18 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       getMeeting,
       meetingId,
       participantId,
-      displayName,
       token,
       readOnly: !amIHost(),
     });
     grid.appendChild(notes.el);
-    const color = myColor();
-    if (color) {
-      notes.setUserColor(color);
-      lastNotesColor = color;
-    }
+    refreshNotesUser();
     if (getMeeting()?.phase === "ended") promptNotesExport();
   });
 
   page.appendChild(grid);
   root.appendChild(page);
-  const unsubMeeting = meeting$.subscribe((m) => {
+  const unsubMeeting = meeting$.subscribe(() => {
+    const m = getMeeting();
     list.update();
     handBanner.update();
     endedBanner.hidden = m?.phase !== "ended";
@@ -467,14 +478,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     refreshTimeboxBtn();
     refreshInviteHint();
     if (!m) return;
-
-    // Push the same color the participant list uses for me into Yjs
-    // awareness, so my remote cursor matches my row color for everyone else.
-    const color = myColor();
-    if (notes && color && color !== lastNotesColor) {
-      notes.setUserColor(color);
-      lastNotesColor = color;
-    }
+    refreshNotesUser();
 
     const currentRaised = new Set<string>();
     for (const p of Object.values(m.participants)) if (p.handRaised) currentRaised.add(p.id);
@@ -505,6 +509,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   // refresh that preserves hover, focus and in-progress drag (which the
   // full update() would clobber).
   const ticker = window.setInterval(() => {
+    meetingTimer.tick();
     spotlight.update();
     list.tick();
     agenda.tick();
@@ -648,7 +653,6 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   return () => {
     tornDown = true;
     mql.removeEventListener("change", onBreakpoint);
-    meetingTimer.stop();
     spotlight.stop();
     notes?.destroy();
     unsubMeeting();

@@ -1,6 +1,8 @@
 import { t } from "../i18n/index.js";
 import { installDialogA11y } from "../lib/dialogA11y.js";
 
+let dialogSeq = 0;
+
 export function confirmDialog(message: string, opts: { okLabel?: string } = {}): Promise<boolean> {
   return new Promise((resolve) => {
     const backdrop = document.createElement("div");
@@ -11,8 +13,12 @@ export function confirmDialog(message: string, opts: { okLabel?: string } = {}):
     dlg.setAttribute("role", "dialog");
     dlg.setAttribute("aria-modal", "true");
 
+    // The question doubles as the dialog's accessible name; without it a
+    // screen reader announces a bare "dialog".
     const msg = document.createElement("p");
+    msg.id = `confirm-dialog-msg-${++dialogSeq}`;
     msg.textContent = message;
+    dlg.setAttribute("aria-labelledby", msg.id);
     dlg.appendChild(msg);
 
     const actions = document.createElement("div");

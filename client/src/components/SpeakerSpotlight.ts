@@ -187,6 +187,9 @@ export function renderSpeakerSpotlight(args: Args): {
     }
     const elapsedTotal = speaker.totalSpeakingMs + baseElapsed;
     timer.textContent = formatMs(elapsedTotal);
+    // The server banks the turn's earlier segments here, so a pause neither
+    // resets the time-box nor shows 00:00 while paused.
+    const turnElapsed = (m.currentSpeakerTurnMs ?? 0) + baseElapsed;
 
     const limitActive = Boolean(m.timeboxEnabled && m.timeboxMs && m.timeboxMs > 0);
     if (limitActive !== lastLimitActive || !initialized) {
@@ -196,10 +199,10 @@ export function renderSpeakerSpotlight(args: Args): {
 
     if (limitActive) {
       const timeboxMs = m.timeboxMs ?? 1;
-      const ratio = baseElapsed / timeboxMs;
+      const ratio = turnElapsed / timeboxMs;
       card.dataset.zone = ratio < 0.7 ? "ok" : ratio < 1 ? "warn" : "over";
       updateOutlineRatio(ratio);
-      turnTimer.textContent = `${formatMs(baseElapsed)} / ${formatMs(timeboxMs)}`;
+      turnTimer.textContent = `${formatMs(turnElapsed)} / ${formatMs(timeboxMs)}`;
       const countdown = args.countdownSounds?.() ?? true;
       if (ratio >= 0.8 && ratio < 1 && nearLimitForId !== m.currentSpeakerId) {
         nearLimitForId = m.currentSpeakerId;
@@ -209,7 +212,7 @@ export function renderSpeakerSpotlight(args: Args): {
         warnedForId = m.currentSpeakerId;
         playTimeboxWarn();
       }
-      const remaining = Math.ceil((timeboxMs - baseElapsed) / 1000);
+      const remaining = Math.ceil((timeboxMs - turnElapsed) / 1000);
       if (
         countdown &&
         remaining > 0 &&

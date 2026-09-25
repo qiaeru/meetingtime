@@ -2,9 +2,11 @@ import type { Meeting } from "@meetingtime/shared";
 import { formatMs } from "../lib/format.js";
 import { t } from "../i18n/index.js";
 
+// No internal ticker: the page's shared 500 ms ticker calls tick(), so this
+// chronometer and the speaker's never disagree by a second.
 export function renderMeetingTimer(getMeeting: () => Meeting | null): {
   el: HTMLElement;
-  stop: () => void;
+  tick: () => void;
 } {
   const el = document.createElement("div");
   el.className = "global-timer";
@@ -69,6 +71,5 @@ export function renderMeetingTimer(getMeeting: () => Meeting | null): {
     }
   };
   tick();
-  const id = window.setInterval(tick, 500);
-  return { el, stop: () => clearInterval(id) };
+  return { el, tick };
 }

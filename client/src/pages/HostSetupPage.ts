@@ -9,6 +9,7 @@ import { toast } from "../components/Toaster.js";
 import {
   downloadMeetingTemplate,
   parseMeetingJSON,
+  MeetingImportError,
   type MeetingDraft,
 } from "../lib/meetingImport.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
@@ -299,7 +300,12 @@ export function renderHostSetup(root: HTMLElement): void {
       applyDraft(draft);
       toast(t("host.importSuccess"), { type: "success" });
     } catch (e) {
-      toast(t("host.importError", { reason: (e as Error).message }), { type: "error" });
+      if (e instanceof MeetingImportError) {
+        const reason = t(`host.importReason.${e.reason}`, { field: e.field });
+        toast(t("host.importError", { reason }), { type: "error" });
+      } else {
+        toast(t("errors.internal_error"), { type: "error" });
+      }
     } finally {
       fileInput.value = "";
     }

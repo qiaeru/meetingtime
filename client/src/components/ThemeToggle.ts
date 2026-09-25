@@ -1,6 +1,7 @@
 import { Observable } from "../state/store.js";
 import { icon } from "./Icon.js";
 import { t } from "../i18n/index.js";
+import { onRouteTeardown } from "../router.js";
 
 type Theme = "light" | "dark";
 
@@ -57,24 +58,16 @@ export function renderThemeToggle(): HTMLButtonElement {
   btn.className = "icon-btn";
   btn.setAttribute("aria-label", t("a11y.themeToggle"));
   btn.title = t("a11y.themeToggle");
-  // Self-unsubscribe once the button leaves the DOM (the router rebuilds the
-  // header on every render); a persistent subscription per render would
-  // accumulate listeners and retain detached buttons for the whole session.
-  // subscribe() fires synchronously before the button is appended, so the
-  // isConnected check must only apply to later notifications.
-  let first = true;
+  // The router rebuilds the header on every render; a subscription kept past
+  // the page would accumulate listeners and retain detached buttons.
   const unsub = theme$.subscribe(() => {
-    if (!first && !btn.isConnected) {
-      unsub();
-      return;
-    }
-    first = false;
     btn.innerHTML = "";
     btn.appendChild(icon(theme$.get() === "dark" ? "Sun" : "Moon"));
     // Exposes the current state (dark on/off) to assistive tech; the icon
     // swap alone is aria-hidden.
     btn.setAttribute("aria-pressed", String(theme$.get() === "dark"));
   });
+  onRouteTeardown(unsub);
   btn.addEventListener("click", toggleTheme);
   return btn;
 }

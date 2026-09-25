@@ -49,7 +49,7 @@ The three fields are mandatory when the object is present.
 
 ### Validation
 
-Any whitespace-only text field is rejected. Numeric fields must be non-negative. On error, a toast shows "Invalid file: `<reason>`"; on success, a "Template imported" toast confirms the import and every form field is populated.
+Any whitespace-only text field is rejected. Numeric fields must be non-negative. On error, a toast shows "Invalid file: `<reason>`", where the reason is localized and names the offending JSON field (for example `topics[2]`); on success, a "Template imported" toast confirms the import and every form field is populated.
 
 ### Export behavior
 

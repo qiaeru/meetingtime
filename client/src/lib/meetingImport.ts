@@ -10,16 +10,27 @@ export interface MeetingDraft {
   password?: string;
 }
 
-// See docs/meeting_import.md for the schema. Throws Error with a
-// human-readable reason on invalid input.
+// Carries a reason code (localized by the caller under host.importReason.*)
+// plus the offending JSON path, instead of an English sentence.
+export class MeetingImportError extends Error {
+  constructor(
+    readonly reason: "json" | "root" | "object" | "array" | "string" | "text" | "number",
+    readonly field = ""
+  ) {
+    super(field ? `${field}: ${reason}` : reason);
+  }
+}
+
+// See docs/meeting_import.md for the schema. Throws MeetingImportError on
+// invalid input.
 export function parseMeetingJSON(raw: string): MeetingDraft {
   let data: unknown;
   try {
     data = JSON.parse(raw);
-  } catch (e) {
-    throw new Error(`JSON parse error: ${(e as Error).message}`, { cause: e });
+  } catch {
+    throw new MeetingImportError("json");
   }
-  if (!isObject(data)) throw new Error("root must be an object");
+  if (!isObject(data)) throw new MeetingImportError("root");
 
   const draft: MeetingDraft = { participants: [], topics: [] };
 
@@ -28,37 +39,36 @@ export function parseMeetingJSON(raw: string): MeetingDraft {
   }
 
   if ("participants" in data && data.participants !== undefined) {
-    if (!Array.isArray(data.participants)) throw new Error("participants must be an array");
+    if (!Array.isArray(data.participants)) throw new MeetingImportError("array", "participants");
     draft.participants = data.participants.map((p, i) => parseIdentity(p, `participants[${i}]`));
   }
 
   if ("topics" in data && data.topics !== undefined) {
-    if (!Array.isArray(data.topics)) throw new Error("topics must be an array");
+    if (!Array.isArray(data.topics)) throw new MeetingImportError("array", "topics");
     draft.topics = data.topics.map((t, i) => {
-      if (typeof t !== "string") throw new Error(`topics[${i}] must be a string`);
-      const trimmed = t.trim();
-      if (!trimmed) throw new Error(`topics[${i}] is empty`);
+      const trimmed = typeof t === "string" ? t.trim() : "";
+      if (!trimmed) throw new MeetingImportError("text", `topics[${i}]`);
       return trimmed;
     });
   }
 
   if ("timeboxMinutes" in data && data.timeboxMinutes !== undefined) {
     if (typeof data.timeboxMinutes !== "number" || data.timeboxMinutes < 0) {
-      throw new Error("timeboxMinutes must be a positive number");
+      throw new MeetingImportError("number", "timeboxMinutes");
     }
     draft.timeboxMinutes = data.timeboxMinutes;
   }
 
   if ("plannedDurationMinutes" in data && data.plannedDurationMinutes !== undefined) {
     if (typeof data.plannedDurationMinutes !== "number" || data.plannedDurationMinutes < 0) {
-      throw new Error("plannedDurationMinutes must be a positive number");
+      throw new MeetingImportError("number", "plannedDurationMinutes");
     }
     draft.plannedDurationMinutes = data.plannedDurationMinutes;
   }
 
   if ("password" in data && data.password !== undefined) {
     if (typeof data.password !== "string") {
-      throw new Error("password must be a string");
+      throw new MeetingImportError("string", "password");
     }
     const trimmed = data.password.trim();
     if (trimmed) draft.password = trimmed;
@@ -68,7 +78,7 @@ export function parseMeetingJSON(raw: string): MeetingDraft {
 }
 
 function parseIdentity(raw: unknown, path: string): ParticipantIdentity {
-  if (!isObject(raw)) throw new Error(`${path} must be an object`);
+  if (!isObject(raw)) throw new MeetingImportError("object", path);
   const firstName = strField(raw, "firstName", path);
   const lastName = strField(raw, "lastName", path);
   const role = strField(raw, "role", path);
@@ -77,8 +87,7 @@ function parseIdentity(raw: unknown, path: string): ParticipantIdentity {
 
 function strField(o: Record<string, unknown>, key: string, path: string): string {
   const v = o[key];
-  if (typeof v !== "string" || !v.trim())
-    throw new Error(`${path}.${key} is required and must be a non-empty string`);
+  if (typeof v !== "string" || !v.trim()) throw new MeetingImportError("text", `${path}.${key}`);
   return v.trim();
 }
 

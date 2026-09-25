@@ -33,7 +33,7 @@ export function renderAvatar(args: Args): HTMLElement {
   if (p.role) parts.push(p.role);
   if (args.connected === false) parts.push(t("a11y.offline"));
   if (args.badge === "speaking") parts.push(t("meeting.currentSpeaker"));
-  else if (args.badge === "hand") parts.push(t("meeting.raiseHand"));
+  else if (args.badge === "hand") parts.push(t("a11y.handRaised"));
   wrap.setAttribute("role", "img");
   wrap.setAttribute("aria-label", parts.join(", "));
 

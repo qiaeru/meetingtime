@@ -28,7 +28,7 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
           .filter((p) => p.handRaised)
           .sort((a, b) => (a.handRaisedAt ?? 0) - (b.handRaisedAt ?? 0))
       : [];
-    const key = raised.map((p) => p.id).join(",") + (args.isHost() ? "|host" : "");
+    const key = raised.map((p) => p.id).join(",") + (canGrant(m, args) ? "|grant" : "");
     if (key === lastKey) return;
     lastKey = key;
     el.innerHTML = "";
@@ -58,7 +58,7 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
       queue.className = "hand-banner-queue";
       queue.setAttribute("aria-label", t("meeting.handQueueLabel"));
       for (const p of rest) {
-        queue.appendChild(renderQueueChip(p, args));
+        queue.appendChild(renderQueueChip(p, canGrant(m, args), args));
       }
       left.appendChild(queue);
     }
@@ -67,7 +67,7 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
 
     const right = document.createElement("div");
     right.className = "hand-banner-right";
-    if (args.isHost()) {
+    if (canGrant(m, args)) {
       const grant = document.createElement("button");
       grant.type = "button";
       grant.className = "btn btn-on-accent";
@@ -87,11 +87,17 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
   return { el, update };
 }
 
-function renderQueueChip(p: Participant, args: Args): HTMLLIElement {
+// The server only grants the floor while the meeting runs or is paused, so
+// hosts get no Grant controls in the lobby or once it has ended.
+function canGrant(m: Meeting | null, args: Args): boolean {
+  return args.isHost() && (m?.phase === "running" || m?.phase === "paused");
+}
+
+function renderQueueChip(p: Participant, grantable: boolean, args: Args): HTMLLIElement {
   const li = document.createElement("li");
   li.className = "hand-banner-queue-item";
   const fullName = `${p.firstName} ${p.lastName}`.trim();
-  if (args.isHost()) {
+  if (grantable) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "hand-banner-chip hand-banner-chip-button";

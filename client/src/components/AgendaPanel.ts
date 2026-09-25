@@ -3,6 +3,7 @@ import type { MeetingSocket } from "../state/socket.js";
 import { icon } from "./Icon.js";
 import { t } from "../i18n/index.js";
 import { formatMs } from "../lib/format.js";
+import { topicDisplayMs } from "../lib/liveTime.js";
 import { addTopicDialog } from "./AddTopicDialog.js";
 import { confirmDialog } from "./ConfirmDialog.js";
 import { toast } from "./Toaster.js";
@@ -14,20 +15,6 @@ interface Args {
   getMeeting: () => Meeting | null;
   socket: MeetingSocket;
   isHost: () => boolean;
-}
-
-function topicDisplayMs(meeting: Meeting, topicId: string): number {
-  const topic = meeting.topics.find((t) => t.id === topicId);
-  if (!topic) return 0;
-  let live = 0;
-  if (
-    meeting.currentTopicId === topicId &&
-    meeting.currentTopicStartedAt &&
-    meeting.phase === "running"
-  ) {
-    live = Date.now() - meeting.currentTopicStartedAt;
-  }
-  return topic.totalMs + live;
 }
 
 interface AgendaHandle {
