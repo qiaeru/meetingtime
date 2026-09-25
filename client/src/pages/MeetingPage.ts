@@ -43,43 +43,58 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     return () => undefined;
   }
 
-  // Auto-rejoin via stored token covers the deep-link case (user pasted a
-  // meeting URL into a fresh tab).
-  if (!meeting$.get() || meeting$.get()?.id !== meetingId) {
+  // Joins with the stored token: on a deep link (user pasted a meeting URL
+  // into a fresh tab), and again after every Socket.IO reconnect, since the
+  // server binds the participant to the socket and a reconnect is a new,
+  // anonymous socket that would otherwise never receive the room's state.
+  const rejoin = (): void => {
     const sess = loadSession(meetingId);
-    if (sess) {
-      // Without the timeout, a server that never acks (restart, dropped
-      // frame) would leave the loader below spinning forever.
-      socket.timeout(10_000).emit("meeting:join", { meetingId, token: sess.token }, (err, resp) => {
-        if (err) {
-          toast(t("errors.connection"), { type: "error" });
-          navigate("/join", { id: meetingId });
-          return;
+    if (!sess) {
+      navigate("/join", { id: meetingId });
+      return;
+    }
+    // Without the timeout, a server that never acks (restart, dropped
+    // frame) would leave the loader below spinning forever.
+    socket.timeout(10_000).emit("meeting:join", { meetingId, token: sess.token }, (err, resp) => {
+      if (err) {
+        toast(t("errors.connection"), { type: "error" });
+        navigate("/join", { id: meetingId });
+        return;
+      }
+      if (resp.ok) {
+        // Identity first: meeting$ subscribers compare against my id.
+        myParticipantId$.set(resp.participantId);
+        meeting$.set(resp.meeting);
+        saveSession({
+          meetingId: resp.meetingId,
+          participantId: resp.participantId,
+          token: resp.token,
+        });
+      } else {
+        // Wipe the stale session so the next visit lands on the join form
+        // instead of looping through this rejoin path.
+        if (resp.error === "invalid_token" || resp.error === "meeting_not_found") {
+          clearSession(meetingId);
+          savePassword(meetingId, undefined);
         }
-        if (resp.ok) {
-          meeting$.set(resp.meeting);
-          myParticipantId$.set(resp.participantId);
-          saveSession({
-            meetingId: resp.meetingId,
-            participantId: resp.participantId,
-            token: resp.token,
-          });
-        } else {
-          // Wipe the stale session so the next visit lands on the join form
-          // instead of looping through this rejoin path.
-          if (resp.error === "invalid_token" || resp.error === "meeting_not_found") {
-            clearSession(meetingId);
-            savePassword(meetingId, undefined);
-          }
-          toast(t(`errors.${resp.error}`), { type: "error" });
-          navigate("/join", { id: meetingId });
-        }
-      });
-    } else {
+        toast(t(`errors.${resp.error}`), { type: "error" });
+        navigate("/join", { id: meetingId });
+      }
+    });
+  };
+  if (meeting$.get()?.id !== meetingId) {
+    if (!loadSession(meetingId)) {
       navigate("/join", { id: meetingId });
       return () => undefined;
     }
+    rejoin();
   }
+  // An ended meeting sends no more state and may already be deleted, so a
+  // reconnect then has nothing to recover.
+  const onReconnect = (): void => {
+    if (meeting$.get()?.phase !== "ended") rejoin();
+  };
+  socket.io.on("reconnect", onReconnect);
 
   // On phones, participants get a stripped-down view (current speaker + take/
   // release-the-floor + raise-hand) instead of the desktop dashboard. The host
@@ -92,6 +107,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   if (mql.matches) {
     const teardown = renderMobileMeeting(root, meetingId, socket);
     return () => {
+      socket.io.off("reconnect", onReconnect);
       mql.removeEventListener("change", onBreakpoint);
       teardown();
     };
@@ -684,6 +700,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
 
   return () => {
     tornDown = true;
+    socket.io.off("reconnect", onReconnect);
     mql.removeEventListener("change", onBreakpoint);
     spotlight.stop();
     notes?.destroy();

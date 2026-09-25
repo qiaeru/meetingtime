@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The monospace font no longer fails to load for Cyrillic characters in the notes.
 - The focus outline of the notes editor now shows on its left edge too.
 
+- After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 ## [1.5.0] - 2026-09-25
 
 ### Changed
