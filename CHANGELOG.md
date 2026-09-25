@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A crash on a server with no connected client now also exits with a failure code.
 - The Traefik deployment starts again on recent Docker Engine versions, which refuse Traefik 3.1: it now follows the latest 3.x release.
 - The nginx deployment guide works as written: the first certificate is issued in standalone mode, and renewals go through a challenge directory that nginx now serves (they used to fail silently after 90 days). The image follows the stable nginx release.
+- On a phone, leaving the meeting view while the screen wake lock was being acquired no longer keeps the screen on.
 
 ### Security
 

@@ -345,13 +345,22 @@ export function renderMobileMeeting(
   // shouldn't dim out. The lock is dropped when the tab is hidden, so re-acquire
   // when it becomes visible again (but not once the meeting has ended).
   // Silently a no-op on browsers without the API or outside a secure context.
+  let disposed = false;
   const requestWakeLock = async (): Promise<void> => {
     if (!("wakeLock" in navigator) || wakeLock) return;
     if (getMeeting()?.phase === "ended") return;
     try {
-      wakeLock = await navigator.wakeLock.request("screen");
-      wakeLock.addEventListener("release", () => {
-        wakeLock = null;
+      const sentinel = await navigator.wakeLock.request("screen");
+      // While the request was pending the view may have been torn down, the
+      // meeting ended, or a concurrent request won: an extra lock would keep
+      // the screen on until the tab is hidden.
+      if (disposed || wakeLock || getMeeting()?.phase === "ended") {
+        void sentinel.release();
+        return;
+      }
+      wakeLock = sentinel;
+      sentinel.addEventListener("release", () => {
+        if (wakeLock === sentinel) wakeLock = null;
       });
     } catch {
       /* unsupported, denied, or non-secure context: ignore */
@@ -371,6 +380,7 @@ export function renderMobileMeeting(
     unsubVibration?.();
     clearInterval(ticker);
     document.removeEventListener("visibilitychange", onVisibility);
+    disposed = true;
     void wakeLock?.release();
     wakeLock = null;
   };
