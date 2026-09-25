@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Importing a template with minutes the form refuses (not a whole number, or above 60 per turn or 600 per meeting) now fails with a message naming the field, instead of reporting success and then blocking "Create".
 - The notes export made during a pause no longer overstates the meeting duration, writes the date with the month spelled out in the interface language (04/09 was ambiguous between countries), and keeps a topic containing a line break on one table row.
 - Sounds no longer replay after a page refresh or a language change: the hand-raise chime for hands already up and, on a phone, the end-of-meeting gong and the "you have the floor" cue.
+- Keyboard focus stays on the "Grant the floor" button when another participant raises a hand.
 
 - After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 

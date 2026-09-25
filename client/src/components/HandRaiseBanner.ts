@@ -31,6 +31,10 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
     const key = raised.map((p) => p.id).join(",") + (canGrant(m, args) ? "|grant" : "");
     if (key === lastKey) return;
     lastKey = key;
+    // Same focus dance as the lists: a new hand in the queue must not drop
+    // the host's keyboard focus from the Grant button or a chip.
+    const active = document.activeElement as HTMLElement | null;
+    const focusKey = active && el.contains(active) ? active.dataset.focusKey : undefined;
     el.innerHTML = "";
     if (raised.length === 0) {
       el.hidden = true;
@@ -85,9 +89,13 @@ export function renderHandRaiseBanner(args: Args): { el: HTMLElement; update: ()
       grant.addEventListener("click", () =>
         args.socket.emit("speaker:grant", { participantId: first.id })
       );
+      grant.dataset.focusKey = "grant";
       right.appendChild(grant);
     }
     el.appendChild(right);
+    if (focusKey) {
+      el.querySelector<HTMLElement>(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
+    }
   };
 
   update();
@@ -113,6 +121,7 @@ function renderQueueChip(p: Participant, grantable: boolean, args: Args): HTMLLI
     btn.dataset.tooltip = label;
     btn.textContent = fullName;
     btn.addEventListener("click", () => args.socket.emit("speaker:grant", { participantId: p.id }));
+    btn.dataset.focusKey = `${p.id}:grant`;
     li.appendChild(btn);
   } else {
     const span = document.createElement("span");
