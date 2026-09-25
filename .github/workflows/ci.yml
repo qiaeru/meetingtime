@@ -18,6 +18,21 @@ jobs:
       - name: Build Docker image
         run: docker build -t meetingtime:ci .
 
+      # Boots the image with a fast health-check interval so the Dockerfile's
+      # own HEALTHCHECK decides: a crash at startup, a missing file or a probe
+      # that no longer reaches /healthz fails here, not after a release.
+      - name: Boot the image until it reports healthy
+        run: |
+          docker run -d --name smoke --health-interval=2s meetingtime:ci
+          for _ in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' smoke)
+            if [ "$status" = healthy ]; then exit 0; fi
+            if [ "$(docker inspect -f '{{.State.Running}}' smoke)" != true ]; then break; fi
+            sleep 2
+          done
+          docker logs smoke
+          exit 1
+
       # One install at the repo root: npm workspaces hoist the production
       # dependencies of all three workspaces into the root node_modules, so a
       # single scan covers everything (the per-directory scans this replaces
