@@ -530,8 +530,10 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
 
     const currentRaised = new Set<string>();
     for (const p of Object.values(m.participants)) if (p.handRaised) currentRaised.add(p.id);
+    // The first state (reload, language switch, breakpoint re-render) only
+    // records the baseline: hands raised before it are not new.
     for (const id of currentRaised) {
-      if (!prevHandRaised.has(id) && amIHost() && id !== getMyId()) {
+      if (prevPhase !== null && !prevHandRaised.has(id) && amIHost() && id !== getMyId()) {
         // Sound only: the hand banner is an aria-live region carrying the
         // same name, so a toast would announce the request twice.
         playHandRaise();

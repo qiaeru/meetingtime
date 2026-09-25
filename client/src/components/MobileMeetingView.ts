@@ -32,6 +32,11 @@ export function renderMobileMeeting(
   const getMyId = (): string | null => myParticipantId$.get();
   let connected = true;
   let cleanedUp = false;
+  // Null until the first state, which only records the baseline: a re-render
+  // (language switch, reload, breakpoint) must not replay the end gong or the
+  // "you have the floor" cue for something that happened before it.
+  let prevPhase: Meeting["phase"] | null = null;
+  let wasSpeaker: boolean | null = null;
 
   // Header outside <main>, as on the desktop page (banner landmark).
   const page = document.createElement("div");
@@ -211,10 +216,6 @@ export function renderMobileMeeting(
   // Declared before refresh(): the first refresh() runs before the wake-lock
   // block below and must be able to release an already-ended meeting's lock.
   let wakeLock: WakeLockSentinel | null = null;
-  // Seed from the current floor holder: reloading the page (or crossing into
-  // the mobile breakpoint) while already holding the floor must not replay the
-  // "you have the floor" gong + buzz as if it had just been granted.
-  let wasSpeaker = Boolean(getMyId() && getMeeting()?.currentSpeakerId === getMyId());
 
   const refresh = (): void => {
     const m = getMeeting();
@@ -230,8 +231,10 @@ export function renderMobileMeeting(
       cleanedUp = true;
       clearSession(meetingId);
       savePassword(meetingId, undefined);
-      playGong();
-      vibrate([100, 50, 100]);
+      if (prevPhase !== null && prevPhase !== "ended") {
+        playGong();
+        vibrate([100, 50, 100]);
+      }
       void wakeLock?.release();
       wakeLock = null;
     }
@@ -240,11 +243,14 @@ export function renderMobileMeeting(
     const iAmSpeaker = Boolean(id && m?.currentSpeakerId === id);
     // Audible + haptic cue when the host hands me the floor: without it a
     // phone participant only notices by staring at the screen.
-    if (iAmSpeaker && !wasSpeaker && !ended) {
-      playGrant();
-      vibrate(60);
+    if (m) {
+      if (iAmSpeaker && wasSpeaker === false && !ended) {
+        playGrant();
+        vibrate(60);
+      }
+      wasSpeaker = iAmSpeaker;
+      prevPhase = m.phase;
     }
-    wasSpeaker = iAmSpeaker;
     const occupiedBy =
       !iAmSpeaker && m?.currentSpeakerId ? m.participants[m.currentSpeakerId] : undefined;
     claimBtn.dataset.active = String(iAmSpeaker);
