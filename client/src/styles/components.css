@@ -405,7 +405,7 @@ textarea:focus-visible {
   height: 0%;
   /* The bottom slab is solid-ish; the waves at the top provide the meniscus.
      CSS vars feed both so a single declaration recolors body + waves. */
-  --water: var(--success, #16a34a);
+  --water: var(--success);
   --water-bg: color-mix(in srgb, var(--water) 18%, transparent);
   --water-wave: color-mix(in srgb, var(--water) 35%, transparent);
   --water-wave-front: color-mix(in srgb, var(--water) 28%, transparent);
@@ -583,7 +583,7 @@ textarea:focus-visible {
   white-space: nowrap;
 }
 .hand-banner-chip-button {
-  border: 1px solid rgba(255, 255, 255, 0.32);
+  border: 1px solid color-mix(in srgb, var(--accent-fg) 32%, transparent);
   cursor: pointer;
   transition: background 0.12s ease;
 }
@@ -597,7 +597,7 @@ textarea:focus-visible {
 .btn-on-accent {
   background: color-mix(in srgb, var(--fg) 18%, var(--accent));
   color: var(--accent-fg);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid color-mix(in srgb, var(--accent-fg) 40%, transparent);
   font-weight: 700;
 }
 .btn-on-accent:hover {
@@ -1164,7 +1164,7 @@ textarea:focus-visible {
 .spotlight-turn-bar-fill {
   height: 100%;
   width: 0%;
-  background: var(--success, #16a34a);
+  background: var(--success);
   transition:
     width 0.4s linear,
     background 0.3s ease;

@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Keyboard focus stays on the "Grant the floor" button when another participant raises a hand.
 - Once the meeting has ended, hosts can no longer drag participants or topics, or open the add-topic dialog from an empty agenda.
 - A tab left open across a server upgrade now reloads once to fetch the new version when a page fails to load, instead of doing nothing.
+- The button borders on the hand-raise banner are visible again in dark mode.
 
 - After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 
