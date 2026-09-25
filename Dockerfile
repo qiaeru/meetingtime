@@ -1,5 +1,8 @@
 # --- Builder stage ---------------------------------------------------------
-FROM node:24-alpine AS builder
+# Runs natively on the CI host for every target platform instead of under
+# QEMU: the output is plain JS, and none of the server's production
+# dependencies ships native code. Revisit if one ever does.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy workspace manifests first for cached deps install. The lock is
