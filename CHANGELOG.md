@@ -47,6 +47,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Screen readers announce a raised hand on an avatar as "hand raised" instead of the "Raise hand" command, and read the question of confirmation dialogs.
 - The Markdown export uses the right label separator in every language ("Durée : 10:00" in French, "Duration: 10:00" elsewhere).
 - A crash on a server with no connected client now also exits with a failure code.
+- The Traefik deployment starts again on recent Docker Engine versions, which refuse Traefik 3.1: it now follows the latest 3.x release.
+- The nginx deployment guide works as written: the first certificate is issued in standalone mode, and renewals go through a challenge directory that nginx now serves (they used to fail silently after 90 days). The image follows the stable nginx release.
 
 ### Security
 

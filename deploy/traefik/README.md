@@ -27,3 +27,4 @@ This variant fits hosts that already use Traefik as their reverse proxy and want
 - WebSocket upgrades (Socket.IO, Yjs) work out of the box with Traefik's default router because v3 keeps long-lived connections open. No timeout tweak is needed.
 - Certificates are persisted in the `letsencrypt` Docker volume. Back it up if you want to keep certificates across host rebuilds.
 - `CORS_ORIGIN` defaults to `https://<MEETINGTIME_DOMAIN>`; override only if you embed Meetingtime in a different origin.
+- To update the stack: `git pull && docker compose -f deploy/traefik/docker-compose.traefik.yml up -d --build`.
