@@ -1,4 +1,7 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+
+// quiet: dotenv 17 otherwise prints a plain-text banner into the JSON logs.
+dotenv.config({ quiet: true });
 
 export const config = {
   port: Number(process.env.PORT ?? 3000),

@@ -46,11 +46,15 @@ export class MeetingStore {
     return meeting;
   }
 
+  // Lookups alone must not count as activity, otherwise failed joins (wrong
+  // password, stale token) could keep an abandoned meeting alive forever.
   get(id: string): Meeting | undefined {
+    return this.entries.get(id)?.meeting;
+  }
+
+  touch(id: string): void {
     const e = this.entries.get(id);
-    if (!e) return undefined;
-    e.lastActivity = Date.now();
-    return e.meeting;
+    if (e) e.lastActivity = Date.now();
   }
 
   getYDoc(id: string): Y.Doc | undefined {

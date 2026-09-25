@@ -22,7 +22,7 @@ export function securityHeaders(): RequestHandler {
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https:",
         "font-src 'self'",
-        "connect-src 'self' ws: wss:",
+        "connect-src 'self'",
         "frame-ancestors 'none'",
         "form-action 'self'",
         "base-uri 'self'",

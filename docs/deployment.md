@@ -24,7 +24,7 @@ Each subfolder under `deploy/` ships its own `docker-compose.<proxy>.yml`, the p
 
 ## Environment variables
 
-See `configuration.md` for the full table. The two variables you should always set in production are `CORS_ORIGIN` (so Socket.IO only accepts your own origin) and a reverse proxy in front of port 3000.
+See `configuration.md` for the full table. The two variables you should always set in production are `CORS_ORIGIN` (so Socket.IO and the notes WebSocket only accept your own origin) and a reverse proxy in front of port 3000.
 
 ## WebSocket considerations
 
@@ -32,12 +32,14 @@ Meetingtime keeps two long-lived WebSocket connections per participant: one for 
 
 ## Updating
 
-Pull the new image and recreate the container:
+The compose files build the image from your checkout, so update the sources and rebuild:
 
 ```bash
-docker compose -f deploy/<proxy>/docker-compose.<proxy>.yml pull
-docker compose -f deploy/<proxy>/docker-compose.<proxy>.yml up -d
+git pull
+docker compose -f deploy/<proxy>/docker-compose.<proxy>.yml up -d --build
 ```
+
+`docker compose pull` alone does not update Meetingtime: it only refreshes the proxy image. Releases are also published as `ghcr.io/qiaeru/meetingtime:<tag>` if you prefer to point the `image:` line at the registry and drop `build:`.
 
 Meetings live in server memory, so a redeploy disconnects everyone currently in a meeting. The client reconnects automatically and rejoins through the persisted session token, but any meeting that was running ends up gone. Plan upgrades around quiet hours.
 

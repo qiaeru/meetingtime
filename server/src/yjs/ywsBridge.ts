@@ -10,12 +10,7 @@ import { meetingStore } from "../meetings/MeetingStore.js";
 import { log } from "../log.js";
 import { config } from "../config.js";
 import { allowIP, ipFromRequest } from "../plugins/rateLimit.js";
-
-function isOriginAllowed(origin: string | undefined): boolean {
-  if (config.corsOrigin === "*") return true;
-  if (!origin) return false;
-  return origin === config.corsOrigin;
-}
+import { isOriginAllowed } from "../plugins/origin.js";
 
 const MAX_WS_PAYLOAD = 64 * 1024;
 const PING_INTERVAL_MS = 30_000;
@@ -30,10 +25,16 @@ const MAX_MEETING_ID_LEN = 32;
 const MESSAGE_SYNC = 0;
 const MESSAGE_AWARENESS = 1;
 
+interface Conn {
+  participantId: string;
+  // Awareness clientIDs this connection controls.
+  clientIds: Set<number>;
+}
+
 interface DocState {
   ydoc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
-  conns: Map<WebSocket, Set<number>>;
+  conns: Map<WebSocket, Conn>;
   // Kept so releaseDocState can detach it; awareness.destroy() clears its own
   // observers, but the ydoc "update" listener must be removed explicitly.
   onUpdate: (update: Uint8Array, origin: unknown) => void;
@@ -58,13 +59,28 @@ export function releaseDocState(meetingId: string): void {
   docStates.delete(meetingId);
 }
 
+// Called when a host removes a participant: the write gate already rejects
+// their edits, but an open connection would keep streaming the notes to them.
+export function closeYjsConnectionsFor(meetingId: string, participantId: string): void {
+  const state = docStates.get(meetingId);
+  if (!state) return;
+  for (const [ws, conn] of state.conns) {
+    if (conn.participantId !== participantId) continue;
+    try {
+      ws.close();
+    } catch {
+      /* socket may already be gone */
+    }
+  }
+}
+
 function getOrCreateDocState(meetingId: string): DocState | undefined {
   let state = docStates.get(meetingId);
   if (state) return state;
   const ydoc = meetingStore.getYDoc(meetingId);
   if (!ydoc) return undefined;
   const awareness = new awarenessProtocol.Awareness(ydoc);
-  const conns = new Map<WebSocket, Set<number>>();
+  const conns = new Map<WebSocket, Conn>();
 
   const onUpdate = (update: Uint8Array, origin: unknown): void => {
     const encoder = encoding.createEncoder();
@@ -89,7 +105,7 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
       // Track which awareness clientIDs each connection controls, so cleanup
       // can remove them the moment the socket closes; otherwise the departed
       // user's cursor lingers until the 30 s awareness timeout.
-      const controlled = conns.get(origin as WebSocket);
+      const controlled = conns.get(origin as WebSocket)?.clientIds;
       if (controlled) {
         for (const clientID of added) controlled.add(clientID);
         for (const clientID of removed) controlled.delete(clientID);
@@ -171,7 +187,7 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
       }
       const meeting = meetingStore.get(meetingId)!;
 
-      state.conns.set(ws, new Set());
+      state.conns.set(ws, { participantId, clientIds: new Set() });
 
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_SYNC);
@@ -232,7 +248,7 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
                 syncType === syncProtocol.messageYjsSyncStep2 ||
                 syncType === syncProtocol.messageYjsUpdate;
               if (isWrite) {
-                const writer = meeting.state.participants[participantId];
+                const writer = meeting.participant(participantId);
                 if (!writer?.isHost) return;
               }
               // readSyncMessage expects the sub-type prefix in the decoder, so
@@ -285,7 +301,7 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
 
       const cleanup = () => {
         clearInterval(heartbeat);
-        const controlled = state.conns.get(ws);
+        const controlled = state.conns.get(ws)?.clientIds;
         state.conns.delete(ws);
         if (controlled && controlled.size > 0) {
           awarenessProtocol.removeAwarenessStates(state.awareness, Array.from(controlled), ws);

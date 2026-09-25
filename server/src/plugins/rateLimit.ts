@@ -34,11 +34,14 @@ export function allowIP(ip: string | undefined): boolean {
   return c.count <= LIMIT;
 }
 
+// Behind one trusted proxy, only the last X-Forwarded-For entry is written by
+// that proxy; anything before it comes from the client and can be spoofed to
+// get a fresh bucket on every request. Same rule as Express's `trust proxy 1`.
 export function ipFromRequest(req: IncomingMessage, trustProxy: boolean): string | undefined {
   if (trustProxy) {
     const xff = req.headers["x-forwarded-for"];
     if (typeof xff === "string" && xff.length > 0) {
-      return xff.split(",")[0].trim();
+      return xff.split(",").at(-1)!.trim();
     }
   }
   return req.socket.remoteAddress ?? undefined;

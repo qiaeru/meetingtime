@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # HTTPS deployment with nginx + certbot (manual certificate management).
 # Run from the project root:
+#   export MEETINGTIME_DOMAIN=meetingtime.example.com
 #   docker compose -f deploy/nginx/docker-compose.nginx.yml up -d
 
 services:
@@ -13,7 +14,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://${MEETINGTIME_DOMAIN}}
       HOST_TIMEOUT_MS: ${HOST_TIMEOUT_MS:-1800000}
       POST_END_GC_MS: ${POST_END_GC_MS:-300000}
       TRUST_PROXY: "1"

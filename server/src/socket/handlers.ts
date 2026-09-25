@@ -5,11 +5,14 @@ import type {
   ParticipantIdentity,
 } from "@meetingtime/shared";
 import { meetingStore } from "../meetings/MeetingStore.js";
-import { requireHost } from "./authorize.js";
+import type { Meeting } from "../meetings/Meeting.js";
+import { ctxOf, requireHost } from "./authorize.js";
 import { broadcastState, roomFor } from "./broadcast.js";
 import { log } from "../log.js";
 import { config } from "../config.js";
 import { allowSocketEvent } from "../plugins/rateLimit.js";
+import { MAX_IDENTITY_FIELD, clampString } from "../meetings/limits.js";
+import { closeYjsConnectionsFor } from "../yjs/ywsBridge.js";
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>;
 type SK = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -87,7 +90,8 @@ function onConnection(io: IO, socket: SK): void {
       });
       const hostId = meeting.hostId()!;
       const token = meeting.tokenFor(hostId)!;
-      attach(socket, meeting.state.id, hostId, token);
+      detach(io, socket);
+      attach(socket, meeting, hostId);
       meeting.setConnected(hostId, true);
       socket.join(roomFor(meeting.state.id));
       ack({
@@ -119,6 +123,9 @@ function onConnection(io: IO, socket: SK): void {
       } else if ("identity" in payload) {
         // Password is only checked on identity-flow joins; the token flow is
         // already authenticated.
+        if (meeting.passwordAttemptsExhausted()) {
+          return ack({ ok: false, error: "rate_limited" });
+        }
         if (!meeting.verifyPassword(payload.password)) {
           return ack({ ok: false, error: "invalid_password" });
         }
@@ -140,21 +147,12 @@ function onConnection(io: IO, socket: SK): void {
         return ack({ ok: false, error: "missing_credentials" });
       }
 
-      // Same socket re-joining a different meeting: cleanly detach from the
-      // previous one, otherwise the client receives both meetings' broadcasts
-      // and the previous meeting forever shows the participant as connected.
-      // Another device of the same participant may still be in the previous
-      // meeting, so only mark them disconnected once their last socket leaves.
       const prev = socket.ctx;
       if (prev && (prev.meeting !== meeting || prev.participant.id !== participantId)) {
-        socket.leave(roomFor(prev.meeting.state.id));
-        if (!hasOtherSocketFor(io, prev.meeting.state.id, prev.participant.id, socket.id)) {
-          prev.meeting.setConnected(prev.participant.id, false);
-          broadcastState(io, prev.meeting);
-        }
+        detach(io, socket);
       }
 
-      attach(socket, meeting.state.id, participantId, token);
+      attach(socket, meeting, participantId);
       meeting.setConnected(participantId, true);
       socket.join(roomFor(meeting.state.id));
       ack({
@@ -173,6 +171,7 @@ function onConnection(io: IO, socket: SK): void {
   on("meeting:start", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
+    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.start();
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
@@ -189,6 +188,7 @@ function onConnection(io: IO, socket: SK): void {
   on("meeting:resume", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
+    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.start();
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
@@ -235,7 +235,7 @@ function onConnection(io: IO, socket: SK): void {
     try {
       ctx.meeting.addParticipant(identity, false);
     } catch (e) {
-      return ack?.({ ok: false, error: (e as Error).message || "internal_error" });
+      return ack?.({ ok: false, error: passthroughOrInternal(e) });
     }
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
@@ -249,6 +249,7 @@ function onConnection(io: IO, socket: SK): void {
     // ctxOf would already reject their next emit; the pre-emptive disconnect
     // saves the round-trip and gives the affected client an explicit signal.
     disconnectParticipant(io, ctx.meeting.state.id, payload.participantId);
+    closeYjsConnectionsFor(ctx.meeting.state.id, payload.participantId);
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
@@ -288,7 +289,7 @@ function onConnection(io: IO, socket: SK): void {
   });
 
   on("hand:raise", (ack) => {
-    const ctx = socket.ctx;
+    const ctx = ctxOf(socket);
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.raiseHand(ctx.participant.id);
@@ -297,7 +298,7 @@ function onConnection(io: IO, socket: SK): void {
   });
 
   on("hand:lower", (ack) => {
-    const ctx = socket.ctx;
+    const ctx = ctxOf(socket);
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.lowerHand(ctx.participant.id);
@@ -324,7 +325,7 @@ function onConnection(io: IO, socket: SK): void {
   // Any participant can take the floor for themselves. grantSpeaker already
   // no-ops outside running/paused, so no phase guard is needed here.
   on("speaker:claim", (ack) => {
-    const ctx = socket.ctx;
+    const ctx = ctxOf(socket);
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     ctx.meeting.grantSpeaker(ctx.participant.id);
     broadcastState(io, ctx.meeting);
@@ -334,7 +335,7 @@ function onConnection(io: IO, socket: SK): void {
   // Releasing only affects the caller's own turn; a participant can never
   // revoke someone else.
   on("speaker:release", (ack) => {
-    const ctx = socket.ctx;
+    const ctx = ctxOf(socket);
     if (!ctx) return ack?.({ ok: false, error: "not_joined" });
     if (ctx.meeting.state.currentSpeakerId !== ctx.participant.id) return ack?.({ ok: true });
     ctx.meeting.revokeSpeaker();
@@ -349,7 +350,7 @@ function onConnection(io: IO, socket: SK): void {
     try {
       ctx.meeting.addTopic(payload.label ?? "");
     } catch (e) {
-      return ack?.({ ok: false, error: (e as Error).message || "internal_error" });
+      return ack?.({ ok: false, error: passthroughOrInternal(e) });
     }
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
@@ -400,12 +401,28 @@ function onConnection(io: IO, socket: SK): void {
   });
 }
 
-function attach(socket: SK, meetingId: string, participantId: string, token: string): void {
-  const meeting = meetingStore.get(meetingId);
-  if (!meeting) return;
-  const participant = meeting.state.participants[participantId];
+function attach(socket: SK, meeting: Meeting, participantId: string): void {
+  const participant = meeting.participant(participantId);
   if (!participant) return;
-  socket.ctx = { meeting, participant, token };
+  socket.ctx = { meeting, participant };
+  meetingStore.touch(meeting.state.id);
+}
+
+// A socket moving to another meeting (join or create from the same tab) must
+// leave the previous one, otherwise the client keeps receiving its broadcasts
+// and it forever shows the participant as connected, which also blocks its GC
+// and host fallback. Another device of the same participant may still be in
+// the previous meeting, so only mark them disconnected once their last socket
+// leaves.
+function detach(io: IO, socket: SK): void {
+  const prev = socket.ctx;
+  if (!prev) return;
+  socket.leave(roomFor(prev.meeting.state.id));
+  socket.ctx = undefined;
+  if (!hasOtherSocketFor(io, prev.meeting.state.id, prev.participant.id, socket.id)) {
+    prev.meeting.setConnected(prev.participant.id, false);
+    broadcastState(io, prev.meeting);
+  }
 }
 
 // True if a socket other than `exceptSid` is still attached to this
@@ -447,15 +464,9 @@ function passthroughOrInternal(e: unknown): string {
 
 function sanitizeIdentity(raw: ParticipantIdentity | undefined): ParticipantIdentity | undefined {
   if (!raw) return undefined;
-  const firstName = String(raw.firstName ?? "")
-    .trim()
-    .slice(0, 60);
-  const lastName = String(raw.lastName ?? "")
-    .trim()
-    .slice(0, 60);
-  const role = String(raw.role ?? "")
-    .trim()
-    .slice(0, 60);
+  const firstName = clampString(raw.firstName, MAX_IDENTITY_FIELD);
+  const lastName = clampString(raw.lastName, MAX_IDENTITY_FIELD);
+  const role = clampString(raw.role, MAX_IDENTITY_FIELD);
   if (!firstName || !lastName || !role) return undefined;
   return { firstName, lastName, role };
 }

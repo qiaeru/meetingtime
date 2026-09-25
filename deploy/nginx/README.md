@@ -18,9 +18,10 @@ This variant targets hosts that already run nginx and prefer to manage their Let
    certbot certonly --webroot -w /var/www/certbot -d meetingtime.example.com
    ```
 
-3. Launch the stack:
+3. Export your domain name and launch the stack:
 
    ```bash
+   export MEETINGTIME_DOMAIN=meetingtime.example.com
    docker compose -f deploy/nginx/docker-compose.nginx.yml up -d
    ```
 
@@ -32,4 +33,6 @@ Schedule `certbot renew --quiet && docker compose -f deploy/nginx/docker-compose
 
 - The nginx container mounts `/etc/letsencrypt` read-only, so renewed certificates are picked up without a container restart. Only the `nginx -s reload` after renewal is needed.
 - The provided `nginx.conf` keeps the proxy read and send timeouts at one hour. Without that, the long-lived Socket.IO and Yjs WebSocket connections would be closed by the default sixty-second timeout, kicking hosts and guests out mid-meeting.
-- The `X-Forwarded-*` headers are forwarded to the app, which reads them because `TRUST_PROXY=1` is set in the compose file.
+- The `X-Forwarded-*` headers are forwarded to the app, which reads them because `TRUST_PROXY=1` is set in the compose file. `X-Forwarded-For` is overwritten with the real client address rather than appended to, so a client cannot spoof its IP to escape the rate limit.
+- `CORS_ORIGIN` defaults to `https://<MEETINGTIME_DOMAIN>` so cross-origin Socket.IO and Yjs connections from other sites are rejected.
+- To update the stack: `git pull && docker compose -f deploy/nginx/docker-compose.nginx.yml up -d --build`.

@@ -48,4 +48,7 @@ export interface Meeting {
   participants: Record<string, Participant>;
   currentSpeakerId?: string;
   currentSpeakerStartedAt?: number;
+  // Time already spoken in the current turn before currentSpeakerStartedAt
+  // (a pause re-arms the start timestamp but must not reset the time-box).
+  currentSpeakerTurnMs?: number;
 }

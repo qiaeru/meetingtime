@@ -5,7 +5,6 @@ import { Meeting } from "../meetings/Meeting.js";
 export interface SocketContext {
   meeting: Meeting;
   participant: Participant;
-  token: string;
 }
 
 declare module "socket.io" {
@@ -21,9 +20,9 @@ declare module "socket.io" {
 export function ctxOf(socket: Socket): SocketContext | undefined {
   const ctx = socket.ctx;
   if (!ctx) return undefined;
-  const live = ctx.meeting.state.participants[ctx.participant.id];
+  const live = ctx.meeting.participant(ctx.participant.id);
   if (!live) return undefined;
-  return { meeting: ctx.meeting, participant: live, token: ctx.token };
+  return { meeting: ctx.meeting, participant: live };
 }
 
 export function requireHost(socket: Socket): SocketContext | undefined {

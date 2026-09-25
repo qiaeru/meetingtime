@@ -11,6 +11,7 @@ import { config } from "./config.js";
 import { log } from "./log.js";
 import { pickLocale } from "./lib/locales.js";
 import { allowIP, ipFromRequest } from "./plugins/rateLimit.js";
+import { isOriginAllowed } from "./plugins/origin.js";
 import { securityHeaders } from "./plugins/securityHeaders.js";
 import { registerHandlers } from "./socket/handlers.js";
 import { attachYjsBridge } from "./yjs/ywsBridge.js";
@@ -63,12 +64,24 @@ app.get("/manifest.webmanifest", (req, res) => {
   }
 });
 
-app.use(express.static(publicDir, { fallthrough: true }));
+app.use(
+  express.static(publicDir, {
+    fallthrough: true,
+    // Vite fingerprints everything under assets/, so those files never change
+    // under the same URL; index.html keeps the default revalidation.
+    setHeaders: (res, filePath) => {
+      if (path.relative(publicDir, filePath).startsWith(`assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  })
+);
 // SPA fallback. Express 5 reserves `*` for path-to-regexp v8, hence the
-// middleware shape instead of `app.get("*", ...)`.
+// middleware shape instead of `app.get("*", ...)`. Socket.IO requests never
+// reach Express (engine.io intercepts them first), only /yjs needs skipping.
 app.use((req, res, next) => {
   if (req.method !== "GET") return next();
-  if (req.path.startsWith("/socket.io") || req.path.startsWith(config.yjsPath)) return next();
+  if (req.path.startsWith(config.yjsPath)) return next();
   res.sendFile(path.join(publicDir, "index.html"), (err) => {
     if (err) next();
   });
@@ -82,6 +95,13 @@ const io = new IOServer<ClientToServerEvents, ServerToClientEvents>(httpServer, 
   // Tighten the default 1 MB cap so a malicious peer cannot fill memory
   // with one giant message. Real meeting events are <10 KB.
   maxHttpBufferSize: 100_000,
+  // The cors option only sets response headers and never rejects a WebSocket.
+  // Same-origin long-polling GETs carry no Origin header, so a missing one is
+  // accepted; a cross-site browser request always sends it.
+  allowRequest: (req, callback) => {
+    const origin = req.headers.origin;
+    callback(null, origin === undefined || isOriginAllowed(origin));
+  },
 });
 io.use((socket, next) => {
   const ip = ipFromRequest(socket.request, config.trustProxy);
@@ -108,6 +128,9 @@ let shuttingDown = false;
 function shutdown(signal: string, exitCode = 0): void {
   if (shuttingDown) return;
   shuttingDown = true;
+  // Set up front: the timers below are unref'd, so an idle server can drain
+  // its event loop and exit on its own before process.exit() runs.
+  process.exitCode = exitCode;
   log.info({ signal }, "shutting down");
 
   const hardExit = setTimeout(() => {

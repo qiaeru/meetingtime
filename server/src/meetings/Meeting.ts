@@ -11,6 +11,8 @@ import {
   MAX_IDENTITY_FIELD,
   MAX_PARTICIPANTS,
   MAX_PASSWORD,
+  MAX_PASSWORD_FAILURES,
+  PASSWORD_FAILURE_WINDOW_MS,
   MAX_PLANNED_MS,
   MAX_TIMEBOX_MS,
   MAX_TOPIC_LABEL,
@@ -30,6 +32,10 @@ export class Meeting {
   private orderSeq = 0;
   // Never serialized; only state.hasPassword (boolean) is broadcast.
   private readonly password?: string;
+  // Per-meeting budget of wrong passwords, so guessing cannot be spread over
+  // many sockets or IPs to escape the per-socket and per-IP limits.
+  private passwordFailWindowStart = 0;
+  private passwordFailures = 0;
 
   constructor(
     id: string,
@@ -69,13 +75,41 @@ export class Meeting {
   // constant-time isn't justified for an in-memory app of this size.
   verifyPassword(supplied: string | undefined): boolean {
     if (!this.password) return true;
+    const ok = this.matchesPassword(this.password, supplied);
+    if (!ok) this.recordPasswordFailure();
+    return ok;
+  }
+
+  private matchesPassword(password: string, supplied: string | undefined): boolean {
     if (typeof supplied !== "string") return false;
-    if (supplied.length !== this.password.length) return false;
+    if (supplied.length !== password.length) return false;
     let diff = 0;
-    for (let i = 0; i < this.password.length; i++) {
-      diff |= this.password.charCodeAt(i) ^ supplied.charCodeAt(i);
+    for (let i = 0; i < password.length; i++) {
+      diff |= password.charCodeAt(i) ^ supplied.charCodeAt(i);
     }
     return diff === 0;
+  }
+
+  passwordAttemptsExhausted(): boolean {
+    if (Date.now() - this.passwordFailWindowStart >= PASSWORD_FAILURE_WINDOW_MS) return false;
+    return this.passwordFailures >= MAX_PASSWORD_FAILURES;
+  }
+
+  private recordPasswordFailure(): void {
+    const now = Date.now();
+    if (now - this.passwordFailWindowStart >= PASSWORD_FAILURE_WINDOW_MS) {
+      this.passwordFailWindowStart = now;
+      this.passwordFailures = 0;
+    }
+    this.passwordFailures++;
+  }
+
+  // Own-property lookup: client-supplied ids such as "__proto__" must never
+  // resolve to Object.prototype and let a mutation leak into every meeting.
+  participant(participantId: string): Participant | undefined {
+    return Object.hasOwn(this.state.participants, participantId)
+      ? this.state.participants[participantId]
+      : undefined;
   }
 
   hostId(): string | undefined {
@@ -123,6 +157,7 @@ export class Meeting {
   }
 
   removeParticipant(participantId: string): void {
+    if (!this.participant(participantId)) return;
     if (this.state.currentSpeakerId === participantId) this.revokeSpeaker();
     delete this.state.participants[participantId];
     this.tokens.delete(participantId);
@@ -130,7 +165,7 @@ export class Meeting {
   }
 
   setConnected(participantId: string, connected: boolean): void {
-    const p = this.state.participants[participantId];
+    const p = this.participant(participantId);
     if (!p) return;
     p.connected = connected;
     if (!connected) {
@@ -145,18 +180,19 @@ export class Meeting {
   }
 
   promote(participantId: string): void {
-    const p = this.state.participants[participantId];
+    const p = this.participant(participantId);
     if (p) p.isHost = true;
   }
 
   demote(participantId: string): void {
-    const p = this.state.participants[participantId];
+    const p = this.participant(participantId);
     if (p) p.isHost = false;
     this.ensureHostExists();
   }
 
   start(): void {
-    if (this.state.phase === "running") return;
+    // An ended meeting is final: restarting it would also dodge the post-end GC.
+    if (this.state.phase === "running" || this.state.phase === "ended") return;
     if (!this.state.startedAt) this.state.startedAt = Date.now();
     if (this.state.phase === "paused" && this.state.pausedSince) {
       this.state.pauseAccumulatedMs += Date.now() - this.state.pausedSince;
@@ -188,6 +224,7 @@ export class Meeting {
     this.flushTopic();
     delete this.state.currentSpeakerId;
     delete this.state.currentSpeakerStartedAt;
+    delete this.state.currentSpeakerTurnMs;
     delete this.state.currentTopicId;
     delete this.state.currentTopicStartedAt;
     this.state.phase = "ended";
@@ -208,18 +245,19 @@ export class Meeting {
     // countdown starts from "now" instead of charging prior elapsed time.
     if (enabled && this.state.currentSpeakerId && this.state.phase === "running") {
       this.flushSpeaker();
+      this.state.currentSpeakerTurnMs = 0;
     }
   }
 
   raiseHand(participantId: string): void {
-    const p = this.state.participants[participantId];
+    const p = this.participant(participantId);
     if (!p || p.handRaised) return;
     p.handRaised = true;
     p.handRaisedAt = Date.now();
   }
 
   lowerHand(participantId: string): void {
-    const p = this.state.participants[participantId];
+    const p = this.participant(participantId);
     if (!p) return;
     p.handRaised = false;
     delete p.handRaisedAt;
@@ -227,10 +265,11 @@ export class Meeting {
 
   grantSpeaker(participantId: string): void {
     if (this.state.phase !== "running" && this.state.phase !== "paused") return;
-    if (!this.state.participants[participantId]) return;
+    if (!this.participant(participantId)) return;
     if (this.state.currentSpeakerId === participantId) return;
     this.flushSpeaker();
     this.state.currentSpeakerId = participantId;
+    this.state.currentSpeakerTurnMs = 0;
     this.state.currentSpeakerStartedAt = this.state.phase === "running" ? Date.now() : undefined;
     this.lowerHand(participantId);
   }
@@ -239,14 +278,17 @@ export class Meeting {
     this.flushSpeaker();
     delete this.state.currentSpeakerId;
     delete this.state.currentSpeakerStartedAt;
+    delete this.state.currentSpeakerTurnMs;
   }
 
   private flushSpeaker(): void {
     const { currentSpeakerId, currentSpeakerStartedAt } = this.state;
     if (!currentSpeakerId || !currentSpeakerStartedAt) return;
     const elapsed = Date.now() - currentSpeakerStartedAt;
-    const p = this.state.participants[currentSpeakerId];
+    const p = this.participant(currentSpeakerId);
     if (p) p.totalSpeakingMs += elapsed;
+    // Keeps the turn's time across a pause, which re-arms the start timestamp.
+    this.state.currentSpeakerTurnMs = (this.state.currentSpeakerTurnMs ?? 0) + elapsed;
     this.state.currentSpeakerStartedAt = this.state.phase === "running" ? Date.now() : undefined;
   }
 
