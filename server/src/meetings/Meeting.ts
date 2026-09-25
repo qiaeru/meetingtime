@@ -47,8 +47,7 @@ export class Meeting {
   ) {
     const rawPassword = clampString(opts?.password, MAX_PASSWORD);
     this.password = rawPassword || undefined;
-    const hostParticipant = createParticipant(host, true);
-    hostParticipant.order = this.allocateOrder();
+    const hostParticipant = createParticipant(host, true, this.allocateOrder());
     this.state = {
       id,
       createdAt: Date.now(),
@@ -166,8 +165,7 @@ export class Meeting {
     if (Object.keys(this.state.participants).length >= MAX_PARTICIPANTS) {
       throw new Error("participant_cap_reached");
     }
-    const p = createParticipant(identity, asHost);
-    p.order = this.allocateOrder();
+    const p = createParticipant(identity, asHost, this.allocateOrder());
     this.state.participants[p.id] = p;
     const token = generateToken();
     this.tokens.set(p.id, token);
@@ -341,19 +339,8 @@ export class Meeting {
   }
 
   reorderParticipant(participantId: string, direction: "up" | "down"): void {
-    const sorted = Object.values(this.state.participants).sort(
-      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
-    );
-    const idx = sorted.findIndex((p) => p.id === participantId);
-    if (idx < 0) return;
-    const swap = direction === "up" ? idx - 1 : idx + 1;
-    if (swap < 0 || swap >= sorted.length) return;
-    const a = sorted[idx];
-    const b = sorted[swap];
-    const ao = a.order ?? a.joinedAt;
-    const bo = b.order ?? b.joinedAt;
-    a.order = bo;
-    b.order = ao;
+    const idx = this.sortedParticipants().findIndex((p) => p.id === participantId);
+    if (idx >= 0) this.moveParticipant(participantId, idx + (direction === "up" ? -1 : 1));
   }
 
   // Atomic absolute move (drag-and-drop). Splicing the sorted list to the
@@ -361,9 +348,7 @@ export class Meeting {
   // sequence stable and leaves freshly added participants (order = now)
   // sorting last, without the race of N single-step swaps.
   moveParticipant(participantId: string, toIndex: number): void {
-    const sorted = Object.values(this.state.participants).sort(
-      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
-    );
+    const sorted = this.sortedParticipants();
     const from = sorted.findIndex((p) => p.id === participantId);
     if (from < 0) return;
     const target = Math.max(0, Math.min(Math.trunc(toIndex), sorted.length - 1));
@@ -378,11 +363,7 @@ export class Meeting {
 
   reorderTopic(topicId: string, direction: "up" | "down"): void {
     const idx = this.state.topics.findIndex((t) => t.id === topicId);
-    if (idx < 0) return;
-    const swap = direction === "up" ? idx - 1 : idx + 1;
-    if (swap < 0 || swap >= this.state.topics.length) return;
-    const list = this.state.topics;
-    [list[idx], list[swap]] = [list[swap], list[idx]];
+    if (idx >= 0) this.moveTopic(topicId, idx + (direction === "up" ? -1 : 1));
   }
 
   moveTopic(topicId: string, toIndex: number): void {
@@ -392,6 +373,12 @@ export class Meeting {
     if (target === from) return;
     const [moved] = this.state.topics.splice(from, 1);
     this.state.topics.splice(target, 0, moved);
+  }
+
+  private sortedParticipants(): Participant[] {
+    return Object.values(this.state.participants).sort(
+      (a, b) => (a.order ?? a.joinedAt) - (b.order ?? b.joinedAt)
+    );
   }
 
   setCurrentTopic(topicId: string | null): void {
@@ -415,22 +402,25 @@ export class Meeting {
   }
 }
 
-function createParticipant(identity: ParticipantIdentity, isHost: boolean): Participant {
+function createParticipant(
+  identity: ParticipantIdentity,
+  isHost: boolean,
+  order: number
+): Participant {
   // Defensive re-clamp: every handler is supposed to have run sanitizeIdentity
   // first, but enforcing limits here closes any future hole.
   const firstName = clampString(identity?.firstName, MAX_IDENTITY_FIELD);
   const lastName = clampString(identity?.lastName, MAX_IDENTITY_FIELD);
   const role = clampString(identity?.role, MAX_IDENTITY_FIELD);
   if (!firstName || !lastName || !role) throw new Error("invalid_identity");
-  const now = Date.now();
   return {
     id: uuid(),
     firstName,
     lastName,
     role,
     isHost,
-    joinedAt: now,
-    order: now,
+    joinedAt: Date.now(),
+    order,
     connected: false,
     handRaised: false,
     totalSpeakingMs: 0,

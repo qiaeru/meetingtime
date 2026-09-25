@@ -170,28 +170,22 @@ function onConnection(io: IO, socket: SK): void {
     }
   });
 
-  on("meeting:start", (ack) => {
+  // Resuming is starting again: start() re-arms the timestamps from "paused".
+  const start: ClientToServerEvents["meeting:start"] = (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.start();
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
-  });
+  };
+  on("meeting:start", start);
+  on("meeting:resume", start);
 
   on("meeting:pause", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     ctx.meeting.pause();
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
-  });
-
-  on("meeting:resume", (ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.start();
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
   });
