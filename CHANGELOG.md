@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Hover hints are now themed bubbles that match the interface instead of the browser's plain boxes. They also appear on keyboard focus, close with Escape, and show a participant's name or role only when it is cut off.
 - Tables in the Markdown export use spaced separators (`| --- |`), the usual formatting, easier to read in the raw file.
 - The meeting page does less work every half second, and the notes server no longer sends an empty presence message to every participant every 15 seconds.
+- A host who reloads the page or briefly loses the connection keeps the role: a guest is now promoted host only after fifteen seconds without any connected host.
 
 ### Fixed
 

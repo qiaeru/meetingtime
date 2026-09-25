@@ -13,6 +13,7 @@ import { config } from "../config.js";
 import { allowMeetingCreate, allowSocketEvent, ipFromRequest } from "../plugins/rateLimit.js";
 import { MAX_IDENTITY_FIELD, clampString } from "../meetings/limits.js";
 import { closeYjsConnectionsFor } from "../yjs/ywsBridge.js";
+import { HOST_FALLBACK_GRACE_MS } from "../meetings/hostFallback.js";
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>;
 type SK = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -416,9 +417,20 @@ function detach(io: IO, socket: SK): void {
   socket.leave(roomFor(prev.meeting.state.id));
   socket.ctx = undefined;
   if (!hasOtherSocketFor(io, prev.meeting.state.id, prev.participant.id, socket.id)) {
-    prev.meeting.setConnected(prev.participant.id, false);
-    broadcastState(io, prev.meeting);
+    markDisconnected(io, prev.meeting, prev.participant.id);
   }
+}
+
+// If that left the meeting without a connected host, re-check once the grace
+// period is over (the margin covers Node timers firing a millisecond early).
+function markDisconnected(io: IO, meeting: Meeting, participantId: string): void {
+  meeting.setConnected(participantId, false);
+  broadcastState(io, meeting);
+  setTimeout(() => {
+    if (meetingStore.get(meeting.state.id) === meeting && meeting.promoteFallbackIfDue()) {
+      broadcastState(io, meeting);
+    }
+  }, HOST_FALLBACK_GRACE_MS + 100).unref?.();
 }
 
 // True if a socket other than `exceptSid` is still attached to this

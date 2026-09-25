@@ -5,7 +5,7 @@ import type {
   ParticipantIdentity,
   Topic,
 } from "@meetingtime/shared";
-import { promoteOldestFallback } from "./hostFallback.js";
+import { HOST_FALLBACK_GRACE_MS, promoteOldestFallback } from "./hostFallback.js";
 import {
   MAX_IDENTITY_FIELD,
   MAX_PARTICIPANTS,
@@ -30,6 +30,9 @@ export class Meeting {
   // Two participants added in the same millisecond would otherwise collide on
   // Date.now() and the up/down swap silently no-ops.
   private orderSeq = 0;
+  // Set while no host is connected; the fallback promotion waits
+  // HOST_FALLBACK_GRACE_MS from it.
+  private hostlessSince: number | undefined;
   // Never serialized; only state.hasPassword (boolean) is broadcast.
   private readonly password?: string;
   // Wrong-password budgets. The per-IP one locks a guesser out without
@@ -187,11 +190,30 @@ export class Meeting {
       p.handRaised = false;
       delete p.handRaisedAt;
     }
-    this.ensureHostExists();
+    this.trackHostPresence();
   }
 
+  // Deliberate host changes (removal, demotion) promote a fallback at once.
   ensureHostExists(): void {
     promoteOldestFallback(this.state);
+    this.trackHostPresence();
+  }
+
+  private trackHostPresence(): void {
+    const hostOnline = Object.values(this.state.participants).some((p) => p.isHost && p.connected);
+    if (hostOnline) this.hostlessSince = undefined;
+    else this.hostlessSince ??= Date.now();
+    this.promoteFallbackIfDue();
+  }
+
+  // True when a guest was promoted. The socket layer calls it again once the
+  // grace period is over, since a disconnect alone triggers nothing later.
+  promoteFallbackIfDue(): boolean {
+    if (this.hostlessSince === undefined) return false;
+    if (Date.now() - this.hostlessSince < HOST_FALLBACK_GRACE_MS) return false;
+    if (!promoteOldestFallback(this.state)) return false;
+    this.hostlessSince = undefined;
+    return true;
   }
 
   promote(participantId: string): void {
