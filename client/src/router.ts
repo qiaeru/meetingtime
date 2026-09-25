@@ -1,4 +1,5 @@
 import { t } from "./i18n/index.js";
+import { toast } from "./components/Toaster.js";
 
 type Renderer = (root: HTMLElement, params: URLSearchParams) => void | (() => void);
 type RouteLoader = () => Promise<Renderer>;
@@ -40,6 +41,7 @@ let widgetTeardowns: Array<() => void> = [];
 // Lets render() drop stale dynamic-import resolutions when the user
 // navigates again before the previous load finishes.
 let renderToken = 0;
+const RELOAD_STAMP_KEY = "mt:chunkReloadAt";
 
 function parseHash(): { path: string; params: URLSearchParams } {
   const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "/";
@@ -65,6 +67,21 @@ async function render(): Promise<void> {
     renderFn = await route.load();
   } catch (err) {
     console.error("Failed to load route module", err);
+    if (myToken !== renderToken) return;
+    // Usually a tab opened before a server upgrade, asking for chunk files the
+    // new build no longer ships: a reload picks up the new build. The stamp
+    // stops a reload loop when something else is broken.
+    try {
+      const last = Number(sessionStorage.getItem(RELOAD_STAMP_KEY));
+      if (navigator.onLine && !(Date.now() - last < 10_000)) {
+        sessionStorage.setItem(RELOAD_STAMP_KEY, String(Date.now()));
+        location.reload();
+        return;
+      }
+    } catch {
+      /* storage blocked: fall through to the error toast */
+    }
+    toast(t("errors.connection"), { type: "error" });
     return;
   }
   if (myToken !== renderToken) return;
