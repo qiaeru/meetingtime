@@ -23,6 +23,10 @@ services:
   nginx:
     image: nginx:stable-alpine
     restart: unless-stopped
+    # Unused by nginx itself: stops the start with a clear message when the
+    # domain is missing, instead of a CORS_ORIGIN that rejects every browser.
+    environment:
+      MEETINGTIME_DOMAIN: ${MEETINGTIME_DOMAIN:?Set MEETINGTIME_DOMAIN}
     ports:
       - "80:80"
       - "443:443"

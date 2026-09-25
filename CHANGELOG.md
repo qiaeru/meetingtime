@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The notes export made during a meeting now counts the ongoing speaking turn and the running topic.
 - Template import errors are now written in the interface language and name the faulty field.
 - Fingerprinted web assets are cached by the browser for a year, so reloading the page no longer re-checks each file.
-- The nginx deployment now requires `MEETINGTIME_DOMAIN`, like the Caddy and Traefik variants, and restricts connections to that origin instead of accepting any.
+- The nginx deployment now requires `MEETINGTIME_DOMAIN`, like the Caddy and Traefik variants, and restricts connections to that origin instead of accepting any. The stack refuses to start without it: export it before updating.
 - The update procedure in the docs now rebuilds the image (`git pull`, then `up -d --build`); `docker compose pull` alone kept running the old version.
 - Multi-architecture release images build faster: the build stage no longer runs under emulation for arm64.
 - The `ws` override is gone: Socket.IO now requires the patched `ws` release itself.
@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A crash on a server with no connected client now also exits with a failure code.
 - The Traefik deployment starts again on recent Docker Engine versions, which refuse Traefik 3.1: it now follows the latest 3.x release.
 - The nginx deployment guide works as written: the first certificate is issued in standalone mode, and renewals go through a challenge directory that nginx now serves (they used to fail silently after 90 days). The image follows the stable nginx release.
+- The Caddy deployment now serves your domain: `MEETINGTIME_DOMAIN` never reached the Caddy container, which fell back to `localhost` and never obtained a certificate for it.
 - On a phone, leaving the meeting view while the screen wake lock was being acquired no longer keeps the screen on.
 
 ### Security

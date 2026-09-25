@@ -23,6 +23,9 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    # The Caddyfile reads the site address from Caddy's own environment.
+    environment:
+      MEETINGTIME_DOMAIN: ${MEETINGTIME_DOMAIN:?Set MEETINGTIME_DOMAIN}
     ports:
       - "80:80"
       - "443:443"
