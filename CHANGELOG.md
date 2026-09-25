@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- The footer shows the updated Qiaeru logo, which is also lighter (14 KB instead of 66 KB).
+
 ## [1.5.0] - 2026-09-25
 
 ### Changed
