@@ -60,7 +60,7 @@ export function buildMarkdown(meeting: Meeting, notesBody: string): string {
   lines.push(
     `| ${t("export.colParticipant")} | ${t("export.colRole")} | ${t("export.colSpeakingTime")} |`
   );
-  lines.push("|---|---|---|");
+  lines.push("| --- | --- | --- |");
   for (const [p, ms] of [...speaking].sort((a, b) => b[1] - a[1])) {
     const ratio = totalSpeaking > 0 ? ms / totalSpeaking : 0;
     lines.push(
@@ -73,7 +73,7 @@ export function buildMarkdown(meeting: Meeting, notesBody: string): string {
     lines.push(`## ${t("export.topicsHeading")}`);
     lines.push("");
     lines.push(`| ${t("export.colTopic")} | ${t("export.colDuration")} |`);
-    lines.push("|---|---|");
+    lines.push("| --- | --- |");
     for (const topic of meeting.topics) {
       lines.push(`| ${escapePipe(topic.label)} | ${formatMs(topicDisplayMs(meeting, topic.id))} |`);
     }

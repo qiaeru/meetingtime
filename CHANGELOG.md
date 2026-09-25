@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - The footer shows the updated Qiaeru logo, which is also lighter (14 KB instead of 66 KB).
+- Tables in the Markdown export use spaced separators (`| --- |`), the usual formatting, easier to read in the raw file.
 
 ### Fixed
 
