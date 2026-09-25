@@ -10,12 +10,18 @@ export interface MeetingDraft {
   password?: string;
 }
 
+// Upper bounds of the host form's minute inputs. An import outside them would
+// report success, then the browser would block "Create".
+export const MAX_TIMEBOX_MINUTES = 60;
+export const MAX_PLANNED_MINUTES = 600;
+
 // Carries a reason code (localized by the caller under host.importReason.*)
 // plus the offending JSON path, instead of an English sentence.
 export class MeetingImportError extends Error {
   constructor(
     readonly reason: "json" | "root" | "object" | "array" | "string" | "text" | "number",
-    readonly field = ""
+    readonly field = "",
+    readonly max = 0
   ) {
     super(field ? `${field}: ${reason}` : reason);
   }
@@ -53,17 +59,15 @@ export function parseMeetingJSON(raw: string): MeetingDraft {
   }
 
   if ("timeboxMinutes" in data && data.timeboxMinutes !== undefined) {
-    if (typeof data.timeboxMinutes !== "number" || data.timeboxMinutes < 0) {
-      throw new MeetingImportError("number", "timeboxMinutes");
-    }
-    draft.timeboxMinutes = data.timeboxMinutes;
+    draft.timeboxMinutes = minutesField(data.timeboxMinutes, "timeboxMinutes", MAX_TIMEBOX_MINUTES);
   }
 
   if ("plannedDurationMinutes" in data && data.plannedDurationMinutes !== undefined) {
-    if (typeof data.plannedDurationMinutes !== "number" || data.plannedDurationMinutes < 0) {
-      throw new MeetingImportError("number", "plannedDurationMinutes");
-    }
-    draft.plannedDurationMinutes = data.plannedDurationMinutes;
+    draft.plannedDurationMinutes = minutesField(
+      data.plannedDurationMinutes,
+      "plannedDurationMinutes",
+      MAX_PLANNED_MINUTES
+    );
   }
 
   if ("password" in data && data.password !== undefined) {
@@ -91,11 +95,18 @@ function strField(o: Record<string, unknown>, key: string, path: string): string
   return v.trim();
 }
 
+function minutesField(v: unknown, field: string, max: number): number {
+  if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > max) {
+    throw new MeetingImportError("number", field, max);
+  }
+  return v;
+}
+
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-export function stringifyMeetingDraft(draft: MeetingDraft): string {
+function stringifyMeetingDraft(draft: MeetingDraft): string {
   const out: Record<string, unknown> = {};
   if (draft.host) out.host = draft.host;
   if (draft.participants.length > 0) out.participants = draft.participants;

@@ -51,7 +51,7 @@
   "host.importReason.array": "{field} must be a list",
   "host.importReason.string": "{field} must be text",
   "host.importReason.text": "{field} is required and cannot be empty",
-  "host.importReason.number": "{field} must be a positive number",
+  "host.importReason.number": "{field} must be a whole number of minutes, from 0 to {max}",
   "host.importSuccess": "Template imported.",
   "host.exportTemplate": "Export as template",
   "host.exportTemplateSuccess": "Template exported.",

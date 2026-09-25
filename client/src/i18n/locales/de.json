@@ -51,7 +51,7 @@
   "host.importReason.array": "{field} muss eine Liste sein",
   "host.importReason.string": "{field} muss Text sein",
   "host.importReason.text": "{field} ist erforderlich und darf nicht leer sein",
-  "host.importReason.number": "{field} muss eine positive Zahl sein",
+  "host.importReason.number": "{field} muss eine ganze Minutenzahl zwischen 0 und {max} sein",
   "host.importSuccess": "Vorlage importiert.",
   "host.exportTemplate": "Als Vorlage exportieren",
   "host.exportTemplateSuccess": "Vorlage exportiert.",

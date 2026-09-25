@@ -51,7 +51,7 @@
   "host.importReason.array": "{field} debe ser una lista",
   "host.importReason.string": "{field} debe ser texto",
   "host.importReason.text": "{field} es obligatorio y no puede estar vacío",
-  "host.importReason.number": "{field} debe ser un número positivo",
+  "host.importReason.number": "{field} debe ser un número entero de minutos, de 0 a {max}",
   "host.importSuccess": "Plantilla importada.",
   "host.exportTemplate": "Exportar como plantilla",
   "host.exportTemplateSuccess": "Plantilla exportada.",

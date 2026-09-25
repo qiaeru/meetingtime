@@ -10,6 +10,8 @@ import {
   downloadMeetingTemplate,
   parseMeetingJSON,
   MeetingImportError,
+  MAX_PLANNED_MINUTES,
+  MAX_TIMEBOX_MINUTES,
   type MeetingDraft,
 } from "../lib/meetingImport.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
@@ -168,7 +170,7 @@ export function renderHostSetup(root: HTMLElement): () => void {
   const plannedInput = document.createElement("input");
   plannedInput.type = "number";
   plannedInput.min = "0";
-  plannedInput.max = "600";
+  plannedInput.max = String(MAX_PLANNED_MINUTES);
   // Whole minutes, no coarser step: the hint announces no other constraint.
   plannedInput.step = "1";
   // No numeric placeholder: "60" reads as a default, but blank means "no
@@ -190,7 +192,7 @@ export function renderHostSetup(root: HTMLElement): () => void {
   const timeboxInput = document.createElement("input");
   timeboxInput.type = "number";
   timeboxInput.min = "0";
-  timeboxInput.max = "60";
+  timeboxInput.max = String(MAX_TIMEBOX_MINUTES);
   timeboxInput.step = "1";
   timeboxInput.setAttribute("aria-label", t("host.timebox"));
   const hint = document.createElement("p");
@@ -301,7 +303,7 @@ export function renderHostSetup(root: HTMLElement): () => void {
       toast(t("host.importSuccess"), { type: "success" });
     } catch (e) {
       if (e instanceof MeetingImportError) {
-        const reason = t(`host.importReason.${e.reason}`, { field: e.field });
+        const reason = t(`host.importReason.${e.reason}`, { field: e.field, max: e.max });
         toast(t("host.importError", { reason }), { type: "error" });
       } else {
         toast(t("errors.internal_error"), { type: "error" });
