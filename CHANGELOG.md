@@ -50,7 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Security
 
-- Wrong meeting passwords are limited to ten per minute per meeting.
+- Wrong meeting passwords are limited to ten per minute per IP address and fifty per minute per meeting, so a guesser only locks out their own address, not the colleagues who have the password.
 - Behind the shipped nginx configuration, a client can no longer fake its IP address to escape the rate limit.
 - Socket.IO now rejects connections from other websites when `CORS_ORIGIN` is set, as the notes channel already did.
 - A crafted participant ID can no longer alter the server state shared by every meeting.

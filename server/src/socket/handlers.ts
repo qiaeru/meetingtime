@@ -10,7 +10,7 @@ import { ctxOf, requireHost } from "./authorize.js";
 import { broadcastState, roomFor } from "./broadcast.js";
 import { log } from "../log.js";
 import { config } from "../config.js";
-import { allowSocketEvent } from "../plugins/rateLimit.js";
+import { allowSocketEvent, ipFromRequest } from "../plugins/rateLimit.js";
 import { MAX_IDENTITY_FIELD, clampString } from "../meetings/limits.js";
 import { closeYjsConnectionsFor } from "../yjs/ywsBridge.js";
 
@@ -23,6 +23,7 @@ export function registerHandlers(io: IO): void {
 
 function onConnection(io: IO, socket: SK): void {
   log.debug({ sid: socket.id }, "socket connected");
+  const ip = ipFromRequest(socket.request, config.trustProxy) ?? "";
 
   // Sockets that never authenticate sit on the per-IP connection slot.
   // Ten minutes is long enough for a host to fill the create form without
@@ -123,10 +124,10 @@ function onConnection(io: IO, socket: SK): void {
       } else if ("identity" in payload) {
         // Password is only checked on identity-flow joins; the token flow is
         // already authenticated.
-        if (meeting.passwordAttemptsExhausted()) {
+        if (meeting.passwordAttemptsExhausted(ip)) {
           return ack({ ok: false, error: "rate_limited" });
         }
-        if (!meeting.verifyPassword(payload.password)) {
+        if (!meeting.verifyPassword(payload.password, ip)) {
           return ack({ ok: false, error: "invalid_password" });
         }
         const identity = sanitizeIdentity(payload.identity);

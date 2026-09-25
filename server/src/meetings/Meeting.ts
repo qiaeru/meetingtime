@@ -11,7 +11,8 @@ import {
   MAX_IDENTITY_FIELD,
   MAX_PARTICIPANTS,
   MAX_PASSWORD,
-  MAX_PASSWORD_FAILURES,
+  MAX_PASSWORD_FAILURES_PER_IP,
+  MAX_PASSWORD_FAILURES_PER_MEETING,
   PASSWORD_FAILURE_WINDOW_MS,
   MAX_PLANNED_MS,
   MAX_TIMEBOX_MS,
@@ -32,10 +33,12 @@ export class Meeting {
   private orderSeq = 0;
   // Never serialized; only state.hasPassword (boolean) is broadcast.
   private readonly password?: string;
-  // Per-meeting budget of wrong passwords, so guessing cannot be spread over
-  // many sockets or IPs to escape the per-socket and per-IP limits.
+  // Wrong-password budgets. The per-IP one locks a guesser out without
+  // blocking colleagues who have the password; the looser meeting-wide one
+  // still bounds guessing spread over many sockets or IPs.
   private passwordFailWindowStart = 0;
   private passwordFailures = 0;
+  private readonly passwordFailuresByIp = new Map<string, { windowStart: number; count: number }>();
 
   constructor(
     id: string,
@@ -73,10 +76,10 @@ export class Meeting {
 
   // Length-first then XOR keeps the comparison roughly timing-safe; full
   // constant-time isn't justified for an in-memory app of this size.
-  verifyPassword(supplied: string | undefined): boolean {
+  verifyPassword(supplied: string | undefined, ip: string): boolean {
     if (!this.password) return true;
     const ok = this.matchesPassword(this.password, supplied);
-    if (!ok) this.recordPasswordFailure();
+    if (!ok) this.recordPasswordFailure(ip);
     return ok;
   }
 
@@ -90,18 +93,33 @@ export class Meeting {
     return diff === 0;
   }
 
-  passwordAttemptsExhausted(): boolean {
-    if (Date.now() - this.passwordFailWindowStart >= PASSWORD_FAILURE_WINDOW_MS) return false;
-    return this.passwordFailures >= MAX_PASSWORD_FAILURES;
+  passwordAttemptsExhausted(ip: string): boolean {
+    const now = Date.now();
+    const meetingWide =
+      now - this.passwordFailWindowStart < PASSWORD_FAILURE_WINDOW_MS &&
+      this.passwordFailures >= MAX_PASSWORD_FAILURES_PER_MEETING;
+    const perIp = this.passwordFailuresByIp.get(ip);
+    return (
+      meetingWide ||
+      (perIp !== undefined &&
+        now - perIp.windowStart < PASSWORD_FAILURE_WINDOW_MS &&
+        perIp.count >= MAX_PASSWORD_FAILURES_PER_IP)
+    );
   }
 
-  private recordPasswordFailure(): void {
+  private recordPasswordFailure(ip: string): void {
     const now = Date.now();
     if (now - this.passwordFailWindowStart >= PASSWORD_FAILURE_WINDOW_MS) {
       this.passwordFailWindowStart = now;
       this.passwordFailures = 0;
     }
     this.passwordFailures++;
+    for (const [key, w] of this.passwordFailuresByIp) {
+      if (now - w.windowStart >= PASSWORD_FAILURE_WINDOW_MS) this.passwordFailuresByIp.delete(key);
+    }
+    const perIp = this.passwordFailuresByIp.get(ip) ?? { windowStart: now, count: 0 };
+    perIp.count++;
+    this.passwordFailuresByIp.set(ip, perIp);
   }
 
   // Own-property lookup: client-supplied ids such as "__proto__" must never
