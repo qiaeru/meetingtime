@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Code blocks in the notes preview get their syntax colors again instead of staying on "Loading syntax highlighting": the content security policy blocked the WebAssembly engine the highlighter needs. If it still cannot load, the code shows without colors.
+- Code blocks in the notes preview now get their syntax colors instead of staying on "Loading syntax highlighter…": the content security policy blocked the WebAssembly engine the highlighter needs. If it still cannot load, the code shows without colors.
 - The monospace font no longer fails to load for Cyrillic characters in the notes.
 - The focus outline of the notes editor now shows on its left edge too.
 
