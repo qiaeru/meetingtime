@@ -44,15 +44,16 @@ Socket.IO is configured with `maxHttpBufferSize: 100_000` so a single oversized 
 
 ## Rate limiting
 
-Five complementary budgets, all in-memory:
+Six complementary budgets, all in-memory:
 
 - **Per-IP connection budget** (`server/src/plugins/rateLimit.ts`): three hundred requests per minute per IP. The same counter is consulted from three places so the limit cannot be bypassed by switching transports: the Express middleware (static files and the SPA fallback), the Socket.IO connection middleware (one count per Socket.IO connection, whatever its transport; engine.io answers `/socket.io` requests before Express sees them, and the per-socket budget below covers the traffic of an open connection), and the Yjs WebSocket upgrade. The budget is sized for shared egress: a cold SPA load is 10-30 requests, and several colleagues behind one office NAT share a single IP. `/healthz` is served before the gate so container health probes are never throttled and never consume the budget.
+- **Per-IP meeting creation budget**: ten meetings per minute per IP, answered with `rate_limited` beyond that. An abandoned meeting stays in memory until the `HOST_TIMEOUT_MS` sweep, so without this cap a single client could create meetings much faster than the GC frees them.
 - **Per-Socket.IO-socket event budget**: eighty events per ten seconds. Every Socket.IO event goes through `socket.use` and is dropped past the threshold; the socket is then disconnected. Without this, an authenticated peer could spam any cheap event (for example `speaker:grant`) at line rate, and since every handler triggers `broadcastState` to every participant, each malicious emit would amplify into `N × (full meeting JSON)` broadcast bytes.
 - **Per-Yjs-WebSocket message budget**: two hundred incoming messages per ten seconds per connection. Same amplification reasoning as above (a flooded awareness or sync update is re-broadcast to every other peer in the doc). Past the budget the connection is terminated.
 - **Per-meeting password budget**: ten wrong passwords per minute per IP address, fifty per minute for the whole meeting (see Per-meeting password above).
 - **Idle-join timeout**: a Socket.IO connection that does not authenticate (via `meeting:create` or `meeting:join`) within ten minutes is force-disconnected (long enough for a host to fill the create form). Without this, an attacker could open the per-IP connection cap and sit on each socket indefinitely, holding the budget while doing nothing.
 
-All five stores are in-memory only and sweep stale entries on the minute. They are meant to deter spray and amplification attacks, not to be airtight against an attacker rotating IPs or coordinating many clients. Combine with a reverse proxy or upstream WAF for stricter posture.
+All six stores are in-memory only and sweep stale entries on the minute. They are meant to deter spray and amplification attacks, not to be airtight against an attacker rotating IPs or coordinating many clients. Combine with a reverse proxy or upstream WAF for stricter posture.
 
 ## Phase-aware authorization
 

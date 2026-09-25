@@ -9,29 +9,44 @@ import type { IncomingMessage } from "node:http";
 const WINDOW_MS = 60_000;
 const LIMIT = 300;
 
+// Per-IP meeting creation budget. An abandoned meeting (participants, topics,
+// Y.Doc) stays in memory for HOST_TIMEOUT_MS, so without its own cap one
+// client could create meetings far faster than the GC frees them.
+const CREATE_LIMIT = 10;
+
 interface Counter {
   windowStart: number;
   count: number;
 }
 const buckets = new Map<string, Counter>();
+const createBuckets = new Map<string, Counter>();
 
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, c] of buckets) {
-    if (now - c.windowStart > WINDOW_MS) buckets.delete(ip);
+  for (const map of [buckets, createBuckets]) {
+    for (const [ip, c] of map) {
+      if (now - c.windowStart > WINDOW_MS) map.delete(ip);
+    }
   }
 }, WINDOW_MS).unref?.();
 
-export function allowIP(ip: string | undefined): boolean {
-  if (!ip) return true;
+function consume(map: Map<string, Counter>, ip: string, limit: number): boolean {
   const now = Date.now();
-  const c = buckets.get(ip);
+  const c = map.get(ip);
   if (!c || now - c.windowStart > WINDOW_MS) {
-    buckets.set(ip, { windowStart: now, count: 1 });
+    map.set(ip, { windowStart: now, count: 1 });
     return true;
   }
   c.count++;
-  return c.count <= LIMIT;
+  return c.count <= limit;
+}
+
+export function allowIP(ip: string | undefined): boolean {
+  return !ip || consume(buckets, ip, LIMIT);
+}
+
+export function allowMeetingCreate(ip: string): boolean {
+  return !ip || consume(createBuckets, ip, CREATE_LIMIT);
 }
 
 // Behind one trusted proxy, only the last X-Forwarded-For entry is written by

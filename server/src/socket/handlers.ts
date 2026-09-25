@@ -10,7 +10,7 @@ import { ctxOf, requireHost } from "./authorize.js";
 import { broadcastState, roomFor } from "./broadcast.js";
 import { log } from "../log.js";
 import { config } from "../config.js";
-import { allowSocketEvent, ipFromRequest } from "../plugins/rateLimit.js";
+import { allowMeetingCreate, allowSocketEvent, ipFromRequest } from "../plugins/rateLimit.js";
 import { MAX_IDENTITY_FIELD, clampString } from "../meetings/limits.js";
 import { closeYjsConnectionsFor } from "../yjs/ywsBridge.js";
 
@@ -77,6 +77,7 @@ function onConnection(io: IO, socket: SK): void {
 
   on("meeting:create", (payload, ack) => {
     try {
+      if (!allowMeetingCreate(ip)) return ack({ ok: false, error: "rate_limited" });
       const host = sanitizeIdentity(payload.host);
       if (!host) return ack({ ok: false, error: "invalid_identity" });
       const initial = (payload.initialParticipants ?? [])
