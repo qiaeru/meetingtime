@@ -19,15 +19,18 @@ Meetingtime is released under the [MIT License](./LICENSE). Every third-party as
 - [y-websocket](https://github.com/yjs/y-websocket) and [y-protocols](https://github.com/yjs/y-protocols). MIT license. The wire protocol used by the Yjs bridge.
 - [cors](https://github.com/expressjs/cors). MIT license.
 - [pino](https://github.com/pinojs/pino). MIT license. Structured logging.
-- [uuid](https://github.com/uuidjs/uuid). MIT license.
+- [compression](https://github.com/expressjs/compression). MIT license. Gzip for the static assets.
+- [dotenv](https://github.com/motdotla/dotenv). BSD-2-Clause license. Loads the `.env` file.
+- [ws](https://github.com/websockets/ws). MIT license. The WebSocket server behind the Yjs bridge.
+- [lib0](https://github.com/dmonad/lib0). MIT license. The binary encoding used by the Yjs protocol.
 
 ## Frontend runtime
 
 - [CodeMirror 6](https://codemirror.net/). MIT license. The notes editor.
 - [y-codemirror.next](https://github.com/yjs/y-codemirror.next). MIT license. The CodeMirror binding for Yjs.
 - [Marked](https://marked.js.org/). MIT license. Markdown parsing for the preview pane.
-- [DOMPurify](https://github.com/cure53/DOMPurify). Apache-2.0 / MPL-2.0 dual license. Sanitises the Markdown preview HTML.
-- [Shiki](https://shiki.style/). MIT license. Syntax highlighting in the Markdown preview, bundled with fifteen languages and the dual `github-light` / `github-dark` themes.
+- [DOMPurify](https://github.com/cure53/DOMPurify). Apache-2.0 / MPL-2.0 dual license. Sanitizes the Markdown preview HTML.
+- [Shiki](https://shiki.style/). MIT license. Syntax highlighting in the Markdown preview, bundled with fourteen languages and the dual `github-light` / `github-dark` themes.
 - [socket.io-client](https://socket.io/). MIT license.
 
 ## Build tooling

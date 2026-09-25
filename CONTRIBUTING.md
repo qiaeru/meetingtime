@@ -41,10 +41,10 @@ Before pushing, review every added comment in the diff, update the relevant `doc
 
 ## Code style
 
-- Components are functions returning a handle `{ el, update(), tick?, stop?, destroy? }`. No UI framework, no class hierarchies.
+- Components are functions returning a handle `{ el, update(), tick?, destroy? }`. No UI framework, no class hierarchies.
 - State lives in small home-grown observables under `client/src/state/`.
 - Every user-visible string goes through `t("key")`; never hardcode natural-language strings in code or HTML.
-- No `innerHTML` for arbitrary content. Sanitised Markdown (DOMPurify) and Lucide inline SVG are the only allowed exceptions.
+- No `innerHTML` for arbitrary content. Sanitized Markdown (DOMPurify) and Lucide inline SVG are the only allowed exceptions.
 
 ## Documentation
 

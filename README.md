@@ -34,7 +34,7 @@ Hosts create a meeting in one click, share a short identifier (or a direct join 
 - **Real-time.** Two WebSocket channels share the same port: Socket.IO for meeting commands and full-state broadcasts, a minimal y-websocket bridge for the CRDT notes.
 - **Self-contained.** Fonts (Inter, JetBrains Mono) self-hosted, syntax-highlighting grammars bundled at build time, zero CDN, zero analytics. Runs unmodified on an air-gapped host.
 - **Hardened.** Strict CSP, per-IP and per-socket rate limits, constant-time-ish password compare, origin check on every WebSocket upgrade, force-disconnect on participant removal, graceful shutdown on `SIGTERM`. Runs as a non-root user in the container.
-- **Ready for public release.** MIT licensed, license check in CI (root + server + client), Dependabot, GitHub Actions CI, multi-arch (amd64 + arm64) GHCR releases.
+- **Ready for public release.** MIT licensed, license check in CI, Dependabot, GitHub Actions CI, multi-arch (amd64 + arm64) GHCR releases.
 
 ## Quick start
 

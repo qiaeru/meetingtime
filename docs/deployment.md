@@ -45,4 +45,4 @@ Meetings live in server memory, so a redeploy disconnects everyone currently in 
 
 ## Backups
 
-There is nothing to back up. No database, no persistent volume (the compose files use bind mounts only for the reverse proxy's certificates). The notes a host did not export end up garbage-collected with the meeting.
+There is nothing to back up. No database and no application data on disk: the only volumes in the compose files hold the reverse proxy's configuration and certificates. The notes a host did not export end up garbage-collected with the meeting.

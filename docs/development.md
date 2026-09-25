@@ -25,7 +25,7 @@ From the repo root, run `npm install`. This walks the three workspaces (`shared`
 
 ## Conventions
 
-No heavyweight UI framework on the client: components are functions that return an `HTMLElement` plus an `update()` / `tick()` / `destroy()` handle. Global state lives as small home-grown observables in `client/src/state/`. Every user-visible string goes through `t("key")` (see `i18n.md`). No mutable strings are injected via `innerHTML` outside of the sanitized Markdown preview (DOMPurify) and the Lucide inline SVG helper. Required form fields carry the `.required` class on the `<legend>` or `<span>`, and CSS adds the red asterisk through a `::after` rule. ESLint runs as a flat config (ESLint 9 with typescript-eslint 8).
+No heavyweight UI framework on the client: components are functions that return an `HTMLElement` plus an `update()` / `tick()` / `destroy()` handle. Global state lives as small home-grown observables in `client/src/state/`. Every user-visible string goes through `t("key")` (see `i18n.md`). No mutable strings are injected via `innerHTML` outside of the sanitized Markdown preview (DOMPurify) and the Lucide inline SVG helper. Required form fields carry the `.required` class on the `<legend>` or `<span>`, and CSS adds the red asterisk through a `::after` rule. ESLint runs as a flat config (ESLint 10 with typescript-eslint 8).
 
 ## Adding a Socket.IO event
 
@@ -36,4 +36,4 @@ No heavyweight UI framework on the client: components are functions that return 
 
 ## Tests
 
-No automated test suite ships with this release. The app is real-time UI on top of a fairly small state machine; manual multi-participant scenarios (two browser windows) are the validation path. Recommended for the future: Playwright with multiple browser contexts so the multi-participant flow can be replayed in CI.
+No automated test suite ships with this release. The app is real-time UI on top of a fairly small state machine; manual multi-participant scenarios (two browser windows) are the validation path.
