@@ -12,6 +12,9 @@ const THEMES = { light: "github-light", dark: "github-dark" } as const;
 
 let highlighter: HighlighterCore | null = null;
 let highlighterPromise: Promise<HighlighterCore> | null = null;
+// Set when the runtime cannot load (e.g. WebAssembly blocked): code blocks
+// then render plain instead of waiting forever for colors.
+let highlighterFailed = false;
 function loadHighlighter(): Promise<HighlighterCore> {
   if (!highlighterPromise) {
     // Each import() is a grammar/theme chunk fetched only now. One `bash` import
@@ -43,6 +46,11 @@ function loadHighlighter(): Promise<HighlighterCore> {
       .then((h) => {
         highlighter = h;
         return h;
+      })
+      .catch((err: unknown) => {
+        console.error("Syntax highlighter failed to load", err);
+        highlighterFailed = true;
+        throw err;
       });
   }
   return highlighterPromise;
@@ -65,7 +73,7 @@ const md = new Marked({
       const langAttr = language ? ` class="language-${language}"` : "";
       // CSS ::before reads data-syntax-loading to show a "loading highlighter"
       // hint until the proper colors arrive.
-      const pending = highlighter ? "" : ' data-syntax-pending="true"';
+      const pending = highlighter || highlighterFailed ? "" : ' data-syntax-pending="true"';
       return `<pre${pending}><code${langAttr}>${escaped}</code></pre>`;
     },
   },
@@ -94,7 +102,7 @@ export function renderMarkdownInto(target: HTMLElement, source: string): void {
     }
   };
   render();
-  if (!highlighter) {
-    void loadHighlighter().then(render);
+  if (!highlighter && !highlighterFailed) {
+    void loadHighlighter().then(render, render);
   }
 }

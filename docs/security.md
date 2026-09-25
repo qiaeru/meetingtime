@@ -20,7 +20,7 @@ On the client, the password is persisted in **sessionStorage** (tab-scoped, neve
 
 Every HTTP response carries a defensive header set, defined in `server/src/plugins/securityHeaders.ts`:
 
-- `Content-Security-Policy` restricts scripts to `'self'` (no inline, no eval), styles to `'self' 'unsafe-inline'` (Shiki emits inline `style="…"` attributes that CSP2 lumps under style-src), images to `'self' data: https:`, fonts to `'self'`, connections to `'self'` (which covers the same-host `ws:` and `wss:` endpoints in current browsers), and forbids framing entirely (`frame-ancestors 'none'`), objects (`object-src 'none'`) and form submissions to anywhere but the same origin.
+- `Content-Security-Policy` restricts scripts to `'self'` (no inline, no eval; `'wasm-unsafe-eval'` only lets the notes preview compile Shiki's WebAssembly regex engine), styles to `'self' 'unsafe-inline'` (Shiki emits inline `style="…"` attributes that CSP2 lumps under style-src), images to `'self' data: https:`, fonts to `'self'`, connections to `'self'` (which covers the same-host `ws:` and `wss:` endpoints in current browsers), and forbids framing entirely (`frame-ancestors 'none'`), objects (`object-src 'none'`) and form submissions to anywhere but the same origin.
 - `X-Content-Type-Options: nosniff` blocks MIME-sniffing-based attacks.
 - `Referrer-Policy: no-referrer` prevents the URL (which contains the meeting ID) from leaking to third parties.
 - `X-Frame-Options: DENY` is a belt-and-suspenders version of `frame-ancestors 'none'` for older browsers.

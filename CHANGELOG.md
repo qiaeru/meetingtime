@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The footer shows the updated Qiaeru logo, which is also lighter (14 KB instead of 66 KB).
 
+### Fixed
+
+- Code blocks in the notes preview get their syntax colors again instead of staying on "Loading syntax highlighting": the content security policy blocked the WebAssembly engine the highlighter needs. If it still cannot load, the code shows without colors.
+
 ## [1.5.0] - 2026-09-25
 
 ### Changed

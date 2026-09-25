@@ -11,14 +11,15 @@ export function securityHeaders(): RequestHandler {
     res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
     res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
-    // style-src 'unsafe-inline' is required for Shiki's per-token inline
-    // styles (CSP2 has no nonce for style attributes); img-src https: lets
-    // hosts embed images in the Markdown notes.
+    // 'wasm-unsafe-eval' lets Shiki compile its Oniguruma regex engine (it
+    // allows WebAssembly only, not eval). style-src 'unsafe-inline' is required
+    // for Shiki's per-token inline styles (CSP2 has no nonce for style
+    // attributes); img-src https: lets hosts embed images in the Markdown notes.
     res.setHeader(
       "Content-Security-Policy",
       [
         "default-src 'self'",
-        "script-src 'self'",
+        "script-src 'self' 'wasm-unsafe-eval'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https:",
         "font-src 'self'",
