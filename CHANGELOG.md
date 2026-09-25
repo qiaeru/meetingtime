@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The footer shows the updated Qiaeru logo, which is also lighter (14 KB instead of 66 KB).
 - Hover hints are now themed bubbles that match the interface instead of the browser's plain boxes. They also appear on keyboard focus, close with Escape, and show a participant's name or role only when it is cut off.
 - Tables in the Markdown export use spaced separators (`| --- |`), the usual formatting, easier to read in the raw file.
+- The meeting page does less work every half second, and the notes server no longer sends an empty presence message to every participant every 15 seconds.
 
 ### Fixed
 

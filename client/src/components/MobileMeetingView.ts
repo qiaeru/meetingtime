@@ -255,7 +255,11 @@ export function renderMobileMeeting(
       !iAmSpeaker && m?.currentSpeakerId ? m.participants[m.currentSpeakerId] : undefined;
     claimBtn.dataset.active = String(iAmSpeaker);
     claimBtn.dataset.occupied = String(floorActive && Boolean(occupiedBy));
-    claimIconSlot.replaceChildren(icon(iAmSpeaker ? "Square" : "Speech", { size: 36 }));
+    const claimIcon = iAmSpeaker ? "Square" : "Speech";
+    if (claimIconSlot.dataset.icon !== claimIcon) {
+      claimIconSlot.dataset.icon = claimIcon;
+      claimIconSlot.replaceChildren(icon(claimIcon, { size: 36 }));
+    }
     // Spell out why the button is inert before the meeting starts or once it
     // has ended, instead of just graying it out. When a colleague holds the
     // floor, the label says the tap takes over from them, not that the floor

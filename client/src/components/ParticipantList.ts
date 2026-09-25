@@ -168,9 +168,11 @@ export function renderParticipantList(args: Args): {
     }
   };
 
+  // Speaking time only advances while running; leaving "running" changes the
+  // phase in the signature, so update() redraws the final values.
   const tick = () => {
     const m = args.getMeeting();
-    if (!m || rowRefs.size === 0) return;
+    if (!m || m.phase !== "running" || rowRefs.size === 0) return;
     const { totals, sum } = computeTotals(m);
     for (const [id, refs] of rowRefs) {
       const total = totals.get(id) ?? 0;

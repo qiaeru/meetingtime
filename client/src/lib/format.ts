@@ -12,8 +12,18 @@ import type { Locale } from "@meetingtime/shared";
 
 // Screen-reader output. Intl carries the unit words and each language's
 // plural rules, so no locale table lives in code.
-const spokenUnit = (lang: Locale, unit: "hour" | "minute" | "second", n: number): string =>
-  new Intl.NumberFormat(lang, { style: "unit", unit, unitDisplay: "long" }).format(n);
+// Formatters are cached: building one is costly and the participant list
+// asks for three per row on every tick.
+const unitFormatters = new Map<string, Intl.NumberFormat>();
+const spokenUnit = (lang: Locale, unit: "hour" | "minute" | "second", n: number): string => {
+  const key = `${lang}:${unit}`;
+  let f = unitFormatters.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat(lang, { style: "unit", unit, unitDisplay: "long" });
+    unitFormatters.set(key, f);
+  }
+  return f.format(n);
+};
 
 export function formatMsSpoken(ms: number, lang: Locale = "fr"): string {
   if (!Number.isFinite(ms) || ms < 0) ms = 0;

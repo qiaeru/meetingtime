@@ -255,9 +255,11 @@ export function renderAgenda(args: Args): AgendaHandle {
     }
   };
 
+  // Topic time only advances while running; leaving "running" changes the
+  // phase in the signature, so update() redraws the final values.
   const tick = () => {
     const m = args.getMeeting();
-    if (!m || timeRefs.size === 0) return;
+    if (!m || m.phase !== "running" || timeRefs.size === 0) return;
     for (const [topicId, el] of timeRefs) {
       el.textContent = formatMs(topicDisplayMs(m, topicId));
     }

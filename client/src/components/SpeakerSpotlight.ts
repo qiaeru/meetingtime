@@ -97,6 +97,7 @@ export function renderSpeakerSpotlight(args: Args): {
   const TICK_AT_SECONDS = new Set([10, 5, 3, 2, 1]);
   let lastSpeakerId: string | null = null;
   let lastColor: string | null = null;
+  let colorFor: { m: Meeting; id: string; color: string } | null = null;
   let lastLimitActive = false;
   let initialized = false;
 
@@ -161,10 +162,14 @@ export function renderSpeakerSpotlight(args: Args): {
     card.dataset.state = "speaking";
 
     // colorByPosition is keyed on the sorted index, so the color must
-    // match whatever ParticipantList renders for the same row.
-    const sorted = sortedParticipants(m);
-    const idx = sorted.findIndex((p) => p.id === speaker.id);
-    const color = colorByPosition(idx, sorted.length, m.id);
+    // match whatever ParticipantList renders for the same row. Recomputed
+    // only when a new state arrives, not on every tick.
+    if (colorFor?.m !== m || colorFor.id !== speaker.id) {
+      const sorted = sortedParticipants(m);
+      const idx = sorted.findIndex((p) => p.id === speaker.id);
+      colorFor = { m, id: speaker.id, color: colorByPosition(idx, sorted.length, m.id) };
+    }
+    const color = colorFor.color;
 
     if (lastSpeakerId !== speaker.id || lastColor !== color) {
       swapAvatar(speaker, color);

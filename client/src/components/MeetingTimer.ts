@@ -24,6 +24,7 @@ export function renderMeetingTimer(getMeeting: () => Meeting | null): {
 
   const label = document.createElement("span");
   label.className = "global-timer-label";
+  label.textContent = t("meeting.global");
 
   const value = document.createElement("span");
   value.className = "global-timer-value";
@@ -36,7 +37,6 @@ export function renderMeetingTimer(getMeeting: () => Meeting | null): {
 
   const tick = () => {
     const m = getMeeting();
-    label.textContent = t("meeting.global");
     if (!m || !m.startedAt) {
       value.textContent = "00:00";
       fill.style.height = "0%";

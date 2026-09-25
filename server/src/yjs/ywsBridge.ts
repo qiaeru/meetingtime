@@ -80,6 +80,9 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
   const ydoc = meetingStore.getYDoc(meetingId);
   if (!ydoc) return undefined;
   const awareness = new awarenessProtocol.Awareness(ydoc);
+  // The server is not a cursor: without this, its own empty presence entry is
+  // sent in every initial sync and renewed to every peer every 15 s.
+  awareness.setLocalState(null);
   const conns = new Map<WebSocket, Conn>();
 
   const onUpdate = (update: Uint8Array, origin: unknown): void => {
