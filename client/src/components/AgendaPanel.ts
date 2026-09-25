@@ -107,7 +107,7 @@ export function renderAgenda(args: Args): AgendaHandle {
     if (m.topics.length === 0) {
       const empty = document.createElement("li");
       empty.className = "agenda-empty";
-      if (args.isHost()) {
+      if (args.isHost() && !ended) {
         empty.textContent = t("meeting.agendaEmptyHost") + " ";
         const cta = document.createElement("button");
         cta.type = "button";
@@ -135,7 +135,7 @@ export function renderAgenda(args: Args): AgendaHandle {
       if (focusedTopicId === topic.id) li.dataset.focused = "true";
       const on = (action: string): string => t("a11y.actionOn", { action, target: topic.label });
 
-      if (args.isHost()) {
+      if (args.isHost() && !ended) {
         li.dataset.draggable = "true";
         const topicHandle = document.createElement("span");
         topicHandle.className = "drag-handle";

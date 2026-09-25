@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The notes export made during a pause no longer overstates the meeting duration, writes the date with the month spelled out in the interface language (04/09 was ambiguous between countries), and keeps a topic containing a line break on one table row.
 - Sounds no longer replay after a page refresh or a language change: the hand-raise chime for hands already up and, on a phone, the end-of-meeting gong and the "you have the floor" cue.
 - Keyboard focus stays on the "Grant the floor" button when another participant raises a hand.
+- Once the meeting has ended, hosts can no longer drag participants or topics, or open the add-topic dialog from an empty agenda.
 
 - After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 

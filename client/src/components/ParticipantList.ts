@@ -256,7 +256,7 @@ function renderRow(
   // The <li> is only marked draggable while the user mousedowns on this
   // handle, so clicks on inner buttons never accidentally start a drag.
   let dragHandle: HTMLElement | null = null;
-  if (meIsHost) {
+  if (meIsHost && m.phase !== "ended") {
     li.dataset.draggable = "true";
     dragHandle = document.createElement("span");
     dragHandle.className = "drag-handle";
