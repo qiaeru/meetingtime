@@ -6,17 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-25
+
 ### Changed
 
-- The author link in the attribution footer now points to qiaeru.com, following the domain move.
-- Pausing the meeting no longer resets the current speaker's time-box: the turn chronometer freezes during the pause and picks up where it stopped.
-- The notes export made during a meeting now counts the ongoing speaking turn and the running topic.
-- Template import errors are now written in the interface language and name the faulty field.
-- Fingerprinted web assets are cached by the browser for a year, so reloading the page no longer re-checks each file.
 - The nginx deployment now requires `MEETINGTIME_DOMAIN`, like the Caddy and Traefik variants, and restricts connections to that origin instead of accepting any. The stack refuses to start without it: export it before updating.
-- The update procedure in the docs now rebuilds the image (`git pull`, then `up -d --build`); `docker compose pull` alone kept running the old version.
-- Multi-architecture release images build faster: the build stage no longer runs under emulation for arm64.
-- The `ws` override is gone: Socket.IO now requires the patched `ws` release itself.
+- Pausing the meeting no longer resets the current speaker's time-box: the turn chronometer freezes during the pause and picks up where it stopped.
 - Confirmation buttons now name their action ("End the meeting", "Remove", "Delete topic") instead of a generic "Confirm", in red for irreversible actions, and the questions say what is lost.
 - Error messages now say what to do next, and error notifications stay on screen until you close them.
 - The meeting creation form shows visible labels on every field (they used to vanish as you typed), and each participant or topic row is easier to tell apart.
@@ -26,6 +21,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Offline participants get an "Offline" tag instead of a dimmed avatar alone.
 - On a phone held sideways, the take-the-floor and raise-hand buttons sit next to the timer instead of below the fold.
 - Each page now has its own browser tab title.
+- The notes export made during a meeting now counts the ongoing speaking turn and the running topic.
+- Template import errors are now written in the interface language and name the faulty field.
+- The author link in the attribution footer now points to qiaeru.com, following the domain move.
+- Fingerprinted web assets are cached by the browser for a year, so reloading the page no longer re-checks each file.
+- The update procedure in the docs now rebuilds the image (`git pull`, then `up -d --build`); `docker compose pull` alone kept running the old version.
+- Multi-architecture release images build faster: the build stage no longer runs under emulation for arm64.
+- The `ws` override is gone: Socket.IO now requires the patched `ws` release itself.
 
 ### Fixed
 
@@ -36,7 +38,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Screen readers now name the notes editor and the invitation message, say which row a repeated button acts on, announce the participant or topic picked with the keyboard shortcuts, and tell which topic is running.
 - Reordering participants or topics on the creation form keeps keyboard focus on the moved row.
 - With reduced motion enabled, the row that just spoke keeps a static highlight, and switching themes no longer fades.
-
 - Creating a new meeting from the same tab no longer leaves the previous one attached: its broadcasts could replace the new meeting on screen, and the old meeting was never cleaned from memory.
 - An ended meeting can no longer be restarted.
 - In the hand-raise banner, hosts no longer get "Give the floor" buttons before the meeting starts or after it ends, since those clicks did nothing.
@@ -46,11 +47,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The "Export the notes?" prompt appears once per ended meeting, not again after a language switch or a screen rotation.
 - Screen readers announce a raised hand on an avatar as "hand raised" instead of the "Raise hand" command, and read the question of confirmation dialogs.
 - The Markdown export uses the right label separator in every language ("Durée : 10:00" in French, "Duration: 10:00" elsewhere).
+- On a phone, leaving the meeting view while the screen wake lock was being acquired no longer keeps the screen on.
 - A crash on a server with no connected client now also exits with a failure code.
 - The Traefik deployment starts again on recent Docker Engine versions, which refuse Traefik 3.1: it now follows the latest 3.x release.
 - The nginx deployment guide works as written: the first certificate is issued in standalone mode, and renewals go through a challenge directory that nginx now serves (they used to fail silently after 90 days). The image follows the stable nginx release.
 - The Caddy deployment now serves your domain: `MEETINGTIME_DOMAIN` never reached the Caddy container, which fell back to `localhost` and never obtained a certificate for it.
-- On a phone, leaving the meeting view while the screen wake lock was being acquired no longer keeps the screen on.
 
 ### Security
 
