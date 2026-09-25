@@ -1,5 +1,4 @@
-import { randomBytes } from "node:crypto";
-import { v4 as uuid } from "uuid";
+import { randomBytes, randomUUID as uuid } from "node:crypto";
 import type {
   Meeting as MeetingState,
   Participant,

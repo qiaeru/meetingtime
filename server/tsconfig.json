@@ -4,8 +4,11 @@
     "outDir": "dist",
     "rootDir": "src",
     "composite": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    // The output runs unbundled on Node: resolve imports the way Node does,
+    // and keep browser globals out of the type space.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
     "types": ["node"]
   },
   "include": ["src/**/*"],

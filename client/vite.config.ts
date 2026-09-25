@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, "../server/dist/public"),
+    outDir: path.resolve(import.meta.dirname, "../server/dist/public"),
     emptyOutDir: true,
     target: "es2022",
     // A small font subset would otherwise be inlined as a data: URL, which the

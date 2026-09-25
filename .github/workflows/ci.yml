@@ -39,5 +39,5 @@ jobs:
       # ran on partial or empty trees and could pass vacuously).
       - name: Check dependency licenses
         run: |
-          npm install --omit=dev --no-audit --no-fund
+          npm ci --omit=dev --no-audit --no-fund
           npx --yes license-checker@25.0.1 --production --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;OFL-1.1;CC0-1.0;Unlicense;0BSD;BlueOak-1.0.0' --excludePrivatePackages
