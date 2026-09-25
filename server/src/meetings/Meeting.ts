@@ -260,8 +260,10 @@ export class Meeting {
   setTimeboxEnabled(enabled: boolean): void {
     this.state.timeboxEnabled = enabled;
     // Re-enabling the limit must reset the per-speaker baseline so the
-    // countdown starts from "now" instead of charging prior elapsed time.
-    if (enabled && this.state.currentSpeakerId && this.state.phase === "running") {
+    // countdown starts from "now" instead of charging prior elapsed time. Also
+    // while paused: the turn time banked by pause() would otherwise count
+    // against the new limit on resume.
+    if (enabled && this.state.currentSpeakerId) {
       this.flushSpeaker();
       this.state.currentSpeakerTurnMs = 0;
     }
