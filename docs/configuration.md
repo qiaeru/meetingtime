@@ -1,6 +1,6 @@
 # Configuration
 
-All operator-facing knobs are environment variables read at boot by `server/src/config.ts` (except `LOG_LEVEL`, read by `server/src/log.ts`). There is no `.env` file shipped; pass the variables through your container runtime (the Docker Compose files in `docker-compose.yml` and under `deploy/` show the canonical layout).
+All operator-facing knobs are environment variables read at boot by `server/src/config.ts` (except `LOG_LEVEL`, read by `server/src/log.ts`). With Docker, pass the variables through your container runtime (the Docker Compose files in `docker-compose.yml` and under `deploy/` show the canonical layout); the image never contains a `.env` file. Outside Docker, the server also loads a `.env` file from its working directory at startup: `npm start` reads the one at the repository root, `npm run dev` the one in `server/`. `.env.example` lists a few variables to start from.
 
 ## Variables
 
