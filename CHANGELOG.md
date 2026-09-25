@@ -9,6 +9,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - The author link in the attribution footer now points to qiaeru.com, following the domain move.
+- Pausing the meeting no longer resets the current speaker's time-box: the turn chronometer freezes during the pause and picks up where it stopped.
+- The notes export made during a meeting now counts the ongoing speaking turn and the running topic.
+- Template import errors are now written in the interface language and name the faulty field.
+- Fingerprinted web assets are cached by the browser for a year, so reloading the page no longer re-checks each file.
+- The nginx deployment now requires `MEETINGTIME_DOMAIN`, like the Caddy and Traefik variants, and restricts connections to that origin instead of accepting any.
+- The update procedure in the docs now rebuilds the image (`git pull`, then `up -d --build`); `docker compose pull` alone kept running the old version.
+- Multi-architecture release images build faster: the build stage no longer runs under emulation for arm64.
+- The `ws` override is gone: Socket.IO now requires the patched `ws` release itself.
+
+### Fixed
+
+- Creating a new meeting from the same tab no longer leaves the previous one attached: its broadcasts could replace the new meeting on screen, and the old meeting was never cleaned from memory.
+- An ended meeting can no longer be restarted.
+- In the hand-raise banner, hosts no longer get "Give the floor" buttons before the meeting starts or after it ends, since those clicks did nothing.
+- A participant removed by the host immediately stops receiving the notes.
+- After a page reload, your cursor in the notes now shows your name to the others instead of "?", and the notes placeholder follows host promotions and demotions.
+- Keyboard focus on the notes "Markdown syntax" link no longer jumps away whenever the meeting state changes.
+- The "Export the notes?" prompt appears once per ended meeting, not again after a language switch or a screen rotation.
+- Screen readers announce a raised hand on an avatar as "hand raised" instead of the "Raise hand" command, and read the question of confirmation dialogs.
+- The Markdown export uses the right label separator in every language ("Durée : 10:00" in French, "Duration: 10:00" elsewhere).
+- A crash on a server with no connected client now also exits with a failure code.
+
+### Security
+
+- Wrong meeting passwords are limited to ten per minute per meeting.
+- Behind the shipped nginx configuration, a client can no longer fake its IP address to escape the rate limit.
+- Socket.IO now rejects connections from other websites when `CORS_ORIGIN` is set, as the notes channel already did.
+- A crafted participant ID can no longer alter the server state shared by every meeting.
+- Inline CSS in the notes is dropped from the preview, except Shiki's own syntax colors.
+- The content security policy only allows connections to the app's own origin.
+- Failed join attempts no longer keep an abandoned meeting in memory.
 
 ## [1.4.0] - 2026-06-19
 
