@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The server accepts at most ten new meetings per minute from one IP address, so a single client can no longer fill its memory with abandoned meetings.
 
+- A meeting deleted a few minutes after it ends is no longer reachable from a tab left open on it.
 ## [1.5.0] - 2026-09-25
 
 ### Changed

@@ -20,6 +20,17 @@ type SK = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export function registerHandlers(io: IO): void {
   io.on("connection", (socket) => onConnection(io, socket));
+  // Tabs left open on the ended page would otherwise keep a deleted meeting
+  // (tokens, password, participants) reachable through their socket.
+  meetingStore.onDelete((id) => {
+    const room = roomFor(id);
+    for (const sid of [...(io.of("/").adapter.rooms.get(room) ?? [])]) {
+      const s = io.sockets.sockets.get(sid);
+      if (!s) continue;
+      s.ctx = undefined;
+      s.leave(room);
+    }
+  });
 }
 
 function onConnection(io: IO, socket: SK): void {
@@ -393,8 +404,7 @@ function onConnection(io: IO, socket: SK): void {
     // Another device of the same participant (laptop + phone) may still be
     // connected; only mark them gone once their last socket drops.
     if (hasOtherSocketFor(io, ctx.meeting.state.id, ctx.participant.id, socket.id)) return;
-    ctx.meeting.setConnected(ctx.participant.id, false);
-    broadcastState(io, ctx.meeting);
+    markDisconnected(io, ctx.meeting, ctx.participant.id);
   });
 }
 

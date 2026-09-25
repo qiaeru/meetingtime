@@ -14,6 +14,7 @@ interface Entry {
 
 export class MeetingStore {
   private readonly entries = new Map<string, Entry>();
+  private readonly deleteListeners: Array<(id: string) => void> = [];
 
   constructor() {
     setInterval(() => this.collectIdle(), 60_000).unref?.();
@@ -69,7 +70,12 @@ export class MeetingStore {
     releaseDocState(id);
     e.ydoc.destroy();
     this.entries.delete(id);
+    for (const fn of this.deleteListeners) fn(id);
     log.info({ meetingId: id }, "meeting deleted");
+  }
+
+  onDelete(fn: (id: string) => void): void {
+    this.deleteListeners.push(fn);
   }
 
   scheduleDeleteAfterEnd(id: string, delayMs: number): void {

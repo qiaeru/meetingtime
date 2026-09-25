@@ -78,7 +78,7 @@ The Yjs bridge pings every connected WebSocket every thirty seconds and terminat
 Meeting state never touches disk. The server holds it in `MeetingStore`, an in-memory `Map<id, { meeting, ydoc, lastActivity }>`. Two GC paths remove it:
 
 - An idle sweep runs every minute and deletes any meeting that has no connected participant and whose `lastActivity` is older than `HOST_TIMEOUT_MS` (default thirty minutes). Only a successful join or a connected participant refreshes `lastActivity`; a failed join (wrong password, stale token) does not, so knowing a meeting ID is not enough to keep an abandoned meeting in memory.
-- The `meeting:end` handler schedules a one-shot deletion `POST_END_GC_MS` later (default five minutes). The delay gives the client enough time to export the Markdown notes from the still-live Yjs document; after that, the password, tokens, participants, topics and Y.Doc are all wiped.
+- The `meeting:end` handler schedules a one-shot deletion `POST_END_GC_MS` later (default five minutes). The delay gives the client enough time to export the Markdown notes from the still-live Yjs document; after that, the password, tokens, participants, topics and Y.Doc are all wiped. Sockets still open on the ended page are detached from the deleted meeting at the same time, so a tab left open does not keep it reachable.
 
 When a meeting is deleted, the bridge-side state on the Yjs server (`docStates` map plus awareness instance) is released too, so the bridge cannot accumulate dead doc references across meeting churn. No file or database persists anything across container restarts. A redeploy wipes every meeting.
 
