@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Code blocks in the notes preview now get their syntax colors instead of staying on "Loading syntax highlighter…": the content security policy blocked the WebAssembly engine the highlighter needs. If it still cannot load, the code shows without colors.
 - The monospace font no longer fails to load for Cyrillic characters in the notes.
 - The focus outline of the notes editor now shows on its left edge too.
+- The "Skip to main content" link no longer sends you back to the home page, which could make you leave a meeting in progress.
 
 - After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 ## [1.5.0] - 2026-09-25

@@ -28,6 +28,14 @@ initTooltips();
 applyStaticI18n();
 locale$.subscribe(() => applyStaticI18n());
 
+// The hash router would read the skip link's "#main-content" as a route and
+// fall back to Home, tearing down the current page (a live meeting included),
+// so move focus without touching the hash.
+document.querySelector(".skip-link")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  document.getElementById("main-content")?.focus();
+});
+
 // For elements that ship in index.html and must render before JS hydrates
 // (currently the skip-link).
 function applyStaticI18n(): void {
