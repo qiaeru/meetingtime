@@ -17,21 +17,24 @@ const groups: ShortcutGroup[] = [
       { keys: () => `Alt${PLUS}${t("keys.enter")}`, labelKey: "shortcuts.altEnter" },
       { keys: () => `Alt${PLUS}⌫`, labelKey: "shortcuts.altDelete" },
       { keys: () => `Alt${PLUS}H`, labelKey: "shortcuts.h" },
-      { keys: () => `Alt${PLUS}N`, labelKey: "shortcuts.ctrlB" },
+      { keys: () => `Alt${PLUS}N`, labelKey: "shortcuts.altN" },
     ],
   },
   {
     titleKey: "shortcuts.groupParticipants",
     items: [
       { keys: () => `Ctrl${PLUS}↑ / ↓`, labelKey: "shortcuts.upDown" },
-      { keys: () => `Ctrl${PLUS}${t("keys.enter")}`, labelKey: "shortcuts.space" },
+      { keys: () => `Ctrl${PLUS}${t("keys.enter")}`, labelKey: "shortcuts.ctrlEnter" },
     ],
   },
   {
     titleKey: "shortcuts.groupTopics",
     items: [
       { keys: () => `Ctrl${PLUS}Shift${PLUS}↑ / ↓`, labelKey: "shortcuts.shiftUpDown" },
-      { keys: () => `Ctrl${PLUS}Shift${PLUS}${t("keys.enter")}`, labelKey: "shortcuts.shiftSpace" },
+      {
+        keys: () => `Ctrl${PLUS}Shift${PLUS}${t("keys.enter")}`,
+        labelKey: "shortcuts.ctrlShiftEnter",
+      },
     ],
   },
   {

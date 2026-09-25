@@ -1,7 +1,7 @@
 import type { Meeting } from "@meetingtime/shared";
 import { headerBar } from "./HomePage.js";
 import { t } from "../i18n/index.js";
-import { meeting$, myParticipantId$, socket$, connection$ } from "../state/socket.js";
+import { meeting$, myParticipantId$, socket$ } from "../state/socket.js";
 import {
   clearSession,
   loadSession,
@@ -11,6 +11,8 @@ import {
 } from "../state/session.js";
 import { navigate, rerender } from "../router.js";
 import { renderMobileMeeting } from "../components/MobileMeetingView.js";
+import { renderConnectionBanner } from "../components/ConnectionBanner.js";
+import { renderMuteButton } from "../components/MuteButton.js";
 import { renderMeetingTimer } from "../components/MeetingTimer.js";
 import { renderSpeakerSpotlight } from "../components/SpeakerSpotlight.js";
 import { renderHandRaiseBanner } from "../components/HandRaiseBanner.js";
@@ -22,7 +24,7 @@ import { confirmDialog } from "../components/ConfirmDialog.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
 import { icon } from "../components/Icon.js";
 import { toast } from "../components/Toaster.js";
-import { playHandRaise, playGong, toggleMute, muted$ } from "../lib/sounds.js";
+import { playHandRaise, playGong } from "../lib/sounds.js";
 import { registerShortcut } from "../lib/keyboard.js";
 import { colorByPosition } from "../lib/color.js";
 
@@ -132,21 +134,8 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
 
   const header = headerBar();
 
-  const muteBtn = document.createElement("button");
-  muteBtn.type = "button";
-  muteBtn.className = "icon-btn";
-  muteBtn.setAttribute("aria-label", t("a11y.muteToggle"));
-  muteBtn.dataset.tooltip = t("a11y.muteToggle");
-  const refreshMute = () => {
-    muteBtn.innerHTML = "";
-    muteBtn.appendChild(icon(muted$.get() ? "VolumeX" : "Volume2"));
-    // The icon is aria-hidden; without this a screen reader cannot tell
-    // whether sounds are currently muted.
-    muteBtn.setAttribute("aria-pressed", String(muted$.get()));
-  };
-  const unsubMute = muted$.subscribe(refreshMute);
-  muteBtn.addEventListener("click", toggleMute);
-  header.querySelector(".header-actions")?.prepend(muteBtn);
+  const muteBtn = renderMuteButton();
+  header.querySelector(".header-actions")?.prepend(muteBtn.el);
 
   // Available to everyone (host or guest). The password row only renders if
   // the local participant typed it on join (sessionStorage); otherwise it's
@@ -258,28 +247,8 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   };
   header.querySelector(".header-actions")?.before(headerControls);
 
-  // Stays up until the connection is restored so a dropped WebSocket can't
-  // be mistaken for an unresponsive UI.
-  const connBanner = document.createElement("div");
-  connBanner.className = "connection-banner";
-  connBanner.setAttribute("role", "status");
-  connBanner.setAttribute("aria-live", "polite");
-  connBanner.hidden = true;
-  const connIcon = icon("CloudOff", { size: 16 });
-  const connText = document.createElement("span");
-  connBanner.append(connIcon, connText);
-  const unsubConn = connection$.subscribe((status) => {
-    if (status === "connected") {
-      connBanner.hidden = true;
-      connBanner.dataset.status = status;
-      return;
-    }
-    connBanner.hidden = false;
-    connBanner.dataset.status = status;
-    connText.textContent =
-      status === "reconnecting" ? t("meeting.connReconnecting") : t("meeting.connDisconnected");
-  });
-  left.appendChild(connBanner);
+  const connBanner = renderConnectionBanner();
+  left.appendChild(connBanner.el);
 
   const handBanner = renderHandRaiseBanner({ getMeeting, socket, isHost: amIHost });
   left.appendChild(handBanner.el);
@@ -704,11 +673,10 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     tornDown = true;
     socket.io.off("reconnect", onReconnect);
     mql.removeEventListener("change", onBreakpoint);
-    spotlight.stop();
     notes?.destroy();
     unsubMeeting();
-    unsubMute();
-    unsubConn();
+    muteBtn.destroy();
+    connBanner.destroy();
     unsubLoader();
     clearInterval(ticker);
     for (const u of unsubs) u();

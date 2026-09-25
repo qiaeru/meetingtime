@@ -48,7 +48,7 @@ export function initTheme(): void {
   theme$.subscribe(apply);
 }
 
-export function toggleTheme(): void {
+function toggleTheme(): void {
   theme$.set(theme$.get() === "dark" ? "light" : "dark");
 }
 

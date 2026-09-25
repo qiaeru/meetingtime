@@ -16,14 +16,12 @@ import { rerender, startRouter } from "./router.js";
 import { initTheme } from "./components/ThemeToggle.js";
 import { connect } from "./state/socket.js";
 import { initKeyboardLayer } from "./lib/keyboard.js";
-import { mountToaster } from "./components/Toaster.js";
 import { initTooltips } from "./lib/tooltip.js";
 import { locale$, t } from "./i18n/index.js";
 
 initTheme();
 connect();
 initKeyboardLayer();
-mountToaster();
 initTooltips();
 applyStaticI18n();
 locale$.subscribe(() => applyStaticI18n());

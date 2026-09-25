@@ -11,20 +11,8 @@ interface ToastOpts {
 // Must match the toast-out animation duration in components.css.
 const LEAVE_MS = 200;
 
-function root(): HTMLElement {
-  let r = document.getElementById("toast-root");
-  if (!r) {
-    r = document.createElement("div");
-    r.id = "toast-root";
-    r.setAttribute("aria-live", "polite");
-    document.body.appendChild(r);
-  }
-  return r;
-}
-
-export function mountToaster(): void {
-  root();
-}
+// Shipped in index.html so the live region exists before the first toast.
+const root = (): HTMLElement => document.getElementById("toast-root")!;
 
 // Errors stay until dismissed: they name a recovery step the user has to be
 // able to read at their own pace. Other toasts fade out on their own.

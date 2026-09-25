@@ -31,8 +31,6 @@ interface Args {
 export interface NotesPanelHandle {
   el: HTMLElement;
   toggleCollapsed: () => void;
-  togglePreview: () => void;
-  focusEditor: () => void;
   exportNow: () => void;
   hasContent: () => boolean;
   setReadOnly: (readOnly: boolean) => void;
@@ -287,12 +285,6 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
     }
   }
 
-  function focusEditor(): void {
-    if (aside.dataset.collapsed === "true") toggleCollapsed();
-    if (previewing && !splitting) togglePreview();
-    editor.view.focus();
-  }
-
   function exportNow(): void {
     const m = args.getMeeting();
     if (!m) return;
@@ -303,8 +295,6 @@ export function renderNotesPanel(args: Args): NotesPanelHandle {
   return {
     el: aside,
     toggleCollapsed,
-    togglePreview,
-    focusEditor,
     exportNow,
     hasContent: () => editor.ytext.toString().trim().length > 0,
     // Called on every state push: only act on an actual permission change, so

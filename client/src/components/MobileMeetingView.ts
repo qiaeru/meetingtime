@@ -6,10 +6,12 @@ import { renderSpeakerSpotlight } from "./SpeakerSpotlight.js";
 import { renderMeetingTimer } from "./MeetingTimer.js";
 import { renderLocaleSwitcher } from "./LocaleSwitcher.js";
 import { renderThemeToggle } from "./ThemeToggle.js";
+import { renderConnectionBanner } from "./ConnectionBanner.js";
+import { renderMuteButton } from "./MuteButton.js";
 import { icon } from "./Icon.js";
 import { formatMs } from "../lib/format.js";
 import { topicDisplayMs } from "../lib/liveTime.js";
-import { muted$, toggleMute, playGong, playGrant, unlockAudio } from "../lib/sounds.js";
+import { playGong, playGrant, unlockAudio } from "../lib/sounds.js";
 import { vibrationEnabled$, toggleVibration, vibrate, hapticsSupported } from "../lib/haptics.js";
 import { t } from "../i18n/index.js";
 
@@ -51,17 +53,7 @@ export function renderMobileMeeting(
   brand.textContent = t("app.name");
   // Mute toggle: the spotlight plays timebox cues on mobile too, so give the
   // participant the same control as the desktop header.
-  const muteBtn = document.createElement("button");
-  muteBtn.type = "button";
-  muteBtn.className = "icon-btn";
-  muteBtn.setAttribute("aria-label", t("a11y.muteToggle"));
-  muteBtn.dataset.tooltip = t("a11y.muteToggle");
-  const refreshMute = (): void => {
-    muteBtn.replaceChildren(icon(muted$.get() ? "VolumeX" : "Volume2"));
-    muteBtn.setAttribute("aria-pressed", String(muted$.get()));
-  };
-  const unsubMute = muted$.subscribe(refreshMute);
-  muteBtn.addEventListener("click", toggleMute);
+  const muteBtn = renderMuteButton();
 
   // Vibration toggle, next to mute. Only on devices that can actually vibrate.
   let unsubVibration: (() => void) | undefined;
@@ -82,7 +74,7 @@ export function renderMobileMeeting(
   const headerActions = document.createElement("div");
   headerActions.className = "header-actions";
   if (hapticsSupported()) headerActions.append(vibrationBtn);
-  headerActions.append(muteBtn, renderLocaleSwitcher(), renderThemeToggle());
+  headerActions.append(muteBtn.el, renderLocaleSwitcher(), renderThemeToggle());
   header.append(brand, headerActions);
   page.appendChild(header);
 
@@ -94,15 +86,8 @@ export function renderMobileMeeting(
   pageTitle.textContent = t("meeting.title", { id: meetingId });
   wrap.appendChild(pageTitle);
 
-  const connBanner = document.createElement("div");
-  connBanner.className = "connection-banner";
-  connBanner.setAttribute("role", "status");
-  connBanner.setAttribute("aria-live", "polite");
-  connBanner.hidden = true;
-  const connIcon = icon("CloudOff", { size: 16 });
-  const connText = document.createElement("span");
-  connBanner.append(connIcon, connText);
-  wrap.appendChild(connBanner);
+  const connBanner = renderConnectionBanner();
+  wrap.appendChild(connBanner.el);
 
   const endedBanner = document.createElement("div");
   endedBanner.className = "ended-banner";
@@ -320,14 +305,6 @@ export function renderMobileMeeting(
 
   const unsubConn = connection$.subscribe((status) => {
     connected = status === "connected";
-    connBanner.dataset.status = status;
-    if (connected) {
-      connBanner.hidden = true;
-    } else {
-      connBanner.hidden = false;
-      connText.textContent =
-        status === "reconnecting" ? t("meeting.connReconnecting") : t("meeting.connDisconnected");
-    }
     refresh();
   });
 
@@ -346,10 +323,6 @@ export function renderMobileMeeting(
     updateTopic();
     updateClaimAlert();
   }, 500);
-
-  refresh();
-  updateTopic();
-  updateClaimAlert();
 
   // Keep the phone awake while the meeting is on screen: a timer you glance at
   // shouldn't dim out. The lock is dropped when the tab is hidden, so re-acquire
@@ -383,10 +356,10 @@ export function renderMobileMeeting(
   document.addEventListener("visibilitychange", onVisibility);
 
   return () => {
-    spotlight.stop();
     unsubMeeting();
     unsubConn();
-    unsubMute();
+    connBanner.destroy();
+    muteBtn.destroy();
     unsubVibration?.();
     clearInterval(ticker);
     document.removeEventListener("visibilitychange", onVisibility);

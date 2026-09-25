@@ -227,7 +227,6 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
 function identityFields(): {
   el: HTMLElement;
   value: () => { firstName: string; lastName: string; role: string } | undefined;
-  firstInput: HTMLInputElement;
 } {
   const fs = document.createElement("fieldset");
   fs.className = "fieldset";
@@ -251,7 +250,6 @@ function identityFields(): {
       if (!f || !l || !r) return undefined;
       return { firstName: f, lastName: l, role: r };
     },
-    firstInput: first.input,
   };
 }
 

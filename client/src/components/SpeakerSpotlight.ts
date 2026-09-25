@@ -21,7 +21,6 @@ interface Args {
 export function renderSpeakerSpotlight(args: Args): {
   el: HTMLElement;
   update: () => void;
-  stop: () => void;
 } {
   const root = document.createElement("div");
   root.className = "speaker-spotlight-root";
@@ -237,5 +236,5 @@ export function renderSpeakerSpotlight(args: Args): {
   update();
   // No internal ticker: MeetingPage drives every component from a single
   // setInterval so all visible seconds agree.
-  return { el: root, update, stop: () => undefined };
+  return { el: root, update };
 }

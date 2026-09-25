@@ -130,10 +130,7 @@ interface Args {
 }
 
 export interface CollaborativeEditor {
-  view: EditorView;
-  ydoc: Y.Doc;
   ytext: Y.Text;
-  provider: WebsocketProvider;
   setReadOnly: (readOnly: boolean) => void;
   // Name and color shown on my remote cursor to the other participants.
   setUser: (name: string, color: string) => void;
@@ -191,10 +188,7 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
   });
 
   return {
-    view,
-    ydoc,
     ytext,
-    provider,
     setReadOnly: (readOnly: boolean) => {
       view.dispatch({
         effects: [

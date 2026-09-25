@@ -115,27 +115,18 @@ const ICONS = {
 
 type Name = keyof typeof ICONS;
 
+// Always decorative: the control carrying the icon owns the accessible name.
 interface Options {
   size?: number;
-  // When set, the icon carries this label for assistive tech;
-  // otherwise it is aria-hidden (decorative).
-  label?: string;
   className?: string;
-  strokeWidth?: number;
 }
 
 export function icon(name: Name, opts: Options = {}): SVGElement {
   const svg = createElement(ICONS[name]);
   svg.setAttribute("width", String(opts.size ?? 20));
   svg.setAttribute("height", String(opts.size ?? 20));
-  if (opts.strokeWidth) svg.setAttribute("stroke-width", String(opts.strokeWidth));
   if (opts.className) svg.setAttribute("class", opts.className);
-  if (opts.label) {
-    svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", opts.label);
-  } else {
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("focusable", "false");
-  }
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
   return svg;
 }
