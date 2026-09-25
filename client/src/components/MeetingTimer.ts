@@ -1,5 +1,6 @@
 import type { Meeting } from "@meetingtime/shared";
 import { formatMs } from "../lib/format.js";
+import { meetingElapsedMs } from "../lib/liveTime.js";
 import { t } from "../i18n/index.js";
 
 // No internal ticker: the page's shared 500 ms ticker calls tick(), so this
@@ -48,13 +49,7 @@ export function renderMeetingTimer(getMeeting: () => Meeting | null): {
       }
       return;
     }
-    // Freeze on endedAt once the meeting is over; otherwise the counter
-    // would keep climbing against wall-clock time.
-    const now = m.phase === "ended" && m.endedAt ? m.endedAt : Date.now();
-    let elapsed = now - m.startedAt - m.pauseAccumulatedMs;
-    if (m.phase === "paused" && m.pausedSince) {
-      elapsed -= now - m.pausedSince;
-    }
+    const elapsed = meetingElapsedMs(m);
     value.textContent = formatMs(elapsed);
 
     if (m.plannedDurationMs && m.plannedDurationMs > 0) {

@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Turning the per-turn speaking time on while the meeting is paused now restarts the current speaker's countdown from zero, as it already did while the meeting runs.
 - Changing the language while filling in the meeting creation form no longer wipes the participants, topics and settings already entered. The form keeps what you typed until the meeting is created.
 - Importing a template with minutes the form refuses (not a whole number, or above 60 per turn or 600 per meeting) now fails with a message naming the field, instead of reporting success and then blocking "Create".
+- The notes export made during a pause no longer overstates the meeting duration, writes the date with the month spelled out in the interface language (04/09 was ambiguous between countries), and keeps a topic containing a line break on one table row.
 
 - After a network drop or a laptop waking from sleep, the meeting page rejoins the meeting on its own. It used to look connected while receiving no more updates, and host actions were silently refused.
 

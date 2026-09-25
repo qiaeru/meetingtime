@@ -1,5 +1,6 @@
 import type { ParticipantIdentity } from "@meetingtime/shared";
 import { formatDateYMDCompact } from "./format.js";
+import { downloadFile } from "./download.js";
 
 export interface MeetingDraft {
   host?: ParticipantIdentity;
@@ -120,15 +121,9 @@ function stringifyMeetingDraft(draft: MeetingDraft): string {
 }
 
 export function downloadMeetingTemplate(draft: MeetingDraft): void {
-  const json = stringifyMeetingDraft(draft);
-  const filename = `${formatDateYMDCompact()}_Meetingtime_Template.json`;
-  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadFile(
+    `${formatDateYMDCompact()}_Meetingtime_Template.json`,
+    stringifyMeetingDraft(draft),
+    "application/json;charset=utf-8"
+  );
 }

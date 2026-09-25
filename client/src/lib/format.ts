@@ -31,12 +31,6 @@ export function formatMsSpoken(ms: number, lang: Locale = "fr"): string {
   return parts.join(" ");
 }
 
-export function formatDateDMY(ts: number = Date.now()): string {
-  const d = new Date(ts);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
-}
-
 // YYYYMMDD format keeps exported filenames in chronological order when
 // listed alphabetically.
 export function formatDateYMDCompact(ts: number = Date.now()): string {

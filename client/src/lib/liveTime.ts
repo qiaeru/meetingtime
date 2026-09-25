@@ -20,3 +20,13 @@ export function topicDisplayMs(m: Meeting, topicId: string): number {
       : 0;
   return topic.totalMs + live;
 }
+
+// Frozen at endedAt once over; a pause still in progress is not banked into
+// pauseAccumulatedMs yet, so it is subtracted here.
+export function meetingElapsedMs(m: Meeting): number {
+  if (!m.startedAt) return 0;
+  const now = m.phase === "ended" && m.endedAt ? m.endedAt : Date.now();
+  let elapsed = now - m.startedAt - m.pauseAccumulatedMs;
+  if (m.phase === "paused" && m.pausedSince) elapsed -= now - m.pausedSince;
+  return elapsed;
+}

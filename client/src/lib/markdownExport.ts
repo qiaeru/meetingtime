@@ -1,13 +1,8 @@
 import type { Meeting } from "@meetingtime/shared";
-import {
-  formatDateDMY,
-  formatDateYMDCompact,
-  formatMs,
-  formatTime,
-  formatPercent,
-} from "./format.js";
-import { speakingDisplayMs, topicDisplayMs } from "./liveTime.js";
-import { t } from "../i18n/index.js";
+import { formatDateYMDCompact, formatMs, formatTime, formatPercent } from "./format.js";
+import { meetingElapsedMs, speakingDisplayMs, topicDisplayMs } from "./liveTime.js";
+import { downloadFile } from "./download.js";
+import { locale$, t } from "../i18n/index.js";
 
 // Filename pattern: YYYYMMDD_Meetingtime_<id-with-underscores>.md so files
 // from different meetings sort chronologically in any file browser.
@@ -15,29 +10,18 @@ export function exportNotes(meeting: Meeting, notesBody: string): void {
   const md = buildMarkdown(meeting, notesBody);
   const ymd = formatDateYMDCompact(meeting.startedAt ?? meeting.createdAt);
   const idSafe = meeting.id.replace(/-/g, "_");
-  const filename = `${ymd}_Meetingtime_${idSafe}.md`;
-  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadFile(`${ymd}_Meetingtime_${idSafe}.md`, md, "text/markdown;charset=utf-8");
 }
 
-function dateSlash(ts: number): string {
-  return formatDateDMY(ts).replace(/-/g, "/");
-}
-
-export function buildMarkdown(meeting: Meeting, notesBody: string): string {
+function buildMarkdown(meeting: Meeting, notesBody: string): string {
   const lines: string[] = [];
   const startedAt = meeting.startedAt ?? meeting.createdAt;
   const endedAt = meeting.endedAt ?? Date.now();
-  const total = meeting.startedAt ? endedAt - meeting.startedAt - meeting.pauseAccumulatedMs : 0;
+  const total = meetingElapsedMs(meeting);
+  // Month spelled out: 04/09 reads as April 9 in the US and September 4 in Europe.
+  const date = new Intl.DateTimeFormat(locale$.get(), { dateStyle: "long" }).format(startedAt);
 
-  lines.push(`# ${t("export.title", { date: dateSlash(startedAt) })}`);
+  lines.push(`# ${t("export.title", { date })}`);
   lines.push("");
   if (meeting.startedAt) {
     lines.push(`- ${field("export.startedAt", formatTime(meeting.startedAt))}`);
@@ -97,6 +81,7 @@ function field(labelKey: string, value: string): string {
   return t("export.field", { label: t(labelKey), value });
 }
 
+// A line break (possible in an imported topic) would end the table row.
 function escapePipe(s: string): string {
-  return s.replace(/\|/g, "\\|");
+  return s.replace(/\s*\n\s*/g, " ").replace(/\|/g, "\\|");
 }
