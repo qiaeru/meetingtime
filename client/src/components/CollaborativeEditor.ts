@@ -50,7 +50,18 @@ const lightTheme = EditorView.theme(
       backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)",
     },
     ".cm-cursor": { borderLeftColor: "var(--fg)" },
-    "&.cm-focused": { outline: "2px solid var(--accent)", outlineOffset: "-2px" },
+    // The ring is drawn on an overlay: on the editor itself, the sticky line
+    // number gutter (z-index 200, opaque) covered its left edge.
+    "&.cm-focused": { outline: "none" },
+    "&.cm-focused::after": {
+      content: '""',
+      position: "absolute",
+      inset: "0",
+      zIndex: "201",
+      pointerEvents: "none",
+      outline: "2px solid var(--accent)",
+      outlineOffset: "-2px",
+    },
     // Override y-codemirror.next which hardcodes `font-family: serif` on the
     // floating remote-cursor name tag.
     ".cm-ySelectionInfo": {
@@ -80,7 +91,18 @@ const darkTheme = EditorView.theme(
       backgroundColor: "color-mix(in srgb, var(--accent) 18%, transparent)",
     },
     ".cm-cursor": { borderLeftColor: "var(--fg)" },
-    "&.cm-focused": { outline: "2px solid var(--accent)", outlineOffset: "-2px" },
+    // The ring is drawn on an overlay: on the editor itself, the sticky line
+    // number gutter (z-index 200, opaque) covered its left edge.
+    "&.cm-focused": { outline: "none" },
+    "&.cm-focused::after": {
+      content: '""',
+      position: "absolute",
+      inset: "0",
+      zIndex: "201",
+      pointerEvents: "none",
+      outline: "2px solid var(--accent)",
+      outlineOffset: "-2px",
+    },
     // Override y-codemirror.next which hardcodes `font-family: serif` on the
     // floating remote-cursor name tag.
     ".cm-ySelectionInfo": {
