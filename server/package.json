@@ -22,14 +22,14 @@
     "socket.io": "^4.8.1",
     "ws": "^8.21.3",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.32"
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
-    "@types/node": "^24.13.5",
+    "@types/node": "^24.13.6",
     "@types/ws": "^8.5.12",
-    "tsx": "^4.23.13"
+    "tsx": "^4.23.15"
   }
 }
