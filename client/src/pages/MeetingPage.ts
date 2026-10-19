@@ -18,6 +18,7 @@ import { renderSpeakerSpotlight } from "../components/SpeakerSpotlight.js";
 import { renderHandRaiseBanner } from "../components/HandRaiseBanner.js";
 import { renderParticipantList, sortedParticipants } from "../components/ParticipantList.js";
 import { addParticipantDialog } from "../components/AddParticipantDialog.js";
+import { timeboxDialog } from "../components/TimeboxDialog.js";
 import { renderAgenda } from "../components/AgendaPanel.js";
 import type { NotesPanelHandle } from "../components/NotesPanel.js";
 import { confirmDialog } from "../components/ConfirmDialog.js";
@@ -338,14 +339,22 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
   timeboxBtn.type = "button";
   timeboxBtn.className = "icon-btn list-header-icon-btn";
   timeboxBtn.appendChild(icon("TimerReset", { size: 16 }));
+  // Turning the limit on asks for its duration first (prefilled with the
+  // current one), so a meeting created without one can still get it.
   timeboxBtn.addEventListener("click", () => {
     const m = getMeeting();
     if (!m) return;
-    if (!m.timeboxMs || m.timeboxMs <= 0) {
-      toast(t("meeting.timeboxUnset"));
+    if (m.timeboxEnabled) {
+      socket.emit("meeting:setTimeboxEnabled", { enabled: false });
       return;
     }
-    socket.emit("meeting:setTimeboxEnabled", { enabled: !m.timeboxEnabled });
+    void timeboxDialog(m.timeboxMs).then((ms) => {
+      if (!ms) return;
+      if (ms !== getMeeting()?.timeboxMs) socket.emit("meeting:setTimebox", { timeboxMs: ms });
+      socket.emit("meeting:setTimeboxEnabled", { enabled: true }, (resp) => {
+        if (!resp.ok) toast(t(`errors.${resp.error}`), { type: "error" });
+      });
+    });
   });
   const refreshTimeboxBtn = () => {
     const m = getMeeting();
@@ -353,11 +362,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
     timeboxBtn.disabled = m?.phase === "ended";
     const enabled = Boolean(m?.timeboxEnabled);
     timeboxBtn.dataset.active = String(enabled);
-    const label = !m?.timeboxMs
-      ? t("meeting.timeboxUnset")
-      : enabled
-        ? t("meeting.timeboxDisable")
-        : t("meeting.timeboxEnable");
+    const label = enabled ? t("meeting.timeboxDisable") : t("meeting.timeboxEnable");
     timeboxBtn.setAttribute("aria-label", label);
     timeboxBtn.dataset.tooltip = label;
   };

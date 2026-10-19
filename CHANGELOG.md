@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- The host can now set the speaking time per turn during the meeting. Turning it on asks for the number of minutes, filled in with the current value, so a meeting created without one is no longer stuck.
+
 ### Fixed
 
 - The meeting form, the join form and the dialogs now accept exactly the lengths the server keeps: topic titles up to 200 characters (the in-meeting dialog stopped at 80), passwords up to 128 (the forms stopped at 64), and the participant rows of the creation form no longer accept names the server then cut short.
