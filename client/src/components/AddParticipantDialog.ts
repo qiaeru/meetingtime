@@ -1,6 +1,7 @@
 import type { ParticipantIdentity } from "@meetingtime/shared";
 import { t } from "../i18n/index.js";
 import { installDialogA11y } from "../lib/dialogA11y.js";
+import { identityInputs } from "./IdentityFields.js";
 
 export function addParticipantDialog(): Promise<ParticipantIdentity | null> {
   return new Promise((resolve) => {
@@ -20,10 +21,8 @@ export function addParticipantDialog(): Promise<ParticipantIdentity | null> {
 
     const fields = document.createElement("div");
     fields.className = "stack-sm";
-    const first = field(t("common.firstName"));
-    const last = field(t("common.lastName"));
-    const role = field(t("common.role"));
-    fields.append(first.wrap, last.wrap, role.wrap);
+    const identity = identityInputs(false);
+    fields.append(...identity.fields);
     dlg.appendChild(fields);
 
     const actions = document.createElement("div");
@@ -51,26 +50,11 @@ export function addParticipantDialog(): Promise<ParticipantIdentity | null> {
     cancel.addEventListener("click", () => close(null));
     dlg.addEventListener("submit", (e) => {
       e.preventDefault();
-      const fn = first.input.value.trim();
-      const ln = last.input.value.trim();
-      const ro = role.input.value.trim();
-      if (!fn || !ln || !ro) return;
-      close({ firstName: fn, lastName: ln, role: ro });
+      const value = identity.value();
+      if (value) close(value);
     });
-    teardown = installDialogA11y(backdrop, dlg, () => close(null), { initialFocus: first.input });
+    teardown = installDialogA11y(backdrop, dlg, () => close(null), {
+      initialFocus: identity.first,
+    });
   });
-}
-
-function field(label: string): { wrap: HTMLElement; input: HTMLInputElement } {
-  const wrap = document.createElement("label");
-  wrap.className = "field";
-  const span = document.createElement("span");
-  span.textContent = label;
-  const input = document.createElement("input");
-  input.required = true;
-  input.maxLength = 60;
-  // Someone else's details: the browser must not offer the host's own name.
-  input.autocomplete = "off";
-  wrap.append(span, input);
-  return { wrap, input };
 }

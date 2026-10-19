@@ -1,4 +1,4 @@
-import type { ParticipantIdentity } from "@meetingtime/shared";
+import { MAX_TIMEBOX_MS, type ParticipantIdentity } from "@meetingtime/shared";
 import { formatDateYMDCompact } from "./format.js";
 import { downloadFile } from "./download.js";
 
@@ -13,7 +13,7 @@ export interface MeetingDraft {
 
 // Upper bounds of the host form's minute inputs. An import outside them would
 // report success, then the browser would block "Create".
-export const MAX_TIMEBOX_MINUTES = 60;
+export const MAX_TIMEBOX_MINUTES = MAX_TIMEBOX_MS / 60_000;
 export const MAX_PLANNED_MINUTES = 600;
 
 // Carries a reason code (localized by the caller under host.importReason.*)

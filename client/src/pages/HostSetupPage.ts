@@ -1,4 +1,9 @@
-import type { ParticipantIdentity } from "@meetingtime/shared";
+import {
+  MAX_IDENTITY_FIELD,
+  MAX_PASSWORD,
+  MAX_TOPIC_LABEL,
+  type ParticipantIdentity,
+} from "@meetingtime/shared";
 import { headerBar } from "./HomePage.js";
 import { t } from "../i18n/index.js";
 import { socket$, meeting$, myParticipantId$ } from "../state/socket.js";
@@ -16,6 +21,7 @@ import {
 } from "../lib/meetingImport.js";
 import { showShareMeetingDialog } from "../components/ShareMeetingDialog.js";
 import { siteFooter } from "../components/SiteFooter.js";
+import { identityFieldset } from "../components/IdentityFields.js";
 
 // What the host typed, kept in module memory (never in storage) until the
 // meeting is created: the page rebuild of a language switch would otherwise
@@ -81,7 +87,7 @@ export function renderHostSetup(root: HTMLElement): () => void {
 
   form.appendChild(importZone);
 
-  const hostFields = identityFields(t("common.yourIdentity"));
+  const hostFields = identityFieldset(t("common.yourIdentity"));
   form.appendChild(hostFields.el);
 
   form.appendChild(sectionHeading(t("host.section.people")));
@@ -108,9 +114,19 @@ export function renderHostSetup(root: HTMLElement): () => void {
     preParticipants.forEach((p, idx) => {
       const rowName = t("host.participantRow", { n: idx + 1 });
       const row = listRow(rowName);
-      const f = labeledInput(t("common.firstName"), p.firstName, (v) => (p.firstName = v));
-      const l = labeledInput(t("common.lastName"), p.lastName, (v) => (p.lastName = v));
-      const r = labeledInput(t("common.role"), p.role, (v) => (p.role = v));
+      const f = labeledInput(
+        t("common.firstName"),
+        p.firstName,
+        MAX_IDENTITY_FIELD,
+        (v) => (p.firstName = v)
+      );
+      const l = labeledInput(
+        t("common.lastName"),
+        p.lastName,
+        MAX_IDENTITY_FIELD,
+        (v) => (p.lastName = v)
+      );
+      const r = labeledInput(t("common.role"), p.role, MAX_IDENTITY_FIELD, (v) => (p.role = v));
       row.append(f.wrap, l.wrap, r.wrap);
       appendRowActions(row, rowName, idx, preParticipants, renderPreList);
       preList.appendChild(row);
@@ -146,7 +162,7 @@ export function renderHostSetup(root: HTMLElement): () => void {
     topics.forEach((label, idx) => {
       const rowName = t("host.topicRow", { n: idx + 1 });
       const row = listRow(rowName);
-      const i = labeledInput(rowName, label, (v) => (topics[idx] = v));
+      const i = labeledInput(rowName, label, MAX_TOPIC_LABEL, (v) => (topics[idx] = v));
       row.append(i.wrap);
       appendRowActions(row, rowName, idx, topics, renderTopicsList);
       topicsList.appendChild(row);
@@ -223,7 +239,7 @@ export function renderHostSetup(root: HTMLElement): () => void {
     input.type = "password";
     input.autocomplete = "new-password";
     input.placeholder = placeholder;
-    input.maxLength = 64;
+    input.maxLength = MAX_PASSWORD;
     input.setAttribute("aria-label", ariaLabel);
     input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
     const toggle = document.createElement("button");
@@ -482,92 +498,27 @@ export function renderHostSetup(root: HTMLElement): () => void {
   };
 }
 
-interface IdentityFieldsHandle {
-  el: HTMLElement;
-  value: () => ParticipantIdentity | undefined;
-  // As typed, even when incomplete.
-  raw: () => ParticipantIdentity;
-  set: (identity: ParticipantIdentity) => void;
-}
-
-function identityFields(legendText: string): IdentityFieldsHandle {
-  const fs = document.createElement("fieldset");
-  fs.className = "fieldset";
-  const leg = document.createElement("legend");
-  leg.className = "required";
-  leg.textContent = legendText;
-  fs.appendChild(leg);
-
-  const row = document.createElement("div");
-  row.className = "inline-row";
-
-  // Visible labels, as on the join page: a placeholder vanishes on the first
-  // keystroke and leaves the field unnamed on screen.
-  const first = identityInput(t("common.firstName"), "given-name");
-  const last = identityInput(t("common.lastName"), "family-name");
-  const role = identityInput(t("common.role"), "organization-title");
-
-  row.append(first.wrap, last.wrap, role.wrap);
-  fs.appendChild(row);
-
-  return {
-    el: fs,
-    value: () => {
-      const f = first.input.value.trim();
-      const l = last.input.value.trim();
-      const r = role.input.value.trim();
-      if (!f || !l || !r) return undefined;
-      return { firstName: f, lastName: l, role: r };
-    },
-    raw: () => ({
-      firstName: first.input.value,
-      lastName: last.input.value,
-      role: role.input.value,
-    }),
-    set: (identity) => {
-      first.input.value = identity.firstName;
-      last.input.value = identity.lastName;
-      role.input.value = identity.role;
-    },
-  };
-}
-
-function identityInput(
-  label: string,
-  autocomplete: string
-): { wrap: HTMLElement; input: HTMLInputElement } {
-  const { wrap, input } = labeledField(label);
-  input.required = true;
-  input.maxLength = 60;
-  // setAttribute: TypeScript's AutoFill type lacks "organization-title".
-  input.setAttribute("autocomplete", autocomplete);
-  return { wrap, input };
-}
-
 // Rows describing other people: the browser must not offer the host's own
 // saved name there.
 function labeledInput(
   label: string,
   value: string,
+  maxLength: number,
   onChange: (v: string) => void
 ): { wrap: HTMLElement; input: HTMLInputElement } {
-  const { wrap, input } = labeledField(label);
-  input.autocomplete = "off";
-  input.value = value;
-  input.addEventListener("input", () => {
-    input.removeAttribute("aria-invalid");
-    onChange(input.value);
-  });
-  return { wrap, input };
-}
-
-function labeledField(label: string): { wrap: HTMLElement; input: HTMLInputElement } {
   const wrap = document.createElement("label");
   wrap.className = "field";
   const span = document.createElement("span");
   span.textContent = label;
   const input = document.createElement("input");
   input.type = "text";
+  input.maxLength = maxLength;
+  input.autocomplete = "off";
+  input.value = value;
+  input.addEventListener("input", () => {
+    input.removeAttribute("aria-invalid");
+    onChange(input.value);
+  });
   wrap.append(span, input);
   return { wrap, input };
 }

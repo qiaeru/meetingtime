@@ -1,3 +1,4 @@
+import { MAX_PASSWORD } from "@meetingtime/shared";
 import { headerBar } from "./HomePage.js";
 import { t } from "../i18n/index.js";
 import { socket$, meeting$, myParticipantId$ } from "../state/socket.js";
@@ -6,6 +7,7 @@ import { navigate } from "../router.js";
 import { toast } from "../components/Toaster.js";
 import { icon } from "../components/Icon.js";
 import { siteFooter } from "../components/SiteFooter.js";
+import { identityFieldset } from "../components/IdentityFields.js";
 
 export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   const page = document.createElement("div");
@@ -59,7 +61,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   idGroup.append(idLabel, idHint);
   form.appendChild(idGroup);
 
-  const fields = identityFields();
+  const fields = identityFieldset(t("common.yourIdentity"));
   form.appendChild(fields.el);
 
   // Empty by default. Server replies invalid_password when needed; we focus
@@ -71,7 +73,7 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   const passwordInput = document.createElement("input");
   passwordInput.type = "password";
   passwordInput.autocomplete = "current-password";
-  passwordInput.maxLength = 64;
+  passwordInput.maxLength = MAX_PASSWORD;
   passwordInput.addEventListener("input", () => passwordInput.removeAttribute("aria-invalid"));
   passwordLabel.append(passwordSpan, passwordInput);
   const passwordHint = document.createElement("p");
@@ -222,50 +224,4 @@ export function renderJoin(root: HTMLElement, params: URLSearchParams): void {
   root.appendChild(page);
   // No field autofocus: the router focuses <main> after every render (skip
   // link target), which would clobber it anyway.
-}
-
-function identityFields(): {
-  el: HTMLElement;
-  value: () => { firstName: string; lastName: string; role: string } | undefined;
-} {
-  const fs = document.createElement("fieldset");
-  fs.className = "fieldset";
-  const leg = document.createElement("legend");
-  leg.className = "required";
-  leg.textContent = t("common.yourIdentity");
-  fs.appendChild(leg);
-  const row = document.createElement("div");
-  row.className = "inline-row";
-  const first = labeled(t("common.firstName"), "given-name");
-  const last = labeled(t("common.lastName"), "family-name");
-  const role = labeled(t("common.role"), "organization-title");
-  row.append(first.wrap, last.wrap, role.wrap);
-  fs.appendChild(row);
-  return {
-    el: fs,
-    value: () => {
-      const f = first.input.value.trim();
-      const l = last.input.value.trim();
-      const r = role.input.value.trim();
-      if (!f || !l || !r) return undefined;
-      return { firstName: f, lastName: l, role: r };
-    },
-  };
-}
-
-function labeled(
-  label: string,
-  autocomplete: string
-): { wrap: HTMLElement; input: HTMLInputElement } {
-  const wrap = document.createElement("label");
-  wrap.className = "field";
-  const span = document.createElement("span");
-  span.textContent = label;
-  const input = document.createElement("input");
-  input.required = true;
-  input.maxLength = 60;
-  // setAttribute: TypeScript's AutoFill type lacks "organization-title".
-  input.setAttribute("autocomplete", autocomplete);
-  wrap.append(span, input);
-  return { wrap, input };
 }

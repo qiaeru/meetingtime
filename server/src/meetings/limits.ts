@@ -1,15 +1,18 @@
 // Hard caps re-enforced inside Meeting.* methods. The socket handlers
 // validate first; these are the defensive backstop for any future caller
-// that bypasses sanitizeIdentity().
-export const MAX_IDENTITY_FIELD = 60;
-export const MAX_TOPIC_LABEL = 200;
+// that bypasses sanitizeIdentity(). The caps the client also enforces on its
+// inputs live in @meetingtime/shared.
+export {
+  MAX_IDENTITY_FIELD,
+  MAX_TOPIC_LABEL,
+  MAX_PASSWORD,
+  MAX_TIMEBOX_MS,
+} from "@meetingtime/shared";
 export const MAX_PARTICIPANTS = 200;
 export const MAX_TOPICS = 100;
-export const MAX_PASSWORD = 128;
 export const MAX_PASSWORD_FAILURES_PER_IP = 10;
 export const MAX_PASSWORD_FAILURES_PER_MEETING = 50;
 export const PASSWORD_FAILURE_WINDOW_MS = 60_000;
-export const MAX_TIMEBOX_MS = 60 * 60 * 1000;
 export const MAX_PLANNED_MS = 24 * 60 * 60 * 1000;
 
 export function clampString(value: unknown, max: number): string {

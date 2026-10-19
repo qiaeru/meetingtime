@@ -1,3 +1,4 @@
+import { MAX_TOPIC_LABEL } from "@meetingtime/shared";
 import { t } from "../i18n/index.js";
 import { installDialogA11y } from "../lib/dialogA11y.js";
 
@@ -24,7 +25,7 @@ export function addTopicDialog(): Promise<string | null> {
     const input = document.createElement("input");
     input.type = "text";
     input.required = true;
-    input.maxLength = 80;
+    input.maxLength = MAX_TOPIC_LABEL;
     wrap.append(span, input);
     dlg.appendChild(wrap);
 
