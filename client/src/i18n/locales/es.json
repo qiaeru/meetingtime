@@ -132,6 +132,7 @@
   "notes.syntaxLoading": "Cargando el resaltado de sintaxis…",
   "notes.placeholder": "Escribe aquí tus notas en Markdown.",
   "notes.placeholderReadOnly": "Aquí aparecen las notas escritas por los anfitriones.",
+  "notes.full": "Las notas han alcanzado su tamaño máximo y el servidor ya no guarda tus cambios. Expórtalas para no perder nada, luego recarga la página y borra algo de texto para seguir escribiendo.",
 
   "export.title": "Reunión del {date}",
   "export.startedAt": "Hora de inicio",

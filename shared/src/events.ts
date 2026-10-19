@@ -78,3 +78,8 @@ export type AckCreate =
 export type AckJoin =
   | { ok: true; meetingId: string; participantId: string; token: string; meeting: Meeting }
   | { ok: false; error: string };
+
+// Message type the notes WebSocket (y-websocket wire format) adds to the
+// standard sync/awareness ones: the server refused a write because the notes
+// reached their size cap.
+export const YJS_MESSAGE_NOTES_FULL = 100;

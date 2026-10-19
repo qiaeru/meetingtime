@@ -10,11 +10,13 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
+import { YJS_MESSAGE_NOTES_FULL } from "@meetingtime/shared";
 import { yCollab } from "y-codemirror.next";
 import { YJS_WS_URL } from "../env.js";
 import { colorFromId } from "../lib/color.js";
 import { t } from "../i18n/index.js";
 import { theme$ } from "./ThemeToggle.js";
+import { toast } from "./Toaster.js";
 
 // y-codemirror.next interpolates this value into a style="..." attribute on
 // remote-cursor decorations. A malicious peer pushing `red; background:url(...)`
@@ -142,6 +144,17 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
   const provider = new WebsocketProvider(YJS_WS_URL.replace(/\/$/, ""), args.meetingId, ydoc, {
     params: { token: args.token },
   });
+  // The server ignores every later write of this connection, so stop syncing
+  // and freeze the editor: the local text stays readable and exportable, and
+  // a reload starts a fresh client from the server's copy.
+  let notesFull = false;
+  provider.messageHandlers[YJS_MESSAGE_NOTES_FULL] = () => {
+    if (notesFull) return;
+    notesFull = true;
+    provider.disconnect();
+    applyReadOnly(true);
+    toast(t("notes.full"), { type: "error" });
+  };
 
   const initialColor = sanitizeColor(args.color ?? colorFromId(args.participantId));
   // Placeholder identity until the page calls setUser() with the real one.
@@ -181,6 +194,15 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
 
   const view = new EditorView({ state, parent: args.container });
 
+  const applyReadOnly = (readOnly: boolean): void => {
+    view.dispatch({
+      effects: [
+        readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)),
+        placeholderCompartment.reconfigure(placeholderFor(readOnly)),
+      ],
+    });
+  };
+
   const unsubTheme = theme$.subscribe((th) => {
     view.dispatch({
       effects: themeCompartment.reconfigure(th === "dark" ? darkTheme : lightTheme),
@@ -189,14 +211,7 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
 
   return {
     ytext,
-    setReadOnly: (readOnly: boolean) => {
-      view.dispatch({
-        effects: [
-          readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)),
-          placeholderCompartment.reconfigure(placeholderFor(readOnly)),
-        ],
-      });
-    },
+    setReadOnly: (readOnly: boolean) => applyReadOnly(readOnly || notesFull),
     setUser: (name: string, color: string) => {
       const safe = sanitizeColor(color);
       provider.awareness.setLocalStateField("user", {

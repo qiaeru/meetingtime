@@ -6,6 +6,7 @@ import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as encoding from "lib0/encoding";
 import * as decoding from "lib0/decoding";
+import { YJS_MESSAGE_NOTES_FULL } from "@meetingtime/shared";
 import { meetingStore } from "../meetings/MeetingStore.js";
 import { log } from "../log.js";
 import { config } from "../config.js";
@@ -17,6 +18,14 @@ const PING_INTERVAL_MS = 30_000;
 const WS_MSG_LIMIT = 200;
 const WS_MSG_WINDOW_MS = 10_000;
 const MAX_MEETING_ID_LEN = 32;
+// Notes caps, in encoded bytes. The per-meeting one is hundreds of pages of
+// Markdown; the process-wide one stops a script spread over many meetings
+// from exhausting server memory.
+const MAX_NOTES_BYTES = 5 * 1024 * 1024;
+const MAX_TOTAL_NOTES_BYTES = 200 * 1024 * 1024;
+// Exact sizing re-encodes the whole doc, so near the cap it runs at most
+// this often per meeting; in between, accepted writes add their own length.
+const NOTES_RESIZE_INTERVAL_MS = 1_000;
 
 // Minimal y-websocket-compatible bridge. Wire format: one varuint message
 // type (MESSAGE_SYNC | MESSAGE_AWARENESS) followed by the corresponding
@@ -29,6 +38,10 @@ interface Conn {
   participantId: string;
   // Awareness clientIDs this connection controls.
   clientIds: Set<number>;
+  // Set once a write was refused for the notes cap. Yjs updates from one
+  // client must arrive in order, so applying anything after the refused one
+  // would only park it as never-integrated pending state.
+  writesRefused: boolean;
 }
 
 interface DocState {
@@ -38,9 +51,32 @@ interface DocState {
   // Kept so releaseDocState can detach it; awareness.destroy() clears its own
   // observers, but the ydoc "update" listener must be removed explicitly.
   onUpdate: (update: Uint8Array, origin: unknown) => void;
+  notesBytes: number;
+  notesMeasuredAt: number;
 }
 
 const docStates = new Map<string, DocState>();
+let totalNotesBytes = 0;
+
+function setNotesBytes(state: DocState, bytes: number): void {
+  totalNotesBytes += bytes - state.notesBytes;
+  state.notesBytes = bytes;
+}
+
+function notesHaveRoom(state: DocState, incoming: number): boolean {
+  const fits = (): boolean =>
+    state.notesBytes + incoming <= MAX_NOTES_BYTES &&
+    totalNotesBytes + incoming <= MAX_TOTAL_NOTES_BYTES;
+  if (fits()) return true;
+  // The running estimate only grows (deletions shrink the real doc), so
+  // re-measure before refusing.
+  const now = Date.now();
+  if (now - state.notesMeasuredAt >= NOTES_RESIZE_INTERVAL_MS) {
+    state.notesMeasuredAt = now;
+    setNotesBytes(state, Y.encodeStateAsUpdate(state.ydoc).byteLength);
+  }
+  return fits();
+}
 
 // Called by MeetingStore on deletion so dead DocState entries don't
 // accumulate across meeting churn.
@@ -56,6 +92,7 @@ export function releaseDocState(meetingId: string): void {
   }
   state.ydoc.off("update", state.onUpdate);
   state.awareness.destroy();
+  setNotesBytes(state, 0);
   docStates.delete(meetingId);
 }
 
@@ -96,7 +133,7 @@ function getOrCreateDocState(meetingId: string): DocState | undefined {
   };
   ydoc.on("update", onUpdate);
 
-  state = { ydoc, awareness, conns, onUpdate };
+  state = { ydoc, awareness, conns, onUpdate, notesBytes: 0, notesMeasuredAt: 0 };
   docStates.set(meetingId, state);
 
   awareness.on(
@@ -190,7 +227,7 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
       }
       const meeting = meetingStore.get(meetingId)!;
 
-      state.conns.set(ws, { participantId, clientIds: new Set() });
+      state.conns.set(ws, { participantId, clientIds: new Set(), writesRefused: false });
 
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_SYNC);
@@ -253,6 +290,20 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
               if (isWrite) {
                 const writer = meeting.participant(participantId);
                 if (!writer?.isHost) return;
+                const conn = state.conns.get(ws);
+                if (!conn || conn.writesRefused) return;
+                const update = decoding.readVarUint8Array(decoder);
+                // Pure deletions always pass, so a host at the cap can make room.
+                if (Y.decodeUpdate(update).structs.length > 0) {
+                  if (!notesHaveRoom(state, update.byteLength)) {
+                    conn.writesRefused = true;
+                    const full = encoding.createEncoder();
+                    encoding.writeVarUint(full, YJS_MESSAGE_NOTES_FULL);
+                    safeSend(ws, encoding.toUint8Array(full));
+                    return;
+                  }
+                  setNotesBytes(state, state.notesBytes + update.byteLength);
+                }
               }
               // readSyncMessage expects the sub-type prefix in the decoder, so
               // rebuild one positioned right after the message-type byte.

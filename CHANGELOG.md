@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The meeting form, the join form and the dialogs now accept exactly the lengths the server keeps: topic titles up to 200 characters (the in-meeting dialog stopped at 80), passwords up to 128 (the forms stopped at 64), and the participant rows of the creation form no longer accept names the server then cut short.
 
+### Security
+
+- Meeting notes are now capped at 5 MB per meeting and 200 MB for the whole server, so filling notes can no longer exhaust server memory. A host who reaches the cap is asked to export the notes, then reload and delete some text to keep writing.
+
 ## [1.6.0] - 2026-09-25
 
 ### Changed

@@ -132,6 +132,7 @@
   "notes.syntaxLoading": "Syntaxhervorhebung wird geladen…",
   "notes.placeholder": "Schreiben Sie hier Ihre Notizen in Markdown.",
   "notes.placeholderReadOnly": "Hier erscheinen die von den Moderatoren verfassten Notizen.",
+  "notes.full": "Die Notizen haben ihre maximale Größe erreicht, und der Server speichert Ihre Änderungen nicht mehr. Exportieren Sie sie, damit nichts verloren geht, laden Sie dann die Seite neu und löschen Sie Text, um weiterzuschreiben.",
 
   "export.title": "Meeting vom {date}",
   "export.startedAt": "Startzeit",

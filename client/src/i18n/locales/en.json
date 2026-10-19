@@ -132,6 +132,7 @@
   "notes.syntaxLoading": "Loading syntax highlighter…",
   "notes.placeholder": "Write your notes here in Markdown.",
   "notes.placeholderReadOnly": "Notes written by hosts appear here.",
+  "notes.full": "The notes reached their maximum size and the server no longer saves your changes. Export them so nothing is lost, then reload the page and delete some text to keep writing.",
 
   "export.title": "Meeting on {date}",
   "export.startedAt": "Start time",

@@ -132,6 +132,7 @@
   "notes.syntaxLoading": "Chargement de la coloration syntaxique…",
   "notes.placeholder": "Rédigez ici vos notes au format Markdown.",
   "notes.placeholderReadOnly": "Les notes rédigées par les animateurs apparaissent ici.",
+  "notes.full": "Les notes ont atteint leur taille maximale et le serveur n'enregistre plus vos modifications. Exportez-les pour ne rien perdre, puis rechargez la page et supprimez du texte pour continuer à écrire.",
 
   "export.title": "Réunion du {date}",
   "export.startedAt": "Heure de début",
