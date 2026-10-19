@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-19
+
 ### Added
 
 - The host can now set the speaking time per turn during the meeting. Turning it on asks for the number of minutes, filled in with the current value, so a meeting created without one is no longer stuck.
+
+### Changed
+
+- Update dependencies, including Express, Vite, Marked, DOMPurify, Lucide and dotenv.
 
 ### Fixed
 
