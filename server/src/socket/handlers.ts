@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import type {
+  AckSimple,
   ClientToServerEvents,
   ServerToClientEvents,
   ParticipantIdentity,
@@ -17,6 +18,18 @@ import { HOST_FALLBACK_GRACE_MS } from "../meetings/hostFallback.js";
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents>;
 type SK = Socket<ClientToServerEvents, ServerToClientEvents>;
+type HostMutation =
+  | "meeting:setTimebox"
+  | "meeting:setTimeboxEnabled"
+  | "participant:add"
+  | "participant:remove"
+  | "participant:reorder"
+  | "host:promote"
+  | "host:demote"
+  | "topic:add"
+  | "topic:remove"
+  | "topic:reorder"
+  | "topic:setCurrent";
 
 export function registerHandlers(io: IO): void {
   io.on("connection", (socket) => onConnection(io, socket));
@@ -182,17 +195,15 @@ function onConnection(io: IO, socket: SK): void {
     }
   });
 
-  // Resuming is starting again: start() re-arms the timestamps from "paused".
-  const start: ClientToServerEvents["meeting:start"] = (ack) => {
+  // Also resumes a paused meeting: start() re-arms the timestamps.
+  on("meeting:start", (ack) => {
     const ctx = requireHost(socket);
     if (!ctx) return ack?.({ ok: false, error: "forbidden" });
     if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
     ctx.meeting.start();
     broadcastState(io, ctx.meeting);
     ack?.({ ok: true });
-  };
-  on("meeting:start", start);
-  on("meeting:resume", start);
+  });
 
   on("meeting:pause", (ack) => {
     const ctx = requireHost(socket);
@@ -216,84 +227,68 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  on("meeting:setTimebox", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.setTimebox(payload.timeboxMs);
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+  // Host-only edits of a live meeting share one guard: forbidden to guests,
+  // refused once ended, then broadcast. `apply` returns an error code to
+  // reject the event without broadcasting.
+  const hostMutation = <E extends HostMutation>(
+    event: E,
+    apply: (meeting: Meeting, payload: Parameters<ClientToServerEvents[E]>[0]) => string | void
+  ): void => {
+    const handler = (payload: Parameters<ClientToServerEvents[E]>[0], ack?: AckSimple): void => {
+      const ctx = requireHost(socket);
+      if (!ctx) return ack?.({ ok: false, error: "forbidden" });
+      if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
+      const error = apply(ctx.meeting, payload);
+      if (error) return ack?.({ ok: false, error });
+      broadcastState(io, ctx.meeting);
+      ack?.({ ok: true });
+    };
+    on(event, handler as unknown as ClientToServerEvents[E]);
+  };
+
+  hostMutation("meeting:setTimebox", (meeting, payload) => {
+    meeting.setTimebox(payload.timeboxMs);
   });
 
-  on("meeting:setTimeboxEnabled", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.setTimeboxEnabled(Boolean(payload.enabled));
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+  hostMutation("meeting:setTimeboxEnabled", (meeting, payload) => {
+    meeting.setTimeboxEnabled(Boolean(payload.enabled));
   });
 
-  on("participant:add", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
+  hostMutation("participant:add", (meeting, payload) => {
     const identity = sanitizeIdentity(payload.identity);
-    if (!identity) return ack?.({ ok: false, error: "invalid_identity" });
+    if (!identity) return "invalid_identity";
     try {
-      ctx.meeting.addParticipant(identity, false);
+      meeting.addParticipant(identity, false);
     } catch (e) {
-      return ack?.({ ok: false, error: passthroughOrInternal(e) });
+      return passthroughOrInternal(e);
     }
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
   });
 
-  on("participant:remove", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.removeParticipant(payload.participantId);
+  hostMutation("participant:remove", (meeting, payload) => {
+    meeting.removeParticipant(payload.participantId);
     // ctxOf would already reject their next emit; the pre-emptive disconnect
     // saves the round-trip and gives the affected client an explicit signal.
-    disconnectParticipant(io, ctx.meeting.state.id, payload.participantId);
-    closeYjsConnectionsFor(ctx.meeting.state.id, payload.participantId);
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+    disconnectParticipant(io, meeting.state.id, payload.participantId);
+    closeYjsConnectionsFor(meeting.state.id, payload.participantId);
   });
 
-  on("participant:reorder", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
+  hostMutation("participant:reorder", (meeting, payload) => {
     if ("toIndex" in payload) {
-      if (!Number.isInteger(payload.toIndex)) return ack?.({ ok: false, error: "invalid_payload" });
-      ctx.meeting.moveParticipant(payload.participantId, payload.toIndex);
+      if (!Number.isInteger(payload.toIndex)) return "invalid_payload";
+      meeting.moveParticipant(payload.participantId, payload.toIndex);
     } else if (payload.direction === "up" || payload.direction === "down") {
-      ctx.meeting.reorderParticipant(payload.participantId, payload.direction);
+      meeting.reorderParticipant(payload.participantId, payload.direction);
     } else {
-      return ack?.({ ok: false, error: "invalid_direction" });
+      return "invalid_direction";
     }
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
   });
 
-  on("host:promote", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.promote(payload.participantId);
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+  hostMutation("host:promote", (meeting, payload) => {
+    meeting.promote(payload.participantId);
   });
 
-  on("host:demote", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.demote(payload.participantId);
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+  hostMutation("host:demote", (meeting, payload) => {
+    meeting.demote(payload.participantId);
   });
 
   on("hand:raise", (ack) => {
@@ -351,51 +346,31 @@ function onConnection(io: IO, socket: SK): void {
     ack?.({ ok: true });
   });
 
-  on("topic:add", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
+  hostMutation("topic:add", (meeting, payload) => {
     try {
-      ctx.meeting.addTopic(payload.label ?? "");
+      meeting.addTopic(payload.label ?? "");
     } catch (e) {
-      return ack?.({ ok: false, error: passthroughOrInternal(e) });
+      return passthroughOrInternal(e);
     }
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
   });
 
-  on("topic:remove", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.removeTopic(payload.topicId);
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+  hostMutation("topic:remove", (meeting, payload) => {
+    meeting.removeTopic(payload.topicId);
   });
 
-  on("topic:reorder", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
+  hostMutation("topic:reorder", (meeting, payload) => {
     if ("toIndex" in payload) {
-      if (!Number.isInteger(payload.toIndex)) return ack?.({ ok: false, error: "invalid_payload" });
-      ctx.meeting.moveTopic(payload.topicId, payload.toIndex);
+      if (!Number.isInteger(payload.toIndex)) return "invalid_payload";
+      meeting.moveTopic(payload.topicId, payload.toIndex);
     } else if (payload.direction === "up" || payload.direction === "down") {
-      ctx.meeting.reorderTopic(payload.topicId, payload.direction);
+      meeting.reorderTopic(payload.topicId, payload.direction);
     } else {
-      return ack?.({ ok: false, error: "invalid_direction" });
+      return "invalid_direction";
     }
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
   });
 
-  on("topic:setCurrent", (payload, ack) => {
-    const ctx = requireHost(socket);
-    if (!ctx) return ack?.({ ok: false, error: "forbidden" });
-    if (ctx.meeting.state.phase === "ended") return ack?.({ ok: false, error: "meeting_ended" });
-    ctx.meeting.setCurrentTopic(payload.topicId);
-    broadcastState(io, ctx.meeting);
-    ack?.({ ok: true });
+  hostMutation("topic:setCurrent", (meeting, payload) => {
+    meeting.setCurrentTopic(payload.topicId);
   });
 
   socket.on("disconnect", () => {

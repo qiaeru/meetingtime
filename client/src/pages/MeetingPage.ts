@@ -221,7 +221,7 @@ export function renderMeeting(root: HTMLElement, params: URLSearchParams): () =>
       "Play",
       phase === "paused" ? t("meeting.resume") : t("meeting.start"),
       "btn-success",
-      () => socket.emit(phase === "paused" ? "meeting:resume" : "meeting:start")
+      () => socket.emit("meeting:start")
     );
     start.dataset.focusKey = "phase";
     const pause = headerBtn("Pause", t("meeting.pause"), "btn-secondary", () =>

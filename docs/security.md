@@ -57,7 +57,7 @@ All six stores are in-memory only and sweep stale entries on the minute. They ar
 
 ## Phase-aware authorization
 
-Beyond `requireHost`, every host mutation (`meeting:start`, `meeting:resume`, `participant:add`, `participant:remove`, `participant:reorder`, `host:promote`, `host:demote`, `meeting:setTimebox`, `meeting:setTimeboxEnabled`, `topic:add`, `topic:remove`, `topic:reorder`, `topic:setCurrent`) explicitly rejects with `meeting_ended` when the meeting is already terminated. The UI already gates the corresponding buttons, but the server enforces independently so a hand-crafted client cannot mutate a meeting that has been ended (and is about to be wiped from memory by `POST_END_GC_MS`).
+Beyond `requireHost`, every host mutation (`meeting:start`, `participant:add`, `participant:remove`, `participant:reorder`, `host:promote`, `host:demote`, `meeting:setTimebox`, `meeting:setTimeboxEnabled`, `topic:add`, `topic:remove`, `topic:reorder`, `topic:setCurrent`) explicitly rejects with `meeting_ended` when the meeting is already terminated. The UI already gates the corresponding buttons, but the server enforces independently so a hand-crafted client cannot mutate a meeting that has been ended (and is about to be wiped from memory by `POST_END_GC_MS`).
 
 ## Notes editor: Yjs awareness color
 

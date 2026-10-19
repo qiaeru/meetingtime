@@ -22,9 +22,9 @@ export interface ClientToServerEvents {
     ack: (response: AckJoin) => void
   ) => void;
 
+  // Also resumes a paused meeting.
   "meeting:start": (ack?: AckSimple) => void;
   "meeting:pause": (ack?: AckSimple) => void;
-  "meeting:resume": (ack?: AckSimple) => void;
   "meeting:end": (ack?: AckSimple) => void;
   "meeting:setTimebox": (payload: { timeboxMs?: number }, ack?: AckSimple) => void;
   "meeting:setTimeboxEnabled": (payload: { enabled: boolean }, ack?: AckSimple) => void;
