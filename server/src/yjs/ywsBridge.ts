@@ -13,16 +13,23 @@ import { config } from "../config.js";
 import { allowIP, ipFromRequest } from "../plugins/rateLimit.js";
 import { isOriginAllowed } from "../plugins/origin.js";
 
-const MAX_WS_PAYLOAD = 64 * 1024;
-const PING_INTERVAL_MS = 30_000;
-const WS_MSG_LIMIT = 200;
-const WS_MSG_WINDOW_MS = 10_000;
-const MAX_MEETING_ID_LEN = 32;
 // Notes caps, in encoded bytes. The per-meeting one is hundreds of pages of
 // Markdown; the process-wide one stops a script spread over many meetings
 // from exhausting server memory.
 const MAX_NOTES_BYTES = 5 * 1024 * 1024;
 const MAX_TOTAL_NOTES_BYTES = 200 * 1024 * 1024;
+// A frame must hold any single write the notes cap allows: a smaller limit
+// closes the socket on a big paste, and y-websocket then resends the same
+// frame on every reconnect, losing every later edit.
+const MAX_WS_PAYLOAD = MAX_NOTES_BYTES + 64 * 1024;
+// Awareness (cursors, names) is stored and relayed to every peer, so it
+// keeps the tight limit the whole frame used to have.
+const MAX_AWARENESS_BYTES = 64 * 1024;
+const PING_INTERVAL_MS = 30_000;
+const WS_MSG_LIMIT = 200;
+const WS_BYTES_LIMIT = 2 * MAX_WS_PAYLOAD;
+const WS_MSG_WINDOW_MS = 10_000;
+const MAX_MEETING_ID_LEN = 32;
 // Exact sizing re-encodes the whole doc, so near the cap it runs at most
 // this often per meeting; in between, accepted writes add their own length.
 const NOTES_RESIZE_INTERVAL_MS = 1_000;
@@ -253,19 +260,21 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
       // budget on top of the per-IP one.
       let msgWindowStart = Date.now();
       let msgCount = 0;
-      const allowMessage = (): boolean => {
+      let msgBytes = 0;
+      const allowMessage = (size: number): boolean => {
         const now = Date.now();
         if (now - msgWindowStart > WS_MSG_WINDOW_MS) {
           msgWindowStart = now;
-          msgCount = 1;
-          return true;
+          msgCount = 0;
+          msgBytes = 0;
         }
         msgCount++;
-        return msgCount <= WS_MSG_LIMIT;
+        msgBytes += size;
+        return msgCount <= WS_MSG_LIMIT && msgBytes <= WS_BYTES_LIMIT;
       };
 
       ws.on("message", (raw: Buffer) => {
-        if (!allowMessage()) {
+        if (!allowMessage(raw.byteLength)) {
           log.warn({ meetingId, participantId }, "yjs ws message budget exceeded; terminating");
           try {
             ws.terminate();
@@ -314,6 +323,7 @@ export function attachYjsBridge(httpServer: HttpServer): { close: () => void } {
               break;
             }
             case MESSAGE_AWARENESS: {
+              if (raw.byteLength > MAX_AWARENESS_BYTES) break;
               awarenessProtocol.applyAwarenessUpdate(
                 state.awareness,
                 decoding.readVarUint8Array(decoder),

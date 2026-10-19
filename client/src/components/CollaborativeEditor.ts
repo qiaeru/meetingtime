@@ -148,13 +148,19 @@ export function mountCollaborativeEditor(args: Args): CollaborativeEditor {
   // and freeze the editor: the local text stays readable and exportable, and
   // a reload starts a fresh client from the server's copy.
   let notesFull = false;
-  provider.messageHandlers[YJS_MESSAGE_NOTES_FULL] = () => {
+  const onNotesFull = (): void => {
     if (notesFull) return;
     notesFull = true;
     provider.disconnect();
     applyReadOnly(true);
     toast(t("notes.full"), { type: "error" });
   };
+  provider.messageHandlers[YJS_MESSAGE_NOTES_FULL] = onNotesFull;
+  // 1009 (message too big): one write is larger than the whole notes cap.
+  // Reconnecting would resend that same frame forever.
+  provider.on("connection-close", (event) => {
+    if (event?.code === 1009) onNotesFull();
+  });
 
   const initialColor = sanitizeColor(args.color ?? colorFromId(args.participantId));
   // Placeholder identity until the page calls setUser() with the real one.

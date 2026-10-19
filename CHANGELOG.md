@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - The meeting form, the join form and the dialogs now accept exactly the lengths the server keeps: topic titles up to 200 characters (the in-meeting dialog stopped at 80), passwords up to 128 (the forms stopped at 64), and the participant rows of the creation form no longer accept names the server then cut short.
+- Pasting a large block of text (over about 64 KB) into the notes no longer silently stops them from syncing. The paste and everything typed after it used to never reach the other participants.
 
 ### Security
 
