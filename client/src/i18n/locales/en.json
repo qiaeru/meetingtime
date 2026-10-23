@@ -183,7 +183,7 @@
   "shortcuts.groupParticipants": "Participants",
   "shortcuts.groupTopics": "Topics",
   "shortcuts.groupMisc": "Other",
-  "shortcuts.altEnter": "Start, resume or pause the meeting",
+  "shortcuts.altEnter": "Start, resume, or pause the meeting",
   "shortcuts.altDelete": "End the meeting",
   "shortcuts.h": "Raise or lower your hand",
   "shortcuts.altN": "Collapse or expand the notes panel",
@@ -225,7 +225,7 @@
   "a11y.notesPanelResize": "Resize the notes panel",
 
   "errors.meeting_not_found": "Meeting not found. Check the meeting ID: an ended meeting is deleted from the server a few minutes after it ends.",
-  "errors.invalid_identity": "Enter a first name, last name and role.",
+  "errors.invalid_identity": "Enter a first name, last name, and role.",
   "errors.invalid_token": "Session expired. Please join the meeting again.",
   "errors.invalid_password": "Incorrect password. Check it with the host.",
   "errors.forbidden": "Action restricted to hosts.",
