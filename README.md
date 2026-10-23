@@ -11,10 +11,10 @@ Hosts create a meeting in one click, share a short identifier (or a direct join 
 
 > **Ephemeral by design.** No database, no telemetry, no external network call at runtime. Meeting state lives in server memory and is wiped a few minutes after the host ends the meeting.
 
-|                                 Home                                 |                                    Live meeting                                    |
-| :------------------------------------------------------------------: | :--------------------------------------------------------------------------------: |
-|      ![Meetingtime home screen](./docs/assets/screenshot1.png)       |        ![A Meetingtime meeting in progress](./docs/assets/screenshot2.png)         |
-| _The home screen with create / join actions and the language picker_ | _A meeting in progress with the speaker spotlight, agenda and collaborative notes_ |
+|                                 Home                                 |                                    Live meeting                                     |
+| :------------------------------------------------------------------: | :---------------------------------------------------------------------------------: |
+|      ![Meetingtime home screen](./docs/assets/screenshot1.png)       |         ![A Meetingtime meeting in progress](./docs/assets/screenshot2.png)         |
+| _The home screen with create / join actions and the language picker_ | _A meeting in progress with the speaker spotlight, agenda, and collaborative notes_ |
 
 ## Highlights
 
@@ -23,13 +23,13 @@ Hosts create a meeting in one click, share a short identifier (or a direct join 
 - **Speaking-time accountability.** The host grants or revokes the floor in one click, or participants take and release it themselves from their device; the current speaker's chronometer is visible to everyone. An optional per-turn time-box shifts the timer from green to orange to red with discreet audio warnings as the limit approaches and once it is exceeded.
 - **Live agenda.** Topics get their own chronometer, can be reordered live, and the currently active topic is highlighted across every participant's view.
 - **Raise-hand queue.** Participants signal they want to speak; the host sees a full-width banner with the queue and grants the floor in one click.
-- **Join from a phone.** Participants get a focused mobile view to take the floor, raise their hand and follow the speaker, the meeting timer and the current topic, with the screen kept awake and optional vibration. The host runs the full dashboard on a large screen.
+- **Join from a phone.** Participants get a focused mobile view to take the floor, raise their hand, and follow the speaker, the meeting timer, and the current topic, with the screen kept awake and optional vibration. The host runs the full dashboard on a large screen.
 - **Collaborative Markdown notes.** Co-hosts edit a shared document with live remote cursors (Yjs CRDT). Fenced code blocks are syntax-highlighted via Shiki. Guests see the notes in read-only. The full notes plus per-topic and per-speaker stats are exported as a single `.md` file at the end.
 - **Five languages out of the box.** English, French, Spanish, Italian, German. PWA manifest content-negotiated per locale.
 
 ### Under the hood
 
-- **Backend.** Node.js 24, Express 5, Socket.IO and Yjs in a single process. No database: meeting state lives in server memory and is garbage-collected after a configurable idle timeout, plus a faster wipe after the host ends the meeting.
+- **Backend.** Node.js 24, Express 5, Socket.IO, and Yjs in a single process. No database: meeting state lives in server memory and is garbage-collected after a configurable idle timeout, plus a faster wipe after the host ends the meeting.
 - **Frontend.** Vanilla TypeScript with Vite, CodeMirror 6 for the editor, Shiki bundled for syntax highlighting, no UI framework. Components are plain functions returning an `{ el, update, tick, destroy }` handle; the meeting view is driven by a single 500 ms ticker.
 - **Real-time.** Two WebSocket channels share the same port: Socket.IO for meeting commands and full-state broadcasts, a minimal y-websocket bridge for the CRDT notes.
 - **Self-contained.** Fonts (Inter, JetBrains Mono) self-hosted, syntax-highlighting grammars bundled at build time, zero CDN, zero analytics. Runs unmodified on an air-gapped host.

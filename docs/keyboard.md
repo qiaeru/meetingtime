@@ -6,7 +6,7 @@ You can operate Meetingtime entirely from the keyboard. Every shortcut uses a mo
 
 | Shortcut | Action | Role |
 | --- | --- | --- |
-| `Alt + Enter` | Start, resume or pause the meeting | Host |
+| `Alt + Enter` | Start, resume, or pause the meeting | Host |
 | `Alt + ⌫` | End the meeting (with confirmation) | Host |
 | `Alt + H` | Raise or lower your hand | All |
 | `Alt + N` | Collapse or expand the notes panel | All |
@@ -37,7 +37,7 @@ All shortcuts are registered through `client/src/lib/keyboard.ts`. The dispatche
 
 On macOS, `Cmd` acts as `Ctrl` for the letter and Enter shortcuts (the conventional mapping), but not for the arrow shortcuts, where `Cmd + ↑/↓` must keep its system meaning (jump to start/end of the text) inside the notes editor. Alt+letter bindings also match on the physical key (`e.code`), because Option+letter types a special character on macOS (`Option + H` produces "˙") and would otherwise never match.
 
-Every binding sets `allowInEditable: true` so it fires even when the focus is inside an `<input>`, a `<textarea>` or CodeMirror. That is the entire reason a modifier (Alt, Ctrl or Ctrl + Shift) is required on every shortcut: a plain letter would otherwise be swallowed by the editor as soon as the host typed.
+Every binding sets `allowInEditable: true` so it fires even when the focus is inside an `<input>`, a `<textarea>`, or CodeMirror. That is the entire reason a modifier (Alt, Ctrl, or Ctrl + Shift) is required on every shortcut: a plain letter would otherwise be swallowed by the editor as soon as the host typed.
 
 The semantic axes are:
 
@@ -45,4 +45,4 @@ The semantic axes are:
 - `Ctrl` for actions on the participants.
 - `Ctrl + Shift` mirrors the participant shortcuts but applies to the topics.
 
-Meetingtime deliberately avoids browser conflicts: no `Ctrl + P`, `Ctrl + T`, `Ctrl + L`, `Ctrl + H`, `Ctrl + N` or `Ctrl + J` is bound, since those are reserved by every major browser for printing, new-tab, address-bar focus, history, new-window and downloads respectively. `Alt + Space` is also avoided because Windows hosts running PowerToys (or just the native window-menu accelerator) intercept it before the browser ever sees the event.
+Meetingtime deliberately avoids browser conflicts: no `Ctrl + P`, `Ctrl + T`, `Ctrl + L`, `Ctrl + H`, `Ctrl + N`, or `Ctrl + J` is bound, since those are reserved by every major browser for printing, new-tab, address-bar focus, history, new-window, and downloads respectively. `Alt + Space` is also avoided because Windows hosts running PowerToys (or just the native window-menu accelerator) intercept it before the browser ever sees the event.

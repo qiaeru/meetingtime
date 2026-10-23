@@ -20,11 +20,11 @@ Three variants live under `deploy/`. Pick the one that matches the reverse proxy
 | `nginx` | `certbot` outside Docker | Hosts where you already run nginx and want to keep `certbot` doing the renewals. |
 | `traefik` | Let's Encrypt via Docker labels | Stacks that already use Traefik as their reverse proxy and label-based discovery. |
 
-Each subfolder under `deploy/` ships its own `docker-compose.<proxy>.yml`, the proxy config and a `README.md` with the exact commands. The compose files set `TRUST_PROXY=1` so Express honors the `X-Forwarded-*` headers your proxy sets.
+Each subfolder under `deploy/` ships its own `docker-compose.<proxy>.yml`, the proxy config, and a `README.md` with the exact commands. The compose files set `TRUST_PROXY=1` so Express honors the `X-Forwarded-*` headers your proxy sets.
 
 ## Environment variables
 
-See `configuration.md` for the full table. The two variables you should always set in production are `CORS_ORIGIN` (so Socket.IO and the notes WebSocket only accept your own origin) and a reverse proxy in front of port 3000.
+See `configuration.md` for the full table. In production, always set `CORS_ORIGIN` (so Socket.IO and the notes WebSocket only accept your own origin) and put a reverse proxy in front of port 3000.
 
 ## WebSocket considerations
 
