@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-10-23
+
 ### Changed
 
 - The French interface uses typographic apostrophes and a no-break space in exported note fields, and the English strings gain missing serial commas.
