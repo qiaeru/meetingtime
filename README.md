@@ -5,6 +5,9 @@
 [![Docker image](https://img.shields.io/badge/ghcr.io-qiaeru%2Fmeetingtime-blue)](https://github.com/qiaeru/meetingtime/pkgs/container/meetingtime)
 [![GitHub stars](https://img.shields.io/github/stars/qiaeru/meetingtime?style=social)](https://github.com/qiaeru/meetingtime/stargazers)
 
+> [!WARNING]
+> **This project is no longer maintained.** The repository is archived and will not receive updates, including security fixes to its dependencies. The code stays available under the MIT license, and you are welcome to fork it.
+
 A self-hosted real-time web app that helps you run better meetings by tracking speaking time and time spent on each topic, with collaborative note-taking.
 
 Hosts create a meeting in one click, share a short identifier (or a direct join link with an optional password), and see in real time who has spoken, for how long, which topic is currently active, and who is raising their hand. The notes panel lets every co-host edit a shared Markdown document with live remote cursors and syntax-highlighted code blocks, and exports the result as a single `.md` file at the end.
